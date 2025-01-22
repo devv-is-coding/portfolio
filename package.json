@@ -1,0 +1,26 @@
+{
+  "name": "onlineportfolio",
+  "version": "1.0.0",
+  "description": "online portfolio project midterm ",
+  "main": "main-server.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start:dev": "nodemon ./src/main-server.mjs",
+    "start": "nodemon ./src/main-server.mjs"
+  },
+  "keywords": [
+    "[]"
+  ],
+  "author": "DevvGwapo",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.1",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.11.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "type": "module"
+}

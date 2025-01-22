@@ -1,0 +1,76 @@
+.sf_V {
+  webkit-animation: sf_V 3s ease;
+  animation: sf_V 3s ease;
+  -webkit-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+  -webkit-animation-fill-mode: forwards;
+  animation-fill-mode: forwards;
+  opacity: 0;
+  position: relative;
+  height: 48px;
+}
+
+.sf_H:before {
+  position: absolute;
+  -webkit-animation-name: sf_H;
+  animation-name: sf_H;
+  -webkit-animation-duration: 3.5s;
+  animation-duration: 3.5s;
+  -webkit-animation-timing-function: linear;
+  animation-timing-function: linear;
+  -webkit-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+  background: -webkit-gradient(linear,left top,right top,color-stop(2%,#ccc),color-stop(18%,#666),color-stop(33%,#ccc));
+  background: linear-gradient(130deg,#ccc 2%,#666 18%,#ccc 33%);
+  background-size: 50%;
+  width: 100%;
+  height: 100%;
+  content: "";
+}
+
+@keyframes sf_H {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+@keyframes sf_V {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.sf_blend:before {
+  mix-blend-mode: overlay;
+}
+
+.sf_bar {
+  border-radius: 8px;
+  background: #d9d9d9;
+  height: 24px;
+}
+
+.sf_grid {
+  position: relative;
+  background-color: #fff;
+}
+
+div {
+}
+
+img {
+  margin-left: -3px;
+}
+
+img {
+}
+

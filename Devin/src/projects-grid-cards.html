@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Projects - Brand</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css?h=97f29be617557a0886946172d7688ddf">
+    <link rel="stylesheet" href="assets/css/Lato.css?h=3ef48857858c5dee26a88fa54459915b">
+    <link rel="stylesheet" href="assets/css/Roboto.css?h=6d285d0e8d6973cea70e807897cb7463">
+    <link rel="stylesheet" href="assets/css/Roboto%20Slab.css?h=6d285d0e8d6973cea70e807897cb7463">
+    <link rel="stylesheet" href="assets/fonts/ionicons.min.css?h=22df91a964c1a33e741fe7d3a53f3fec">
+    <link rel="stylesheet" href="assets/css/Black-Navbar.css?h=5ba3564199f115ae77dd64b33b7a4328">
+    <link rel="stylesheet" href="assets/css/logo.css?h=3d5287e610be2d1a2550efd197d5a2c5">
+    <link rel="stylesheet" href="assets/css/pikaday.min.css?h=b5d8dc0127f2418450262e222d5852b3">
+    <link rel="stylesheet" href="/src/style.css">
+    <style>
+        #ViewProjectModalResult img {
+            max-width: 100%;
+            max-height: 300px; 
+            object-fit: contain;
+            margin: 0 auto; 
+            display: block; 
+        }
+        </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg fixed-top bg-black portfolio-navbar navbar-dark">
+      <div class="container">
+        <a class="navbar-brand logo" href="#">Devin's Portfolio</a>
+        <button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navbarNav">
+          <span class="visually-hidden">Toggle navigation</span>
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="projects-grid-cards.html">Projects</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="cv.html">CV</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="hire-me.html">Hire me</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <main class="page projects-page">
+      <section class="portfolio-block projects-cards">
+        <div class="container">
+          <!-- Start: portfolio heading -->
+          <div class="heading">
+            <h2>Recent Work</h2>
+          </div>
+          <!-- End: portfolio heading -->
+          <div class="row">
+            <div class="col">
+              <div>
+                <button class="btn btn-primary" id="CreateProjectBTN" type="button" data-bs-target="#CreateProjectModal" data-bs-toggle="modal">Create Project</button>
+              </div>
+            </div>
+            <div class="col">
+              <div>
+                <button class="btn btn-primary" id="UpdateProjectBTN" type="button" data-bs-target="#UpdateProjectModal" data-bs-toggle="modal">Update Project</button>
+              </div>
+            </div>
+            <div class="col">
+              <div>
+                <button class="btn btn-primary" id="DeleteProjectBTN" type="button" data-bs-target="#DeleteProjectModal" data-bs-toggle="modal">Delete Project</button>
+              </div>
+            </div>
+            <div class="col">
+              <div>
+                <button class="btn btn-primary" id="ViewProjectBTN" type="button" data-bs-target="#ViewProjectModal" data-bs-toggle="modal">View Project</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <!-- Start of Create Project Modal -->
+            <div class="modal fade" role="dialog" tabindex="-1" id="CreateProjectModal">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <form enctype="multipart/form-data" id="createProjectForm">
+                    <div class="modal-header">
+                      <h4 class="modal-title">Create Project</h4>
+                      <button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <label class="form-label">Project Name: <input type="text" id="createProjectName" class="createProjectName" required>
+                      </label>
+                      <input type="file" id="createProjectFilePath" class="createProjectFilePath" required>
+                    </div>
+                    <div class="modal-footer">
+                      <button class="btn btn-light cancelModal" type="button" data-bs-dismiss="modal">Close</button>
+                      <button class="btn btn-primary" type="submit">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <!-- Start of Update Project Modal -->
+            <div class="modal fade" role="dialog" tabindex="-1" id="UpdateProjectModal">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <form enctype="multipart/form-data" id="updateProjectForm">
+                    <div class="modal-header">
+                      <h4 class="modal-title">Update Project</h4>
+                      <button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <label class="form-label">Project ID: <input type="number" id="updateProjectID" class="updateProjectID" required>
+                      </label>
+                      <label class="form-label">Project Name: <input type="text" id="updateProjectName" class="updateProjectName" required>
+                      </label>
+                      <input type="file" id="updateProjectFilePath" class="updateProjectFilePath" required>
+                    </div>
+                    <div class="modal-footer">
+                      <button class="btn btn-light cancelModal" type="button" data-bs-dismiss="modal">Close</button>
+                      <button class="btn btn-primary" type="submit">Save</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <!-- Start of Delete Project Modal -->
+            <div class="modal fade" role="dialog" tabindex="-1" id="DeleteProjectModal">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4 class="modal-title">Delete Project</h4>
+                    <button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <label class="form-label">Enter Project ID: <input type="number" id="deleteProjectID" class="deleteProjectID" required>
+                    </label>
+                  </div>
+                  <div class="modal-footer">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary cancelModal" type="button" onclick="deleteProject(event)">Delete</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Start of View Project Modal -->
+            <div class="modal fade" role="dialog" tabindex="-1" id="ViewProjectModal">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4 class="modal-title">View Project</h4>
+                    <button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <label class="form-label">Enter Project ID:&nbsp; <input type="number" id="viewProjectID" class="viewProjectID">
+                    </label>
+                  </div>
+                  <div class="modal-footer">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary cancelModal" type="button" onclick="viewProject()">View</button>
+                  </div>
+              
+              </div>
+            </div>
+            <!-- Extension View Project Modal -->
+            <div class="modal fade" role="dialog" tabindex="-1" id="ViewProjectModalResult">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h4 class="modal-title">View Project Result</h4>
+                    <button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div>
+                      <h4 id="viewProjectNameResultID" class="viewProjectNameResultID"></h4>
+                      <p id="viewProjectDescriptionResultID" class="viewProjectDescriptionResultID"></p>
+                      <p id="viewProjectDateResultID" class="viewProjectDateResultID"></p>
+                      <picture id="viewProjectFilePathResult" class="viewProjectFilePathResult">
+                        <img style="max-width: 100%; max-height: 300px; object-fit: contain;">
+                      </picture>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Close</button>
+                    <button class="btn btn-primary cancelModal" type="button">View</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <div class="container">
+      <div id="projectsContainer" class="projectsContainer"></div>
+    </div>
+    <footer class="page-footer">
+      <div class="container">
+        <div class="links">
+          <a href="#">About me</a>
+          <a href="#">Contact me</a>
+          <a href="#">Projects</a>
+        </div>
+        <div class="social-icons">
+          <a href="www.facebook.com/profile.php?id=100013911271158">
+            <i class="icon ion-social-facebook"></i>
+          </a>
+          <a href="#">
+            <i class="icon ion-social-instagram-outline"></i>
+          </a>
+          <a href="#">
+            <i class="icon ion-social-twitter"></i>
+          </a>
+        </div>
+      </div>
+    </footer>
+    <script src="assets/bootstrap/js/bootstrap.min.js?h=374d178d651fa0eaf680a1fa7b40c788"></script>
+    <script src="assets/js/pikaday.min.js?h=039feef26d52ebc5f1260a47208bfa38"></script>
+    <script src="assets/js/theme.js?h=aeddb9c3ce5d77b8278c91c07acf30ad"></script>
+    <script src="/src/client-server.js"></script>
+  </body>
+</html>
