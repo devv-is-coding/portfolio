@@ -1,0 +1,93 @@
+
+  /* Buttons with white outline and text */
+  .btn-outline-primary {
+    color: black;
+    border-color: black;
+  }
+  
+  .btn-outline-primary:hover {
+    background-color: #333;
+    color: #fff;
+    border-color: #333;
+  }
+  #CreateProjectBTN{
+    background-color: white;
+    border-color: black;
+    color: black;
+  }
+  #CreateProjectBTN:hover{
+    background-color: black;
+    color: white;
+    border-color: black;
+  }
+  #UpdateProjectBTN{
+    background-color: white;
+    border-color: black;
+    color: black;
+  }
+  #UpdateProjectBTN:hover{
+    background-color: black;
+    color: white;
+    border-color: black;
+  }
+  #DeleteProjectBTN{
+    background-color: white;
+    border-color: black;
+    color: black;
+  }
+  #DeleteProjectBTN:hover{
+    background-color: black;
+    color: white;
+    border-color: black;
+  }
+  #ViewProjectBTN{
+    background-color: white;
+    border-color: black;
+    color: black;
+  }
+  #ViewProjectBTN:hover{
+    background-color: black;
+    color: white;
+    border-color: black;
+  }
+  #hireMeBTN{
+    background-color: white;
+    border-color: black;
+    color: black;
+  }
+  #hireMeBTN:hover{
+    background-color: black;
+    color: white;
+    border-color: black;
+  }
+/* Set the portfolio section to white and align images */
+.portfolio-block.photography {
+    background-color: #ffffff;
+    padding: 20px 0;
+  }
+  
+  /* Center and align images in their containers */
+  .image-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    padding: 10px;
+    border: 2px solid black; /* Optional border */
+    height: 250px; /* Adjust based on desired image size */
+  }
+  
+  /* Ensure images resize while maintaining their aspect ratio */
+  .image-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Ensures images fit within the container without distortion */
+  }
+  
+  
+ 
+
+  
+ 
+  
+  
