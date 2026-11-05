@@ -1,0 +1,9 @@
+[submodule ".claude/skills/animation-library"]
+	path = .claude/skills/animation-library
+	url = https://github.com/lscottart/animation-library.git
+[submodule ".claude/skills/claude-red"]
+	path = .claude/skills/claude-red
+	url = https://github.com/SnailSploit/claude-red
+[submodule ".claude/skills/goated-ui-skill"]
+	path = .claude/skills/goated-ui-skill
+	url = https://github.com/flash-hero/GOATED-UI-SKILL.git
