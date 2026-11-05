@@ -1,29 +1,12 @@
 {
-  "name": "portfolio",
-  "version": "0.1.0",
+  "name": "portfolio-repo",
   "private": true,
+  "description": "Repo-level tooling only (commit message linting). The Next.js app lives in frontend/, the FastAPI API in backend/.",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@gsap/react": "^2.1.2",
-    "gsap": "^3.15.1",
-    "motion": "^14.9.1",
-    "next": "16.4.5",
-    "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "commitlint": "commitlint --verbose"
   },
   "devDependencies": {
-    "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "^15.5.29",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1"
   }
 }

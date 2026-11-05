@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    # `edited` re-runs CI when the PR title changes (commitlint checks it).
+    types: [opened, synchronize, reopened, edited]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Every push and pull request runs ALL jobs: frontend, backend and commit messages.
+jobs:
+  frontend:
+    name: Frontend (conventions, lint, types, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      - name: Check file & code conventions
+        run: npm run check:conventions
+
+      - name: Lint
+        run: npm run lint -- --max-warnings=0
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+  backend:
+    name: Backend (ruff, mypy, pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Format
+        run: uv run ruff format --check .
+
+      - name: Typecheck
+        run: uv run mypy app tests
+
+      - name: Test
+        run: uv run pytest
+
+  docker:
+    name: Docker (build + smoke test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Build the dev stages straight from the Dockerfiles. compose.yaml uses
+      # `develop.watch[].initial_sync`, which the runner's older Docker Compose rejects.
+      - name: Build dev images (Dockerfile `dev` targets)
+        run: |
+          docker build --target dev ./frontend
+          docker build --target dev ./backend
+
+      - name: Build production images (compose.prod.yaml)
+        run: docker compose -f compose.prod.yaml build
+
+      - name: Start production stack and wait for health checks
+        run: docker compose -f compose.prod.yaml up -d --wait --wait-timeout 120
+
+      - name: Smoke test
+        run: |
+          curl -fsS http://localhost:8000/health
+          curl -fsS -o /dev/null http://localhost:3000
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose -f compose.prod.yaml logs
+
+      - name: Stop stack
+        if: always()
+        run: docker compose -f compose.prod.yaml down
+
+  branch:
+    name: Branch name
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branch name matches <type>/<short-description>
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          pattern='^(feat|fix|refactor|style|docs|test|perf|build|ci|chore|revert)/[a-z0-9]+(-[a-z0-9]+)*$'
+          if [[ "$BRANCH" =~ $pattern ]]; then
+            echo "Branch name OK: $BRANCH"
+          else
+            echo "::error title=Branch name::'$BRANCH' must be <type>/<short-description> (lowercase, hyphens), e.g. feat/hero-section or fix/42-nav-overflow. Types: feat, fix, refactor, style, docs, test, perf, build, ci, chore, revert."
+            exit 1
+          fi
+
+  commits:
+    name: Commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+
+      - name: Lint PR title
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$PR_TITLE" | npx commitlint --verbose
+
+      - name: Lint PR commits
+        if: github.event_name == 'pull_request'
+        env:
+          FROM: ${{ github.event.pull_request.base.sha }}
+          TO: ${{ github.event.pull_request.head.sha }}
+        run: npx commitlint --from "$FROM" --to "$TO" --verbose
+
+      - name: Lint pushed commits
+        if: github.event_name == 'push'
+        env:
+          FROM: ${{ github.event.before }}
+          TO: ${{ github.event.after }}
+        run: |
+          if [ "$FROM" = "0000000000000000000000000000000000000000" ]; then
+            npx commitlint --last --verbose
+          else
+            npx commitlint --from "$FROM" --to "$TO" --verbose
+          fi

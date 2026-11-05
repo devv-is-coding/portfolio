@@ -1,0 +1,42 @@
+# Production images, run locally or in CI's smoke test:
+#   docker compose -f compose.prod.yaml up --build
+# For development use compose.yaml (`docker compose up --watch`).
+name: portfolio-prod
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Inlined into the browser bundle at build time; must be reachable from the browser.
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      # Server-side code -> backend (Docker network name). Read at runtime.
+      API_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
