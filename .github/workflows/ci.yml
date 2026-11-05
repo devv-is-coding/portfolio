@@ -4,6 +4,8 @@ on:
   push:
     branches: [main, master]
   pull_request:
+    # `edited` re-runs CI when the PR title changes (commitlint checks it).
+    types: [opened, synchronize, reopened, edited]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
