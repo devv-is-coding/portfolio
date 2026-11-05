@@ -78,8 +78,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Build dev images (compose.yaml)
-        run: docker compose build
+      # Build the dev stages straight from the Dockerfiles. compose.yaml uses
+      # `develop.watch[].initial_sync`, which the runner's older Docker Compose rejects.
+      - name: Build dev images (Dockerfile `dev` targets)
+        run: |
+          docker build --target dev ./frontend
+          docker build --target dev ./backend
 
       - name: Build production images (compose.prod.yaml)
         run: docker compose -f compose.prod.yaml build
