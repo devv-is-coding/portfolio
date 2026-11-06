@@ -6,14 +6,16 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.core.config import get_settings
 
+# Every session runs in UTC, so CURRENT_TIMESTAMP defaults and NOW() are UTC
+# whatever the server's time zone is. Python code compares with naive UTC.
+CONNECT_ARGS = {"init_command": "SET time_zone = '+00:00'"}
+
 # Creating the engine doesn't connect; the first query does.
 engine = create_async_engine(
     get_settings().database_url,
     pool_pre_ping=True,  # drop dead connections (e.g. after MariaDB restarts)
     pool_recycle=3600,  # stay below MariaDB's wait_timeout
-    # Every session runs in UTC, so CURRENT_TIMESTAMP defaults and NOW() are UTC
-    # whatever the server's time zone is. Python code compares with naive UTC.
-    connect_args={"init_command": "SET time_zone = '+00:00'"},
+    connect_args=CONNECT_ARGS,
 )
 
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)

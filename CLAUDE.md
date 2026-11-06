@@ -51,6 +51,8 @@ The dev stack normally runs in Docker (`docker compose up --watch`, see **Docker
 
 Always run the checks for every part you changed, and fix every failure before reporting the task as done. CI runs the same checks, so a local warning becomes a CI failure.
 
+**Resolve every error before ending a task.** That covers everything that catches errors: lint (ruff, ESLint), format, type checks (mypy, `tsc`), tests, builds, migrations (`alembic check`), the editor's diagnostics for the files you touched, and errors or warnings in command output and container logs. Fix the cause. Don't silence it with `# type: ignore`, `# noqa`, `eslint-disable`, `@ts-expect-error`, skipped tests or loosened config unless there's no other way, and then say why in a comment and in your report. If an error can't be fixed within the task, don't end silently: report it, with the exact output.
+
 ## Docker (Local Development)
 
 `compose.yaml` runs the dev stack: `frontend` (`next dev`, :3000), `backend` (`fastapi dev`, :8000), `worker` (Celery), `mariadb` (MariaDB 11.8, host port 3307, data in the `mariadb-data` volume), `redis` (host port 6380), and `migrate`, a one-shot job that runs `alembic upgrade head` on every `up` before the backend and worker start. `compose.prod.yaml` runs the production images (`output: "standalone"` Next.js server, `fastapi run`), which CI's **Docker** job builds and smoke-tests. Run Docker commands from the repo root.

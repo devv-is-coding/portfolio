@@ -1,8 +1,14 @@
 from functools import lru_cache
+from typing import Annotated, Self
 
-from pydantic import SecretStr
+from fastapi import Depends
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
+
+# Local development only. Production refuses to start with it (see Settings).
+DEV_JWT_SECRET_KEY = "dev-only-insecure-jwt-secret-key-change-me"
+MIN_JWT_SECRET_KEY_LENGTH = 32
 
 
 class Settings(BaseSettings):
@@ -32,6 +38,25 @@ class Settings(BaseSettings):
     sentry_dsn: str | None = None
     sentry_traces_sample_rate: float = 0.1
 
+    # Signs access tokens (HS256). Production must set its own random value.
+    jwt_secret_key: SecretStr = SecretStr(DEV_JWT_SECRET_KEY)
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 30
+    # Failed logins allowed per client IP within the window, then 429 until it ends.
+    login_max_attempts: int = 5
+    login_window_seconds: int = 900
+
+    @model_validator(mode="after")
+    def _check_jwt_secret_key(self) -> Self:
+        key = self.jwt_secret_key.get_secret_value()
+        if len(key) < MIN_JWT_SECRET_KEY_LENGTH:
+            raise ValueError(
+                f"JWT_SECRET_KEY must be at least {MIN_JWT_SECRET_KEY_LENGTH} characters"
+            )
+        if self.environment == "production" and key == DEV_JWT_SECRET_KEY:
+            raise ValueError("JWT_SECRET_KEY must be set in production")
+        return self
+
     @property
     def database_url(self) -> URL:
         """Async SQLAlchemy URL for MariaDB (asyncmy driver). Password is escaped safely."""
@@ -49,3 +74,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+SettingsDep = Annotated[Settings, Depends(get_settings)]

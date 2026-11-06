@@ -88,14 +88,18 @@ jobs:
       - name: Typecheck
         run: uv run mypy app tests alembic
 
-      - name: Test
-        run: uv run pytest
-
       - name: Migrations apply (alembic upgrade head)
         run: uv run alembic upgrade head
 
       - name: Models match migrations (alembic check)
         run: uv run alembic check
+
+      # After the migrations: tests/integration needs the tables. Each test rolls back.
+      - name: Test
+        run: uv run pytest
+        env:
+          # Fail instead of skipping tests/integration when MariaDB is unreachable.
+          TESTS_REQUIRE_DATABASE: "1"
 
       - name: Migrations roll back and re-apply
         run: |
