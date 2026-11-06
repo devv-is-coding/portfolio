@@ -8,7 +8,7 @@ from app.core.config import get_settings
 from app.core.database import engine
 from app.core.redis import redis_client
 from app.core.sentry import init_sentry
-from app.routers import health
+from app.routers import auth, health
 
 settings = get_settings()
 init_sentry(settings)
@@ -33,3 +33,4 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(auth.router)

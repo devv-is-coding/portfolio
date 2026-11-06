@@ -12,6 +12,12 @@ async def _database_ok() -> None:
 
 
 @pytest.fixture
+def anyio_backend() -> str:
+    """Async tests (`pytest.mark.anyio`) run on asyncio, like the app."""
+    return "asyncio"
+
+
+@pytest.fixture
 def client() -> Iterator[TestClient]:
     app.dependency_overrides[check_database] = _database_ok
     with TestClient(app) as test_client:
