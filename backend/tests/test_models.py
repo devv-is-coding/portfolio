@@ -15,7 +15,27 @@ def _ids(table: Table) -> str:
 
 def test_every_table_is_registered() -> None:
     """A model missing from app/models/__init__.py is invisible to Alembic autogenerate."""
-    assert Base.metadata.tables.keys() == {"users", "refresh_tokens"}
+    assert Base.metadata.tables.keys() == {
+        "users",
+        "refresh_tokens",
+        "media",
+        "profiles",
+        "social_links",
+        "skills",
+        "projects",
+        "project_images",
+        "project_skills",
+        "experiences",
+        "education",
+        "certifications",
+        "blog_categories",
+        "blog_posts",
+        "blog_tags",
+        "blog_post_tags",
+        "contact_messages",
+        "site_settings",
+        "audit_logs",
+    }
 
 
 @pytest.mark.parametrize("table", TABLES, ids=_ids)
