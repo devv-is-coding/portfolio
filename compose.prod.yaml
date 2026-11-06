@@ -1,9 +1,51 @@
 # Production images, run locally or in CI's smoke test:
 #   docker compose -f compose.prod.yaml up --build
 # For development use compose.yaml (`docker compose up --watch`).
+# Real deployments must set DB_PASSWORD / DB_ROOT_PASSWORD (the defaults are for local use only).
 name: portfolio-prod
 
+x-backend-env: &backend-env
+  DB_HOST: mariadb
+  DB_PORT: "3306"
+  DB_NAME: ${DB_NAME:-portfolio}
+  DB_USER: ${DB_USER:-portfolio}
+  DB_PASSWORD: ${DB_PASSWORD:-portfolio}
+  REDIS_URL: redis://redis:6379/0
+
 services:
+  mariadb:
+    image: mariadb:11.8
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-portfolio}
+      MARIADB_USER: ${DB_USER:-portfolio}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-portfolio}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  redis:
+    image: redis:8-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    build: ./backend
+    command: ["alembic", "upgrade", "head"]
+    environment: *backend-env
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: "no"
+
   backend:
     build: ./backend
     ports:
@@ -12,13 +54,41 @@ services:
       - path: ./backend/.env
         required: false
     environment:
+      <<: *backend-env
       CORS_ORIGINS: '["http://localhost:3000"]'
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
-      timeout: 3s
+      timeout: 5s
       retries: 5
       start_period: 5s
+
+  worker:
+    build:
+      context: ./backend
+    command: ["celery", "-A", "app.worker", "worker", "--loglevel=info"]
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment: *backend-env
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.worker", "inspect", "ping", "--timeout", "5"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 15s
 
   frontend:
     build:
@@ -40,3 +110,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+volumes:
+  mariadb-data:

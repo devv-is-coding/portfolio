@@ -46,11 +46,28 @@ jobs:
         run: npm run build
 
   backend:
+    # Keep this name: it's a required status check in the GitHub ruleset.
     name: Backend (ruff, mypy, pytest)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
+    services:
+      # Same image and host port (3307) as compose.yaml, so the app's default DB_* settings work.
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_DATABASE: portfolio
+          MARIADB_USER: portfolio
+          MARIADB_PASSWORD: portfolio
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v5
 
@@ -69,10 +86,21 @@ jobs:
         run: uv run ruff format --check .
 
       - name: Typecheck
-        run: uv run mypy app tests
+        run: uv run mypy app tests alembic
 
       - name: Test
         run: uv run pytest
+
+      - name: Migrations apply (alembic upgrade head)
+        run: uv run alembic upgrade head
+
+      - name: Models match migrations (alembic check)
+        run: uv run alembic check
+
+      - name: Migrations roll back and re-apply
+        run: |
+          uv run alembic downgrade base
+          uv run alembic upgrade head
 
   docker:
     name: Docker (build + smoke test)

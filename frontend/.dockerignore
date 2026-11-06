@@ -11,3 +11,4 @@ Dockerfile
 .dockerignore
 CLAUDE.md
 README.md
+progress.md

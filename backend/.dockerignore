@@ -13,3 +13,4 @@ tests
 Dockerfile
 .dockerignore
 CLAUDE.md
+progress.md

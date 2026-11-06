@@ -22,6 +22,18 @@ commitlint.config.mjs
 
 **Before creating or changing anything in `frontend/` or `backend/`, read that folder's `CLAUDE.md`.** It loads the rules for that part. Run commands from inside the folder they belong to, and keep the two apps independent: no imports across the boundary. They talk only over HTTP.
 
+## Progress tracking
+
+`frontend/progress.md` and `backend/progress.md` track what's done and what's next (both gitignored, local only). Read the relevant one at the start of a task. When a task in that part is finished, tick off its items, add new follow-ups under **Next**, and add a dated **Log** entry (newest first).
+
+## Secrets and environment variables
+
+The app will be deployed on Vercel, so all confidential values come from environment variables:
+- **Locally:** `backend/.env` and `frontend/.env.local` (both gitignored and kept out of Docker images). Create them from the `.env.example` next to them.
+- **On Vercel:** Project → Settings → Environment Variables, with the same names. `vercel env pull .env.local` downloads them for the frontend.
+- Never commit secrets, never hardcode them, and never put them in a `.env.example`. Every new variable goes into the matching `.env.example` with a placeholder or the local default.
+- Never give a secret the `NEXT_PUBLIC_` prefix: those values end up in the browser bundle.
+
 ## Project rules
 
 - `.ai/rules/frontend.md`: Next.js naming, Server/Client components, imports, lint. Loaded by `frontend/CLAUDE.md`.
@@ -35,17 +47,17 @@ The dev stack normally runs in Docker (`docker compose up --watch`, see **Docker
 | Part     | Run from    | Native dev server (without Docker) | Before finishing a task                                  |
 | -------- | ----------- | ---------------------------------- | -------------------------------------------------------- |
 | Frontend | `frontend/` | `npm run dev` (:3000)              | `npm run check`                                          |
-| Backend  | `backend/`  | `uv run fastapi dev` (:8000)       | `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests && uv run pytest` |
+| Backend  | `backend/`  | `uv run fastapi dev` (:8000)       | `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests alembic && uv run pytest` |
 
 Always run the checks for every part you changed, and fix every failure before reporting the task as done. CI runs the same checks, so a local warning becomes a CI failure.
 
 ## Docker (Local Development)
 
-`compose.yaml` runs the dev stack: `frontend` (`next dev`, :3000) and `backend` (`fastapi dev`, :8000). `compose.prod.yaml` runs the production images (`output: "standalone"` Next.js server, `fastapi run`), which CI's **Docker** job builds and smoke-tests. Run Docker commands from the repo root.
+`compose.yaml` runs the dev stack: `frontend` (`next dev`, :3000), `backend` (`fastapi dev`, :8000), `worker` (Celery), `mariadb` (MariaDB 11.8, host port 3307, data in the `mariadb-data` volume), `redis` (host port 6380), and `migrate`, a one-shot job that runs `alembic upgrade head` on every `up` before the backend and worker start. `compose.prod.yaml` runs the production images (`output: "standalone"` Next.js server, `fastapi run`), which CI's **Docker** job builds and smoke-tests. Run Docker commands from the repo root.
 
 ```bash
 docker compose up --watch                          # dev stack + sync host edits into the containers
-docker compose up -d --force-recreate backend      # after changing backend/.env (or frontend/.env.local for frontend)
+docker compose up -d --force-recreate backend worker  # after changing backend/.env (frontend/.env.local: recreate frontend)
 docker compose logs -f backend                     # follow one service's logs
 docker compose down                                # stop and remove the containers
 docker compose -f compose.prod.yaml up --build     # production images, locally
@@ -67,6 +79,7 @@ docker compose -f compose.prod.yaml up --build     # production images, locally
 - **Two backend URLs.** The browser calls `NEXT_PUBLIC_API_URL` (`http://localhost:8000`). Server-side Next.js code inside the container calls `API_URL` (`http://backend:8000`, the Compose service name). Never hardcode either.
 - **Standalone output is Docker-only.** `next.config.ts` enables it only when `NEXT_OUTPUT=standalone`, which the production Dockerfile stage sets. Leave it unset elsewhere so Vercel builds keep working.
 - Containers run as non-root users (`node`, `app`). Keep it that way, and never copy `.env` files or secrets into an image.
+- `docker compose down` keeps the database (the `mariadb-data` volume). `docker compose down -v` deletes it; never run that without the user's explicit permission.
 - Don't change the pinned uv image (`UV_VERSION` in `backend/Dockerfile`) or the Node/Python base versions casually. Bump them together with CI and local tooling.
 
 ## Git
@@ -77,7 +90,7 @@ docker compose -f compose.prod.yaml up --build     # production images, locally
   - Never commit directly to `main` unless the user or the established workflow explicitly permits it.
   - **Before every push, run the CI checks locally and push only when all of them pass.** If one fails, fix it first. Never push to "see if CI passes".
     - Frontend, from `frontend/`: `npm run check && npm run build`
-    - Backend, from `backend/`: `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests && uv run pytest`
+    - Backend, from `backend/`: `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests alembic && uv run pytest`, then `uv run alembic check` (needs the Docker MariaDB running)
     - Commit messages, from the repo root: `npx commitlint --from origin/main --to HEAD`. Also check the PR title you'll use: `echo "<title>" | npx commitlint`.
     - Branch name: matches the branch types in `.ai/rules/github.md` (`feature/`, `fix/`, `hotfix/`, `refactor/`, `docs/`, `test/`, `chore/`, `style/`, `perf/`).
     - If `.github/workflows/` changed: `uv run --no-project --with actionlint-py actionlint`

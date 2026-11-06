@@ -3,12 +3,23 @@ name = "portfolio-backend"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic>=1.20.1",
+    "asyncmy>=0.2.17",
+    "celery[redis]>=5.7.0",
     "fastapi[standard]>=0.162.0",
+    "httpx>=0.28.1",
+    "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.16.2",
+    "pyjwt>=2.15.1",
+    "pymysql>=1.2.3",
+    "redis>=8.1.0",
+    "sentry-sdk[fastapi]>=2.73.0",
+    "sqlalchemy[asyncio]>=2.1.8",
 ]
 
 [dependency-groups]
 dev = [
+    "celery-types>=0.26.0",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "ruff>=0.17.3",
@@ -41,3 +52,23 @@ plugins = ["pydantic.mypy"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+
+[tool.alembic]
+# The database URL comes from app settings (see alembic/env.py), never from config files.
+script_location = "%(here)s/alembic"
+prepend_sys_path = ["."]
+# e.g. 2026_11_06_1430-<rev>_create_users_table.py, so migrations sort by creation time.
+file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"
+
+# Lint and format every generated revision so it passes the ruff checks in CI.
+[[tool.alembic.post_write_hooks]]
+name = "ruff_fix"
+type = "module"
+module = "ruff"
+options = "check --fix REVISION_SCRIPT_FILENAME"
+
+[[tool.alembic.post_write_hooks]]
+name = "ruff_format"
+type = "module"
+module = "ruff"
+options = "format REVISION_SCRIPT_FILENAME"
