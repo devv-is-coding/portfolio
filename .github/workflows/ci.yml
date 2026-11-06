@@ -111,15 +111,17 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      # Branch rules: .ai/rules/github.md. Branch and commit prefixes differ:
+      # branch `feature/tenant-management`, commit `feat: implement tenant management`.
       - name: Check branch name matches <type>/<short-description>
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          pattern='^(feat|fix|refactor|style|docs|test|perf|build|ci|chore|revert)/[a-z0-9]+(-[a-z0-9]+)*$'
+          pattern='^(feature|fix|hotfix|refactor|docs|test|chore|style|perf)/[a-z0-9]+(-[a-z0-9]+)*$'
           if [[ "$BRANCH" =~ $pattern ]]; then
             echo "Branch name OK: $BRANCH"
           else
-            echo "::error title=Branch name::'$BRANCH' must be <type>/<short-description> (lowercase, hyphens), e.g. feat/hero-section or fix/42-nav-overflow. Types: feat, fix, refactor, style, docs, test, perf, build, ci, chore, revert."
+            echo "::error title=Branch name::'$BRANCH' must be <type>/<short-description> or <type>/<issue-number>-<short-description> (lowercase, hyphens), e.g. feature/42-tenant-directory or fix/nav-overflow. Types: feature, fix, hotfix, refactor, docs, test, chore, style, perf. See .ai/rules/github.md."
             exit 1
           fi
 

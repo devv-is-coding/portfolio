@@ -74,8 +74,12 @@ docker compose -f compose.prod.yaml up --build     # production images, locally
 - Before any commit, branch, push or pull request, read `.ai/rules/github.md` (commit message types and rules, branch names, branch workflow and cleanup). No file edit triggers it, so this line is its trigger.
 - The ones never to miss:
   - Commit only when the user explicitly asks or the task requires it, as Conventional Commits: `<type>(<scope>): <short description>`, lowercase, imperative, under 72 characters.
-  - **Never commit to `main`.** Always work on a sub-branch created from an up-to-date `main`, and get changes into `main` through a pull request.
-  - **Name sub-branches with the same types as commits:** `<type>/<short-description>`, e.g. `feat/hero-section`, `fix/42-nav-overflow`, `chore/bump-next`, `docs/docker-setup`. Types: `feat`, `fix`, `refactor`, `style`, `docs`, `test`, `perf`, `build`, `ci`, `chore`, `revert`.
-  - **Keep local branches few.** Before creating a new sub-branch, update `main`. Once `main` contains a merged sub-branch and a second merged one exists, delete the older one, so only the most recently merged sub-branch stays as a rollback point. Squash-merged branches show as `[gone]` in `git branch -vv`; the exact steps are in `.ai/rules/github.md`.
+  - Never commit directly to `main` unless the user or the established workflow explicitly permits it.
+  - **Before every push, run the CI checks locally and push only when all of them pass.** If one fails, fix it first. Never push to "see if CI passes".
+    - Frontend, from `frontend/`: `npm run check && npm run build`
+    - Backend, from `backend/`: `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests && uv run pytest`
+    - Commit messages, from the repo root: `npx commitlint --from origin/main --to HEAD`. Also check the PR title you'll use: `echo "<title>" | npx commitlint`.
+    - Branch name: matches the branch types in `.ai/rules/github.md` (`feature/`, `fix/`, `hotfix/`, `refactor/`, `docs/`, `test/`, `chore/`, `style/`, `perf/`).
+    - If `.github/workflows/` changed: `uv run --no-project --with actionlint-py actionlint`
+    - If a Dockerfile, `.dockerignore` or compose file changed: `docker build --target dev ./frontend`, `docker build --target dev ./backend`, then `docker compose -f compose.prod.yaml up --build -d --wait`, `curl -f http://localhost:8000/health`, `curl -f http://localhost:3000`, and `docker compose -f compose.prod.yaml down`
   - Never switch branches over uncommitted user changes, discard user changes, or run destructive Git operations without explicit authorization.
-- Use the part as the scope when a change touches only one: `feat(frontend): …`, `fix(backend): …`, `ci: …`.
