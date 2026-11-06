@@ -62,13 +62,13 @@ file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(r
 
 # Lint and format every generated revision so it passes the ruff checks in CI.
 [[tool.alembic.post_write_hooks]]
-name = "ruff_fix"
-type = "module"
-module = "ruff"
-options = "check --fix REVISION_SCRIPT_FILENAME"
-
-[[tool.alembic.post_write_hooks]]
 name = "ruff_format"
 type = "module"
 module = "ruff"
 options = "format REVISION_SCRIPT_FILENAME"
+
+[[tool.alembic.post_write_hooks]]
+name = "ruff_fix"
+type = "module"
+module = "ruff"
+options = "check --fix REVISION_SCRIPT_FILENAME"
