@@ -156,6 +156,9 @@ jobs:
   commits:
     name: Commit messages
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # rename PR titles that aren't Conventional Commits
     steps:
       - uses: actions/checkout@v5
         with:
@@ -169,11 +172,37 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint PR title
+      # GitHub titles multi-commit PRs after the branch ("Feature/backend database"),
+      # which never passes commitlint. If the title is invalid, rename the PR to the newest
+      # commit of the branch's type (feature/ -> feat, hotfix/ -> fix), or build one from the
+      # branch name. Edits made with GITHUB_TOKEN don't trigger another workflow run.
+      - name: Fix PR title if needed, then lint it
         if: github.event_name == 'pull_request'
         env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: echo "$PR_TITLE" | npx commitlint --verbose
+          BRANCH: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          title="$PR_TITLE"
+          if ! echo "$title" | npx commitlint > /dev/null 2>&1; then
+            prefix="${BRANCH%%/*}"
+            case "$prefix" in
+              feature) type=feat ;;
+              hotfix) type=fix ;;
+              *) type="$prefix" ;;
+            esac
+            title=$(git log --no-merges --format=%s "$BASE_SHA..$HEAD_SHA" | grep -E "^${type}(\(|!|:)" | head -n1 || true)
+            if [ -z "$title" ]; then
+              words=$(echo "${BRANCH#*/}" | sed -E 's/^[0-9]+-//; s/-/ /g')
+              title="${type}: ${words}"
+            fi
+            echo "::notice title=PR title::Renamed '$PR_TITLE' to '$title'"
+            gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --title "$title"
+          fi
+          echo "$title" | npx commitlint --verbose
 
       - name: Lint PR commits
         if: github.event_name == 'pull_request'
