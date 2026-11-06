@@ -32,11 +32,29 @@ const NON_IMPERATIVE_STARTS = new Set([
   "bumping", "cleaned", "cleaning", "adjusted", "adjusting", "resolved", "resolving",
 ]);
 
+// Git trailers don't count as a description ("TA-18: ..." task paragraphs do).
+const TRAILER =
+  /^(co-authored-by|signed-off-by|reviewed-by|acked-by|tested-by|reported-by|suggested-by|helped-by):/i;
+const MIN_BODY_LENGTH = 40;
+
 const config = {
   extends: ["@commitlint/config-conventional"],
   plugins: [
     {
       rules: {
+        "body-detailed": ({ raw }) => {
+          const description = (raw ?? "")
+            .split("\n")
+            .slice(1) // drop the title
+            .filter((line) => !TRAILER.test(line.trim()) && !line.startsWith("#"))
+            .join(" ")
+            .trim();
+          return [
+            description.length >= MIN_BODY_LENGTH,
+            `add a detailed body below the title (at least ${MIN_BODY_LENGTH} characters, trailers ` +
+              "like Co-Authored-By don't count): what was built, how it behaves, key decisions",
+          ];
+        },
         "subject-not-vague": ({ subject }) => {
           if (!subject) return [true];
           const normalized = subject.trim().toLowerCase().replace(/[.!]+$/, "");
@@ -69,6 +87,11 @@ const config = {
     "header-max-length": [2, "always", 72],
     "subject-not-vague": [2, "always"],
     "subject-imperative": [2, "always"],
+    // Every commit explains itself in a body: what was built, how it behaves, key decisions
+    // (one paragraph per task). Blank line after the title; wrap lines (~72, max 100).
+    "body-detailed": [2, "always"],
+    "body-leading-blank": [2, "always"],
+    "body-max-line-length": [2, "always", 100],
   },
 };
 

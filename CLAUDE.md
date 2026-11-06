@@ -17,7 +17,7 @@ backend/             FastAPI API (Python 3.13, uv, Pydantic v2)
 compose.yaml         Docker dev stack: next dev + fastapi dev with watch sync (see **Docker**)
 compose.prod.yaml    Docker production images (used by CI's smoke test)
 package.json         Repo-level tooling only (commitlint). Not the app.
-commitlint.config.mjs
+commitlint.config.mjs        Commit message rules (commitlint.title.config.mjs: same rules for PR titles, no body)
 ```
 
 **Before creating or changing anything in `frontend/` or `backend/`, read that folder's `CLAUDE.md`.** It loads the rules for that part. Run commands from inside the folder they belong to, and keep the two apps independent: no imports across the boundary. They talk only over HTTP.
@@ -86,13 +86,13 @@ docker compose -f compose.prod.yaml up --build     # production images, locally
 
 - Before any commit, branch, push or pull request, read `.ai/rules/github.md` (commit message types and rules, branch names, branch workflow and cleanup). No file edit triggers it, so this line is its trigger.
 - The ones never to miss:
-  - Commit only when the user explicitly asks or the task requires it, as Conventional Commits: `<type>(<scope>): <short description>`, lowercase, imperative, under 72 characters.
+  - Commit only when the user explicitly asks or the task requires it, as Conventional Commits: `<type>(<scope>): <short description>`, lowercase, imperative, under 72 characters. The title names what changed in detail, and **every commit has a detailed body**: one paragraph per task, covering what was built, how it behaves and key decisions (format and example in `.ai/rules/github.md`). Branch names stay short (1–4 words); the detail goes in the commits.
   - Never commit directly to `main` unless the user or the established workflow explicitly permits it.
   - **Before every push, run the CI checks locally and push only when all of them pass.** If one fails, fix it first. Never push to "see if CI passes".
     - Frontend, from `frontend/`: `npm run check && npm run build`
     - Backend, from `backend/`: `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests alembic && uv run pytest`, then `uv run alembic check` (needs the Docker MariaDB running)
-    - Commit messages, from the repo root: `npx commitlint --from origin/main --to HEAD`. Also check the PR title you'll use: `echo "<title>" | npx commitlint`.
-    - Branch name: matches the branch types in `.ai/rules/github.md` (`feature/`, `fix/`, `hotfix/`, `refactor/`, `docs/`, `test/`, `chore/`, `style/`, `perf/`).
+    - Commit messages, from the repo root: `npx commitlint --from origin/main --to HEAD`. Also check the PR title you'll use: `echo "<title>" | npx commitlint --config commitlint.title.config.mjs`.
+    - Branch name: matches the branch types in `.ai/rules/github.md` (`feature/`, `fix/`, `hotfix/`, `refactor/`, `docs/`, `test/`, `chore/`, `style/`, `perf/`), 1–4 words.
     - If `.github/workflows/` changed: `uv run --no-project --with actionlint-py actionlint`
     - If a Dockerfile, `.dockerignore` or compose file changed: `docker build --target dev ./frontend`, `docker build --target dev ./backend`, then `docker compose -f compose.prod.yaml up --build -d --wait`, `curl -f http://localhost:8000/health`, `curl -f http://localhost:3000`, and `docker compose -f compose.prod.yaml down`
   - **Push one branch at a time.** Put all commits for the current work on a single branch and push them together with one command (`git push -u origin <branch>`). Keep separate topics apart with separate commits on that branch, not with extra branches. Never push several branches in one go or stack a new branch on top of an unmerged one. Start the next branch only after the current one is merged into `main`, or when the user explicitly asks.
