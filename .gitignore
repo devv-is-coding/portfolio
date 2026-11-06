@@ -57,3 +57,4 @@ backend/dist/
 # Personal progress notes (local only)
 frontend/progress.md
 backend/progress.md
+/TODO.md
