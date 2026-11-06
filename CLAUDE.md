@@ -11,6 +11,7 @@ Monorepo for a personal portfolio: a **Next.js 16** frontend and a **FastAPI** b
 ```
 frontend/            Next.js 16 app (App Router, React 19, TypeScript, Tailwind v4, GSAP / Motion)
 backend/             FastAPI API (Python 3.13, uv, Pydantic v2)
+TODO.md              Development plan and task checklist (gitignored, local only; see **TODO.md**)
 .ai/rules/           Rules for Claude: frontend.md, backend.md, github.md
 .github/workflows/   ci.yml: frontend, backend, Docker, branch-name and commit-message checks on every push and PR
 .claude/skills/      Project-local skills (gsap-scrolltrigger, modern-web-design, …)
@@ -22,9 +23,19 @@ commitlint.config.mjs        Commit message rules (commitlint.title.config.mjs: 
 
 **Before creating or changing anything in `frontend/` or `backend/`, read that folder's `CLAUDE.md`.** It loads the rules for that part. Run commands from inside the folder they belong to, and keep the two apps independent: no imports across the boundary. They talk only over HTTP.
 
-## Progress tracking
+## TODO.md
 
-`frontend/progress.md` and `backend/progress.md` track what's done and what's next (both gitignored, local only). Read the relevant one at the start of a task. When a task in that part is finished, tick off its items, add new follow-ups under **Next**, and add a dated **Log** entry (newest first).
+`TODO.md` at the repo root (gitignored, local only) is the development plan: the backend-first strategy, the quality bar, the Phase 1 backend tasks, the **Backend completion requirements**, Phases 2 and 3, blockers and decisions. Start every task from it.
+
+- **Backend first.** No frontend feature work (pages, components, API calls) starts until every backend completion requirement in `TODO.md` is ticked with evidence. The frontend consumes the FastAPI endpoints and never re-implements backend business logic.
+- **One meaningful, verified task per session.** Never skip prerequisites, and never mark a task complete without verification.
+- **After each verified task, update `TODO.md`:** tick the item, add follow-ups, record new blockers and technical decisions, and add a dated **Log** entry (newest first).
+
+@TODO.md
+
+## Progress notes
+
+`frontend/progress.md` and `backend/progress.md` (both gitignored, local only) keep the detailed technical log of each part: what was built, fixed and verified. Add a dated entry there too when a task in that part is finished.
 
 ## Secrets and environment variables
 
