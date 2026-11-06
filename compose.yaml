@@ -1,11 +1,66 @@
-# Local development stack: `next dev` + `fastapi dev`.
+# Local development stack: MariaDB + Redis + `fastapi dev` + Celery worker + `next dev`.
 #   docker compose up --watch
 # Source is NOT bind-mounted (slow on Windows). Watch syncs host edits into the
 # containers one way (host -> container), and rebuilds the image when dependency
-# files change. Production images: see compose.prod.yaml.
+# files change. `migrate` applies Alembic migrations once on every `up`.
+# Production images: see compose.prod.yaml.
 name: portfolio
 
+x-backend-env: &backend-env
+  DB_HOST: mariadb
+  DB_PORT: "3306"
+  DB_NAME: ${DB_NAME:-portfolio}
+  DB_USER: ${DB_USER:-portfolio}
+  DB_PASSWORD: ${DB_PASSWORD:-portfolio}
+  REDIS_URL: redis://redis:6379/0
+
 services:
+  mariadb:
+    image: mariadb:11.8
+    ports:
+      # Host port 3307, so it doesn't clash with another MySQL/MariaDB on 3306.
+      - "3307:3306"
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-portfolio}
+      MARIADB_USER: ${DB_USER:-portfolio}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-portfolio}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      # Host port 6380, so it doesn't clash with another Redis on 6379.
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    build:
+      context: ./backend
+      target: dev
+    command: ["alembic", "upgrade", "head"]
+    environment: *backend-env
+    # Read-only mounts so the latest migrations and models from the host are applied,
+    # not the copy baked into the image. (One-shot job, so bind-mount speed doesn't matter.)
+    volumes:
+      - ./backend/alembic:/app/alembic:ro
+      - ./backend/app:/app/app:ro
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: "no"
+
   backend:
     build:
       context: ./backend
@@ -16,16 +71,60 @@ services:
       - path: ./backend/.env
         required: false
     environment:
+      <<: *backend-env
       CORS_ORIGINS: '["http://localhost:3000"]'
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
-      timeout: 3s
+      timeout: 5s
       retries: 10
       start_period: 10s
     develop:
       watch:
         - action: sync
+          path: ./backend
+          target: /app
+          initial_sync: true
+          ignore:
+            - .venv/
+            - pyproject.toml
+            - uv.lock
+        - action: rebuild
+          path: ./backend/pyproject.toml
+        - action: rebuild
+          path: ./backend/uv.lock
+
+  worker:
+    build:
+      context: ./backend
+      target: dev
+    command: ["celery", "-A", "app.worker", "worker", "--loglevel=info"]
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment: *backend-env
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.worker", "inspect", "ping", "--timeout", "5"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 15s
+    develop:
+      watch:
+        # Celery doesn't auto-reload: sync the code, then restart the worker.
+        - action: sync+restart
           path: ./backend
           target: /app
           initial_sync: true
@@ -76,3 +175,6 @@ services:
           path: ./frontend/package.json
         - action: rebuild
           path: ./frontend/package-lock.json
+
+volumes:
+  mariadb-data:

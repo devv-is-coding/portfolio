@@ -46,11 +46,28 @@ jobs:
         run: npm run build
 
   backend:
+    # Keep this name: it's a required status check in the GitHub ruleset.
     name: Backend (ruff, mypy, pytest)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
+    services:
+      # Same image and host port (3307) as compose.yaml, so the app's default DB_* settings work.
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_DATABASE: portfolio
+          MARIADB_USER: portfolio
+          MARIADB_PASSWORD: portfolio
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
     steps:
       - uses: actions/checkout@v5
 
@@ -69,10 +86,21 @@ jobs:
         run: uv run ruff format --check .
 
       - name: Typecheck
-        run: uv run mypy app tests
+        run: uv run mypy app tests alembic
 
       - name: Test
         run: uv run pytest
+
+      - name: Migrations apply (alembic upgrade head)
+        run: uv run alembic upgrade head
+
+      - name: Models match migrations (alembic check)
+        run: uv run alembic check
+
+      - name: Migrations roll back and re-apply
+        run: |
+          uv run alembic downgrade base
+          uv run alembic upgrade head
 
   docker:
     name: Docker (build + smoke test)
@@ -111,21 +139,26 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      # Branch rules: .ai/rules/github.md. Branch and commit prefixes differ:
+      # branch `feature/tenant-management`, commit `feat: implement tenant management`.
       - name: Check branch name matches <type>/<short-description>
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
-          pattern='^(feat|fix|refactor|style|docs|test|perf|build|ci|chore|revert)/[a-z0-9]+(-[a-z0-9]+)*$'
+          pattern='^(feature|fix|hotfix|refactor|docs|test|chore|style|perf)/[a-z0-9]+(-[a-z0-9]+)*$'
           if [[ "$BRANCH" =~ $pattern ]]; then
             echo "Branch name OK: $BRANCH"
           else
-            echo "::error title=Branch name::'$BRANCH' must be <type>/<short-description> (lowercase, hyphens), e.g. feat/hero-section or fix/42-nav-overflow. Types: feat, fix, refactor, style, docs, test, perf, build, ci, chore, revert."
+            echo "::error title=Branch name::'$BRANCH' must be <type>/<short-description> or <type>/<issue-number>-<short-description> (lowercase, hyphens), e.g. feature/42-tenant-directory or fix/nav-overflow. Types: feature, fix, hotfix, refactor, docs, test, chore, style, perf. See .ai/rules/github.md."
             exit 1
           fi
 
   commits:
     name: Commit messages
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # rename PR titles that aren't Conventional Commits
     steps:
       - uses: actions/checkout@v5
         with:
@@ -139,11 +172,37 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint PR title
+      # GitHub titles multi-commit PRs after the branch ("Feature/backend database"),
+      # which never passes commitlint. If the title is invalid, rename the PR to the newest
+      # commit of the branch's type (feature/ -> feat, hotfix/ -> fix), or build one from the
+      # branch name. Edits made with GITHUB_TOKEN don't trigger another workflow run.
+      - name: Fix PR title if needed, then lint it
         if: github.event_name == 'pull_request'
         env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
-        run: echo "$PR_TITLE" | npx commitlint --verbose
+          BRANCH: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          title="$PR_TITLE"
+          if ! echo "$title" | npx commitlint > /dev/null 2>&1; then
+            prefix="${BRANCH%%/*}"
+            case "$prefix" in
+              feature) type=feat ;;
+              hotfix) type=fix ;;
+              *) type="$prefix" ;;
+            esac
+            title=$(git log --no-merges --format=%s "$BASE_SHA..$HEAD_SHA" | grep -E "^${type}(\(|!|:)" | head -n1 || true)
+            if [ -z "$title" ]; then
+              words=$(echo "${BRANCH#*/}" | sed -E 's/^[0-9]+-//; s/-/ /g')
+              title="${type}: ${words}"
+            fi
+            echo "::notice title=PR title::Renamed '$PR_TITLE' to '$title'"
+            gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --title "$title"
+          fi
+          echo "$title" | npx commitlint --verbose
 
       - name: Lint PR commits
         if: github.event_name == 'pull_request'
