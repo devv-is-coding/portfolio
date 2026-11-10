@@ -99,7 +99,8 @@ docker compose -f compose.prod.yaml up --build     # production images, locally
 
 - Before any commit, branch, push or pull request, read `.ai/rules/github.md` (commit message types and rules, branch names, branch workflow and cleanup). No file edit triggers it, so this line is its trigger.
 - The ones never to miss:
-  - Commit only when the user explicitly asks or the task requires it, as Conventional Commits: `<type>(<scope>): <short description>`, lowercase, imperative, under 72 characters. The title names what changed in detail, and **every commit has a detailed body**: one paragraph per task, covering what was built, how it behaves and key decisions (format and example in `.ai/rules/github.md`). Branch names stay short (1–4 words); the detail goes in the commits.
+  - **Never commit unless the user explicitly says so** ("commit", "push it", …). This includes local commits: no task, workflow or tidy history is a reason to commit on your own. Leave the work uncommitted, and offer the commit when the task is done.
+  - Commits are Conventional Commits: `<type>(<scope>): <short description>`, lowercase, imperative, under 72 characters. The title names what changed in detail, and **every commit has a detailed body**: one paragraph per task, covering what was built, how it behaves and key decisions (format and example in `.ai/rules/github.md`). Branch names stay short (1–4 words); the detail goes in the commits.
   - Never commit directly to `main` unless the user or the established workflow explicitly permits it.
   - **Before every push, run the CI checks locally and push only when all of them pass.** If one fails, fix it first. Never push to "see if CI passes".
     - Frontend, from `frontend/`: `npm run check && npm run build`

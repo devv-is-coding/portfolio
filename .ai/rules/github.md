@@ -33,7 +33,7 @@ Applies to every commit, not only to files under this path (commits touch no sin
   processes refunds, several per booking, never more than was paid. A
   full refund cancels the booking and frees its units.
   ```
-- Commit only when the user explicitly asks or the task requires it, and follow the branch rules below.
+- Never commit unless the user explicitly says so, local commits included; no task or workflow is a reason to commit on your own. Then follow the branch rules below.
 
 ## Branch names and branch workflow
 Applies to every branch, push and pull request.
