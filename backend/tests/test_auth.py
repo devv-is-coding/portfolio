@@ -12,7 +12,9 @@ def test_me_without_token_is_401_with_bearer_challenge(client: TestClient) -> No
 
     assert response.status_code == 401
     assert response.headers["www-authenticate"] == "Bearer"
-    assert response.json() == {"detail": "Not authenticated"}
+    assert response.json() == {
+        "error": {"code": "unauthorized", "message": "Not authenticated", "details": None}
+    }
 
 
 @pytest.mark.parametrize(

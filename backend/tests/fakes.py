@@ -1,5 +1,6 @@
-"""In-memory stand-ins for external services in tests."""
+"""In-memory stand-ins for external services, and small test helpers."""
 
+import logging
 from typing import cast
 
 from redis.asyncio import Redis
@@ -48,3 +49,8 @@ class BrokenRedis:
 
 def as_redis(fake: FakeRedis | BrokenRedis) -> Redis:
     return cast(Redis, fake)
+
+
+def field(record: logging.LogRecord, name: str) -> object:
+    """A field added to the record at runtime (request_id, or `extra=` fields)."""
+    return record.__dict__[name]

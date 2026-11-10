@@ -1,6 +1,8 @@
+import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
 
@@ -33,4 +35,30 @@ def test_health_returns_503_when_database_is_unreachable(client: TestClient) -> 
     response = client.get("/health")
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Database unavailable"}
+    assert response.json() == {
+        "error": {"code": "service_unavailable", "message": "Database unavailable", "details": None}
+    }
+
+
+def test_passing_health_checks_stay_out_of_the_info_log(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO, logger="app.access")
+
+    client.get("/health")
+
+    assert [r for r in caplog.records if r.name == "app.access"] == []
+
+
+def test_failing_health_checks_are_logged(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.INFO, logger="app.access")
+    app.dependency_overrides.pop(check_database)
+    app.dependency_overrides[get_session] = _unreachable_session
+
+    client.get("/health")
+
+    [access] = [r for r in caplog.records if r.name == "app.access"]
+    assert access.levelno == logging.INFO
+    assert access.getMessage().startswith("GET /health 503 ")

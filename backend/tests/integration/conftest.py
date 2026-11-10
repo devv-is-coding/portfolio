@@ -21,8 +21,10 @@ from app.core.config import get_settings
 from app.core.database import CONNECT_ARGS, get_session
 from app.core.redis import get_redis
 from app.main import app
+from app.models import User
 from app.routers.health import check_database
 from tests.fakes import FakeRedis, as_redis
+from tests.integration.factories import bearer_headers, create_admin_user
 
 pytestmark = pytest.mark.anyio
 
@@ -81,3 +83,15 @@ def _no_leftover_overrides() -> Iterator[None]:
     # The real database check is used here; make sure no unit-test override leaks in.
     app.dependency_overrides.pop(check_database, None)
     yield
+
+
+@pytest.fixture
+async def admin(db_session: AsyncSession) -> User:
+    """The admin account (ADMIN_EMAIL / ADMIN_PASSWORD from factories.py)."""
+    return await create_admin_user(db_session)
+
+
+@pytest.fixture
+def admin_headers(admin: User) -> dict[str, str]:
+    """Headers authenticating as `admin`."""
+    return bearer_headers(admin)
