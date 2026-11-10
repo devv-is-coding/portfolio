@@ -30,14 +30,20 @@ app/
   main.py            Creates the FastAPI app: lifespan, middleware, CORS, include_router(...). No endpoints here.
   worker.py          Celery app (broker/result backend = Redis)
   core/config.py     Settings (pydantic-settings) + get_settings()
-  core/database.py   Async engine, SessionLocal, get_session / SessionDep
+  core/database.py   Async engine, SessionLocal, get_session / SessionDep, ping()
   core/redis.py      Async Redis client, get_redis / RedisDep
   core/sentry.py     init_sentry() (only when SENTRY_DSN is set)
-  dependencies.py    Shared dependencies (auth, current user, ...) when needed
+  core/security.py   Password hashing, access tokens, refresh token hashing
+  core/errors.py     AppError subclasses, the shared error shape and its handlers, error_responses()
+  core/logging.py    configure_logging(), RequestContextMiddleware (request id, access log, 500s)
+  core/pagination.py PageParams, Page[T], sort_query(), SearchQuery
+  core/slugs.py      Slug type, slugify()
+  dependencies.py    Shared dependencies: ClientIpDep, CurrentUserDep, AuditContextDep
   models/            SQLAlchemy models, one module per table; base.py holds Base and mixins, enums.py the status enums; import each in __init__.py
+  repositories/      Queries only, one repository per model (users.py, refresh_tokens.py); base.py holds BaseRepository
   routers/           One APIRouter per resource: projects.py, contact.py, health.py
   schemas/           Pydantic request/response models, one module per resource
-  services/          Business logic; routers stay thin and call services
+  services/          Business logic and transactions, one module per area (auth.py)
   tasks/             Celery tasks, one module per area; register each in worker.py `include`
   commands/          CLI scripts, run as `python -m app.commands.<name>` (argparse, no extra dependencies)
 alembic/
@@ -46,9 +52,17 @@ alembic/
 tests/
   conftest.py        Shared fixtures (TestClient, dependency overrides, ...)
   test_<module>.py   Tests, mirroring app/ (routers/test_projects.py for larger suites)
+  integration/       Tests against MariaDB (rolled back per test)
 ```
 
-Add `services/` and `dependencies.py` only when they're needed. Don't add new infrastructure (other databases, queues, external services) without asking.
+Don't add new infrastructure (other databases, queues, external services) without asking.
+
+## Layers: routers → services → repositories
+
+- **Routers** handle HTTP only: parse the request, call one service function, return a schema. No queries, no business rules.
+- **Services** hold the business rules and own the transaction: they call repositories and decide when to `commit()`. They take the `AsyncSession` and build the repositories they need (`UserRepository(session)`).
+- **Repositories** (`BaseRepository[Model]` subclasses) build and run SQLAlchemy queries and never commit. `BaseRepository` gives `get`, `add`, `delete` and `flush`; add a method only when a service needs that query, named after what it returns (`get_by_email`, `get_by_hash_for_update`). No generic query builders.
+- Infrastructure checks that aren't about a model (`ping()` for `/health`) live in `core/`.
 
 ## Naming
 
@@ -68,12 +82,17 @@ Add `services/` and `dependencies.py` only when they're needed. Don't add new in
 
 ## API rules
 
-- **Routers per resource.** `router = APIRouter(prefix="/projects", tags=["projects"])` in `routers/projects.py`, included in `main.py` under the `/api` prefix: `app.include_router(projects.router, prefix="/api")`. `/health` stays at the root for uptime checks.
+- **Routers per resource.** Public reads at `/<resource>` (`APIRouter(prefix="/projects", tags=["projects"])` in `routers/projects.py`), admin routes at `/admin/<resource>` with `CurrentUserDep` or `AuditContextDep` on every endpoint (or `dependencies=[Depends(get_current_user)]` on the router). Include each router in `main.py`. `/health` and `/auth` stay at the root. `tests/test_route_protection.py` fails for any `/admin` route without the current user.
 - **Type everything.** mypy runs in strict mode: every function has parameter and return annotations.
 - **Declare responses with return types.** Write `async def get_project(...) -> ProjectRead:`. FastAPI uses the return annotation for validation, filtering and OpenAPI. Use `response_model=` only when the returned object differs from the declared type.
 - **Use `Annotated` for parameters and dependencies.** `slug: Annotated[str, Path()]`, `settings: Annotated[Settings, Depends(get_settings)]`, not default-value style `= Depends(...)`. Ruff's `FAST` rules flag this.
 - **`async def` vs `def`.** Use `async def` only when everything awaited inside is async (httpx, async DB drivers). Code that calls blocking libraries goes in plain `def`, which FastAPI runs in a threadpool. Never block inside `async def` (`time.sleep`, `requests`, sync DB calls). Ruff's `ASYNC` rules flag common cases.
-- **Errors.** Raise `HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")`, using `fastapi.status` constants rather than bare numbers.
+- **Errors have one shape:** `{"error": {"code": "not_found", "message": "Project not found", "details": [...]}}` (`app/core/errors.py`). Services raise `NotFoundError("Project not found")`, `ConflictError`, `UnauthorizedError`, `RateLimitedError(retry_after=…)`, `ServiceUnavailableError` or `ValidationFailedError(details=[…])`, or a subclass with its own `default_message`; routers don't catch and translate them, and never raise `HTTPException`. Validation errors list each field (`body.email`) without echoing the input; integrity errors become 409 without SQL; anything unexpected is a logged 500 with no internals. Document error responses with `responses=error_responses(401, 404)`; routers with parameters or bodies declare `responses=error_responses(422)`, so the docs show the real shape (a test fails if `HTTPValidationError` appears in OpenAPI).
+- **Lists** take `page: PageParamsDep`, `sort: Annotated[Sort, Depends(sort_query("title", "published_at", default="-published_at"))]` and `q: SearchQuery` from `app/core/pagination.py`, and return `Page[<Name>Read]` built with `Page.create(items, total, page)`. Repositories build the statement with `apply_sort(statement, sort, COLUMNS, Model.id)` (the id tie-breaker keeps pages stable) and `search_filter([...columns], q)` (wildcards escaped), then `await self.paginate(statement, page)`. Only expose sort fields that are safe to show; filters stay resource-specific query parameters.
+- **Slugs** use `Slug` from `app/core/slugs.py` with the column's `max_length`; services fill a missing slug with `slugify(title, max_length)` and reject an empty result with a 422. Duplicates come back as 409 from the unique index.
+- **Audit** every admin create, update and delete, and every security event, with `audit.record(session, context, "project.update", entity_type="project", entity_id=…, details=…)` in the same transaction as the change (`app/services/audit.py`). Admin endpoints get the context from `AuditContextDep`. Sensitive keys in `details` are redacted automatically; still put only what explains the change there (changed fields, old → new), never whole request bodies.
+- **Logging.** Use `logging.getLogger(__name__)`. Never log passwords, tokens, `Authorization` headers, request bodies or query strings. Every line carries the request id, and `RequestContextMiddleware` (`app/core/logging.py`) writes the access log, so endpoints don't log requests themselves. `LOG_LEVEL` and `LOG_FORMAT` (`text` or `json`) configure it.
+- **Client IP** comes from `ClientIpDep` (`app/dependencies.py`), never from `request.client` directly.
 - **Status codes.** Set them on the decorator for non-200 success: `@router.post("", status_code=status.HTTP_201_CREATED)`.
 - **Validate at the edge.** Request bodies and query parameters are Pydantic models or typed parameters with constraints (`Field(min_length=1, max_length=200)`). Don't validate by hand inside the endpoint.
 - **Pydantic v2 APIs only.** `model_config = ConfigDict(...)`, `model_dump()`, `model_validate()`, not `class Config`, `.dict()` or `.parse_obj()`.
@@ -132,3 +151,5 @@ Add `services/` and `dependencies.py` only when they're needed. Don't add new in
 - Unit tests (`tests/test_*.py`) must not need MariaDB or Redis: override `get_session` / `check_database` / `get_redis`. Redis stand-ins live in `tests/fakes.py`.
 - Flows that depend on real SQL (locking, constraints, rotation) go in `tests/integration/`: the `api` fixture (async `httpx.AsyncClient`) and `db_session` run every test in one transaction that is rolled back, so nothing is written. They need the database migrated to head; locally they skip when MariaDB is down, in CI (`TESTS_REQUIRE_DATABASE=1`) they fail instead.
 - Async tests use `pytestmark = pytest.mark.anyio` (anyio's plugin, no pytest-asyncio).
+- Integration fixtures: `admin` (the admin user, created through the real service) and `admin_headers` (a valid `Authorization` header). Test data builders are plain functions in `tests/integration/factories.py`; add one when a second test needs the same kind of row, not before.
+- Every admin endpoint's integration tests cover: success, 401 without a token (also enforced for all routes by `tests/test_route_protection.py`), 404, 409, 422, pagination/filters where it lists, and the audit entry it writes.

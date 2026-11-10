@@ -1,5 +1,5 @@
 from functools import lru_cache
-from typing import Annotated, Self
+from typing import Annotated, Literal, Self
 
 from fastapi import Depends
 from pydantic import SecretStr, model_validator
@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     app_name: str = "Portfolio API"
     environment: str = "development"
     cors_origins: list[str] = ["http://localhost:3000"]
+
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    # "json" (one JSON object per line) for production log collectors.
+    log_format: Literal["text", "json"] = "text"
 
     db_host: str = "localhost"
     db_port: int = 3307

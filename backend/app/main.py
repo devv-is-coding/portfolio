@@ -6,11 +6,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.database import engine
+from app.core.errors import register_exception_handlers
+from app.core.logging import RequestContextMiddleware, configure_logging
 from app.core.redis import redis_client
 from app.core.sentry import init_sentry
 from app.routers import auth, health
 
 settings = get_settings()
+configure_logging(settings)
 init_sentry(settings)
 
 
@@ -23,6 +26,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+register_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,7 +34,12 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Lets the browser read the request id, e.g. to show it next to an error.
+    expose_headers=["X-Request-ID"],
 )
+# Added last, so it's the outermost middleware: every response (CORS preflights and
+# errors included) gets a request id and an access log line.
+app.add_middleware(RequestContextMiddleware)
 
 app.include_router(health.router)
 app.include_router(auth.router)

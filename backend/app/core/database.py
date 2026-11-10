@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import get_settings
@@ -28,3 +29,8 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
+
+async def ping(session: AsyncSession) -> None:
+    """Run `SELECT 1`. Raises SQLAlchemyError when MariaDB can't be reached."""
+    await session.execute(text("SELECT 1"))

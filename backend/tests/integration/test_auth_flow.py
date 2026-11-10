@@ -10,19 +10,14 @@ from app.core.config import get_settings
 from app.core.security import hash_refresh_token, utc_now
 from app.models import RefreshToken, User
 from app.services.auth import UserExistsError, UserNotFoundError, create_admin
+from tests.integration.factories import ADMIN_EMAIL, ADMIN_PASSWORD
 
 pytestmark = pytest.mark.anyio
 
-EMAIL = "admin@example.com"
-PASSWORD = "correct horse battery staple"
 
-
-@pytest.fixture
-async def admin(db_session: AsyncSession) -> User:
-    return await create_admin(db_session, EMAIL, PASSWORD)
-
-
-async def _login(api: AsyncClient, email: str = EMAIL, password: str = PASSWORD) -> dict[str, Any]:
+async def _login(
+    api: AsyncClient, email: str = ADMIN_EMAIL, password: str = ADMIN_PASSWORD
+) -> dict[str, Any]:
     response = await api.post("/auth/login", json={"email": email, "password": password})
     assert response.status_code == 200, response.text
     body: dict[str, Any] = response.json()
@@ -47,7 +42,7 @@ async def test_login_returns_tokens_and_me_returns_the_admin(
     assert tokens["expires_in"] == get_settings().access_token_expire_minutes * 60
     me = await api.get("/auth/me", headers={"Authorization": f"Bearer {tokens['access_token']}"})
     assert me.status_code == 200
-    assert me.json()["email"] == EMAIL
+    assert me.json()["email"] == ADMIN_EMAIL
     assert me.json()["last_login_at"] is not None
     stored = await db_session.scalar(select(RefreshToken).where(RefreshToken.user_id == admin.id))
     assert stored is not None
@@ -55,7 +50,7 @@ async def test_login_returns_tokens_and_me_returns_the_admin(
 
 
 @pytest.mark.parametrize(
-    ("email", "password"), [(EMAIL, "wrong password"), ("nobody@example.com", PASSWORD)]
+    ("email", "password"), [(ADMIN_EMAIL, "wrong password"), ("nobody@example.com", ADMIN_PASSWORD)]
 )
 async def test_login_failures_look_the_same(
     api: AsyncClient, admin: User, email: str, password: str
@@ -63,7 +58,9 @@ async def test_login_failures_look_the_same(
     response = await api.post("/auth/login", json={"email": email, "password": password})
 
     assert response.status_code == 401
-    assert response.json() == {"detail": "Incorrect email or password"}
+    assert response.json() == {
+        "error": {"code": "unauthorized", "message": "Incorrect email or password", "details": None}
+    }
 
 
 async def test_inactive_admin_cannot_log_in_or_use_tokens(
@@ -73,7 +70,7 @@ async def test_inactive_admin_cannot_log_in_or_use_tokens(
     admin.is_active = False
     await db_session.commit()
 
-    login = await api.post("/auth/login", json={"email": EMAIL, "password": PASSWORD})
+    login = await api.post("/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
     me = await api.get("/auth/me", headers={"Authorization": f"Bearer {tokens['access_token']}"})
     refresh = await api.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
 
@@ -135,7 +132,9 @@ async def test_expired_or_unknown_refresh_token_is_rejected(
 
     assert expired.status_code == 401
     assert unknown.status_code == 401
-    assert unknown.json() == {"detail": "Invalid refresh token"}
+    assert unknown.json() == {
+        "error": {"code": "unauthorized", "message": "Invalid refresh token", "details": None}
+    }
 
 
 async def test_logout_revokes_the_refresh_token(
@@ -153,11 +152,11 @@ async def test_logout_revokes_the_refresh_token(
 
 
 async def test_too_many_failed_logins_are_rate_limited(api: AsyncClient, admin: User) -> None:
-    wrong = {"email": EMAIL, "password": "wrong password"}
+    wrong = {"email": ADMIN_EMAIL, "password": "wrong password"}
     for _ in range(get_settings().login_max_attempts):
         assert (await api.post("/auth/login", json=wrong)).status_code == 401
 
-    blocked = await api.post("/auth/login", json={"email": EMAIL, "password": PASSWORD})
+    blocked = await api.post("/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD})
 
     assert blocked.status_code == 429
     assert int(blocked.headers["retry-after"]) > 0
@@ -172,10 +171,12 @@ async def test_create_admin_refuses_duplicates_and_resets_passwords(
         await create_admin(db_session, " Admin@Example.com ", "another password!")
     with pytest.raises(UserNotFoundError):
         await create_admin(db_session, "nobody@example.com", "x" * 12, reset_password=True)
-    await create_admin(db_session, EMAIL, "a brand new password", reset_password=True)
+    await create_admin(db_session, ADMIN_EMAIL, "a brand new password", reset_password=True)
 
-    assert admin.email == EMAIL
-    old_password = await api.post("/auth/login", json={"email": EMAIL, "password": PASSWORD})
+    assert admin.email == ADMIN_EMAIL
+    old_password = await api.post(
+        "/auth/login", json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD}
+    )
     assert old_password.status_code == 401
     assert (await _login(api, password="a brand new password"))["access_token"]
     old_session = await api.post("/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
