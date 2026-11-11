@@ -55,5 +55,5 @@ class BlogPost(IdMixin, TimestampMixin, Base):
     category: Mapped[BlogCategory | None] = relationship(lazy="raise")
     cover: Mapped[Media | None] = relationship(lazy="raise")
     tags: Mapped[list[BlogTag]] = relationship(
-        secondary="blog_post_tags", lazy="raise", passive_deletes=True
+        secondary="blog_post_tags", lazy="raise", passive_deletes=True, order_by="BlogTag.name"
     )

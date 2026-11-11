@@ -12,6 +12,7 @@ from app.core.redis import redis_client
 from app.core.sentry import init_sentry
 from app.routers import (
     auth,
+    blog,
     certifications,
     education,
     experiences,
@@ -66,3 +67,5 @@ app.include_router(education.router)
 app.include_router(education.admin_router)
 app.include_router(certifications.router)
 app.include_router(certifications.admin_router)
+app.include_router(blog.router)
+app.include_router(blog.admin_router)
