@@ -79,6 +79,12 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
+      # Known vulnerabilities in any locked package (PyPI advisory database).
+      - name: Dependency audit (pip-audit)
+        run: |
+          uv export --frozen --no-emit-project --format requirements-txt > "$RUNNER_TEMP/requirements.txt"
+          uvx pip-audit@2.10.1 -r "$RUNNER_TEMP/requirements.txt" --disable-pip --progress-spinner off
+
       - name: Lint
         run: uv run ruff check .
 

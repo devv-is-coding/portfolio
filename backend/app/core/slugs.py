@@ -12,6 +12,9 @@ from typing import Annotated
 
 from pydantic import Field
 
+from app.core.errors import ValidationFailedError
+from app.schemas.errors import ErrorDetail
+
 SLUG_PATTERN = r"^[a-z0-9]+(?:-[a-z0-9]+)*$"
 
 Slug = Annotated[
@@ -41,3 +44,22 @@ def slugify(text: str, max_length: int) -> str:
     if slug[max_length] != "-" and "-" in cut:
         cut = cut[: cut.rindex("-")]
     return cut.strip("-")
+
+
+def slug_or_explicit(slug: str | None, text: str, max_length: int) -> str:
+    """The client's slug, or one made from `text`. 422 on `body.slug` when `text`
+    gives nothing usable (e.g. only non-Latin letters): the client must send a slug."""
+    if slug:
+        return slug
+    made = slugify(text, max_length)
+    if not made:
+        raise ValidationFailedError(
+            details=[
+                ErrorDetail(
+                    field="body.slug",
+                    message="Can't make a slug from this text; send one explicitly",
+                    type="invalid_slug",
+                )
+            ]
+        )
+    return made

@@ -1,10 +1,12 @@
 from datetime import timedelta
 
 import pytest
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import utc_now
-from app.models import RefreshToken, User
+from app.models import Project, RefreshToken, User
+from app.models.enums import PublicationStatus
 from app.repositories.refresh_tokens import RefreshTokenRepository
 from app.repositories.users import UserRepository
 
@@ -79,3 +81,24 @@ async def test_delete_removes_the_row(db_session: AsyncSession) -> None:
     await users.flush()
 
     assert await users.get_by_email("admin@example.com") is None
+
+
+async def test_statuses_are_stored_as_codes_and_read_back_as_values(
+    db_session: AsyncSession,
+) -> None:
+    project = Project(title="A", slug="a", status=PublicationStatus.ARCHIVED)
+    db_session.add(project)
+    await db_session.flush()
+
+    raw = await db_session.scalar(
+        text("SELECT status FROM projects WHERE id = :id"), {"id": project.id}
+    )
+    found = await db_session.scalar(
+        select(Project)
+        .where(Project.status == "archived")
+        .execution_options(populate_existing=True)
+    )
+
+    assert raw == 2
+    assert found is not None
+    assert found.status is PublicationStatus.ARCHIVED

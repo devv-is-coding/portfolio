@@ -30,6 +30,7 @@ _HTTP_ERROR_CODES = {
     401: "unauthorized",
     404: "not_found",
     405: "method_not_allowed",
+    413: "payload_too_large",
 }
 
 
@@ -171,10 +172,13 @@ async def _handle_validation_error(_request: Request, exc: Exception) -> JSONRes
 async def _handle_integrity_error(request: Request, exc: Exception) -> JSONResponse:
     """A constraint the service didn't check first. 409, without leaking SQL."""
     assert isinstance(exc, IntegrityError)  # registered for it only
-    logger.warning("Integrity error on %s %s: %s", request.method, request.url.path, exc.orig)
     error_code = exc.orig.args[0] if exc.orig is not None and exc.orig.args else None
     if error_code == _ER_DUP_ENTRY:
+        # MariaDB's message repeats the duplicate value (e.g. an email): don't log it.
+        logger.info("Duplicate value on %s %s", request.method, request.url.path)
         return error_response(409, "conflict", "A record with these values already exists")
+    # Foreign key and check failures name the constraint, not the values.
+    logger.warning("Integrity error on %s %s: %s", request.method, request.url.path, exc.orig)
     return error_response(409, ConflictError.code, ConflictError.default_message)
 
 

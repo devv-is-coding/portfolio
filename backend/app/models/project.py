@@ -13,9 +13,9 @@ from app.models.base import (
     IdMixin,
     TimestampMixin,
     UnsignedBigInt,
-    status_enum,
+    status_column,
 )
-from app.models.enums import PublicationStatus
+from app.models.enums import PUBLICATION_STATUS_CODES, PublicationStatus
 
 if TYPE_CHECKING:
     from app.models.media import Media
@@ -29,7 +29,8 @@ class Project(IdMixin, TimestampMixin, Base):
         # Public listing: published projects, newest first.
         Index(None, "status", "published_at"),
         CheckConstraint(
-            "status <> 'published' OR published_at IS NOT NULL",
+            f"status <> {PUBLICATION_STATUS_CODES[PublicationStatus.PUBLISHED]}"
+            " OR published_at IS NOT NULL",
             name="published_at_required",
         ),
         TABLE_OPTIONS,
@@ -44,10 +45,8 @@ class Project(IdMixin, TimestampMixin, Base):
     )
     live_url: Mapped[str | None] = mapped_column(String(2048))
     repository_url: Mapped[str | None] = mapped_column(String(2048))
-    status: Mapped[PublicationStatus] = mapped_column(
-        status_enum(PublicationStatus),
-        default=PublicationStatus.DRAFT,
-        server_default=PublicationStatus.DRAFT.value,
+    status: Mapped[PublicationStatus] = status_column(
+        PUBLICATION_STATUS_CODES, default=PublicationStatus.DRAFT
     )
     is_featured: Mapped[bool] = mapped_column(default=False, server_default=false())
     display_order: Mapped[int] = mapped_column(default=0, server_default=text("0"))
@@ -57,9 +56,15 @@ class Project(IdMixin, TimestampMixin, Base):
     images: Mapped[list[ProjectImage]] = relationship(
         back_populates="project",
         lazy="raise",
+        # Loaded images are deleted with the project, not orphaned (project_id is NOT NULL).
+        cascade="all, delete-orphan",
         passive_deletes=True,
-        order_by="ProjectImage.display_order",
+        # Stable order for images with the same display_order.
+        order_by="(ProjectImage.display_order, ProjectImage.id)",
     )
     skills: Mapped[list[Skill]] = relationship(
-        secondary="project_skills", lazy="raise", passive_deletes=True
+        secondary="project_skills",
+        lazy="raise",
+        passive_deletes=True,
+        order_by="(Skill.display_order, Skill.id)",
     )

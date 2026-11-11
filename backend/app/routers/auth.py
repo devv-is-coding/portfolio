@@ -8,7 +8,7 @@ from app.dependencies import ClientIpDep, CurrentUserDep
 from app.schemas.auth import LoginRequest, RefreshRequest, TokenResponse
 from app.schemas.user import UserRead
 from app.services import auth as auth_service
-from app.services.login_rate_limit import LoginRateLimiter
+from app.services.rate_limit import login_rate_limiter
 
 router = APIRouter(prefix="/auth", tags=["auth"], responses=error_responses(422))
 
@@ -33,7 +33,7 @@ async def login(
 
     After too many failed logins from one IP, answers 429 with `Retry-After`.
     """
-    limiter = LoginRateLimiter(redis, settings)
+    limiter = login_rate_limiter(redis, settings)
     limiter_key = client_ip or "unknown"
     retry_after = await limiter.retry_after(limiter_key)
     if retry_after is not None:
@@ -43,7 +43,7 @@ async def login(
             session, body.email, body.password, settings, ip_address=client_ip
         )
     except auth_service.InvalidCredentialsError:
-        await limiter.record_failure(limiter_key)
+        await limiter.hit(limiter_key)
         raise
     await limiter.reset(limiter_key)
     return _token_response(tokens)

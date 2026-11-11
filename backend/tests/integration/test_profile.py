@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.imagekit import get_media_url_endpoint
 from app.main import app
-from app.models import AuditLog, Media, Profile, User
-from tests.integration.factories import create_media
+from app.models import Media, Profile, User
+from tests.integration.factories import audit_entries, create_media
 
 pytestmark = pytest.mark.anyio
 
@@ -35,10 +35,6 @@ async def created(client: AsyncClient, admin_headers: dict[str, str]) -> dict[st
     assert response.status_code == 201, response.text
     body: dict[str, object] = response.json()
     return body
-
-
-async def _audit(session: AsyncSession, action: str) -> list[AuditLog]:
-    return list((await session.scalars(select(AuditLog).where(AuditLog.action == action))).all())
 
 
 # --- profile -------------------------------------------------------------------------------
@@ -70,9 +66,9 @@ async def test_put_creates_then_replaces_the_single_profile(
     count = await db_session.scalar(select(func.count()).select_from(Profile))
     assert count == 1
     assert (await db_session.scalar(select(Profile.id))) == 1
-    [create] = await _audit(db_session, "profile.create")
+    [create] = await audit_entries(db_session, "profile.create")
     assert (create.user_id, create.entity_id) == (admin.id, 1)
-    [update] = await _audit(db_session, "profile.update")
+    [update] = await audit_entries(db_session, "profile.update")
     assert update.details is not None
     assert update.details["full_name"] == {"old": "Devv", "new": "Devv Coder"}
     assert update.details["headline"] == {"old": "Backend developer", "new": None}
@@ -186,7 +182,7 @@ async def test_patch_changes_only_what_is_sent(
     body = changed.json()
     assert (body["full_name"], body["headline"], body["location"]) == ("Devv", None, "Cebu")
     assert unchanged.json() == body
-    [update] = await _audit(db_session, "profile.update")  # the no-op wrote nothing
+    [update] = await audit_entries(db_session, "profile.update")  # the no-op wrote nothing
     assert update.details == {
         "headline": {"old": "Backend developer", "new": None},
         "location": {"old": "Manila", "new": "Cebu"},
@@ -230,7 +226,7 @@ async def test_social_links_are_listed_in_order_on_the_profile(
 
     assert [link["platform"] for link in links] == ["linkedin", "github", "x"]
     assert links[0]["url"] == "https://linkedin.com/"
-    created_entries = await _audit(db_session, "social_link.create")
+    created_entries = await audit_entries(db_session, "social_link.create")
     assert [entry.user_id for entry in created_entries] == [admin.id] * 3
 
 
@@ -298,9 +294,9 @@ async def test_update_and_delete_a_social_link(
     assert null_platform.status_code == 422
     assert (deleted.status_code, again.status_code, missing_update.status_code) == (204, 404, 404)
     assert (await client.get("/profile")).json()["social_links"] == []
-    [update] = await _audit(db_session, "social_link.update")
+    [update] = await audit_entries(db_session, "social_link.update")
     assert update.details == {
         "url": {"old": "https://github.com/old", "new": "https://github.com/new"}
     }
-    [delete] = await _audit(db_session, "social_link.delete")
+    [delete] = await audit_entries(db_session, "social_link.delete")
     assert delete.entity_id == link["id"]

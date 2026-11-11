@@ -6,7 +6,6 @@ from collections.abc import AsyncIterator
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -20,9 +19,10 @@ from app.core.imagekit import (
     sign_upload,
 )
 from app.main import app
-from app.models import AuditLog, Media, Profile, User
+from app.models import Media, Profile, User
 from app.routers.media import get_file_deleter
 from tests.fakes import FakeImageKit, IsolatedSettings
+from tests.integration.factories import audit_entries
 
 pytestmark = pytest.mark.anyio
 
@@ -71,10 +71,6 @@ async def _register(
     assert response.status_code == 201, response.text
     body: dict[str, object] = response.json()
     return body
-
-
-async def _audit(session: AsyncSession, action: str) -> list[AuditLog]:
-    return list((await session.scalars(select(AuditLog).where(AuditLog.action == action))).all())
 
 
 # --- upload-auth -----------------------------------------------------------------------
@@ -140,7 +136,7 @@ async def test_register_stores_what_imagekit_reports(
     stored = await db_session.get(Media, body["id"])
     assert stored is not None
     assert stored.file_path == "/projects/shop.webp"
-    [entry] = await _audit(db_session, "media.create")
+    [entry] = await audit_entries(db_session, "media.create")
     assert (entry.user_id, entry.entity_type, entry.entity_id) == (admin.id, "media", body["id"])
 
 
@@ -280,7 +276,7 @@ async def test_update_changes_the_alt_text_and_audits_the_change(
         "Shop",
         None,
     ]
-    updates = await _audit(db_session, "media.update")
+    updates = await audit_entries(db_session, "media.update")
     assert [entry.details for entry in updates] == [
         {"alt_text": {"old": None, "new": "Shop"}},
         {"alt_text": {"old": "Shop", "new": None}},
@@ -324,5 +320,5 @@ async def test_delete_removes_the_row_clears_uses_and_queues_the_imagekit_deleti
     await db_session.refresh(profile)
     assert profile.avatar_media_id is None
     assert deleted_files == ["img1"]  # queued once, after the row was gone
-    [entry] = await _audit(db_session, "media.delete")
+    [entry] = await audit_entries(db_session, "media.delete")
     assert entry.details == {"file_id": "img1", "file_path": "/projects/shop.webp"}

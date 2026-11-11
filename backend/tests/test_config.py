@@ -15,7 +15,11 @@ IMAGEKIT: dict[str, Any] = {
 
 
 def _production(**overrides: Any) -> Settings:
-    values: dict[str, Any] = {"environment": "production", "jwt_secret_key": STRONG_KEY}
+    values: dict[str, Any] = {
+        "environment": "production",
+        "jwt_secret_key": STRONG_KEY,
+        "cors_origins": ["https://example.com"],
+    }
     values |= IMAGEKIT | overrides
     return IsolatedSettings(**values)
 
@@ -27,7 +31,7 @@ def test_short_jwt_secret_key_is_rejected() -> None:
 
 def test_production_refuses_the_development_jwt_secret_key() -> None:
     with pytest.raises(ValidationError, match="JWT_SECRET_KEY must be set in production"):
-        IsolatedSettings(environment="production", **IMAGEKIT)
+        IsolatedSettings(environment="production", cors_origins=["https://example.com"], **IMAGEKIT)
 
 
 def test_production_accepts_its_own_settings() -> None:
@@ -51,3 +55,26 @@ def test_imagekit_is_optional_in_development() -> None:
 def test_imagekit_url_endpoint_must_be_https() -> None:
     with pytest.raises(ValidationError, match="must start with https://"):
         IsolatedSettings(imagekit_url_endpoint="http://ik.imagekit.io/portfolio")
+
+
+@pytest.mark.parametrize(
+    ("origins", "message"),
+    [
+        (["*"], "can't contain"),
+        (["https://example.com/"], "no path"),
+        (["https://example.com/app"], "no path"),
+        (["example.com"], "no path"),
+        (["ftp://example.com"], "no path"),
+    ],
+)
+def test_cors_origins_must_be_exact_origins(origins: list[str], message: str) -> None:
+    with pytest.raises(ValidationError, match=message):
+        IsolatedSettings(cors_origins=origins)
+
+
+def test_production_cors_origins_must_be_https() -> None:
+    with pytest.raises(ValidationError, match="https:// origins in production"):
+        _production(cors_origins=["https://example.com", "http://example.com"])
+
+    assert _production().cors_origins == ["https://example.com"]
+    assert IsolatedSettings(cors_origins=["http://localhost:3000"]).cors_origins
