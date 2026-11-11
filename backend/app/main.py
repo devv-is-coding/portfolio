@@ -11,6 +11,7 @@ from app.core.logging import RequestContextMiddleware, configure_logging
 from app.core.redis import redis_client
 from app.core.sentry import init_sentry
 from app.routers import (
+    audit_logs,
     auth,
     blog,
     certifications,
@@ -75,3 +76,4 @@ app.include_router(contact.router)
 app.include_router(contact.admin_router)
 app.include_router(site_settings.router)
 app.include_router(site_settings.admin_router)
+app.include_router(audit_logs.admin_router)
