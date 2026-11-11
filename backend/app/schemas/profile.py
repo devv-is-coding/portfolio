@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from app.schemas.fields import BlankToNone, NotNull, RequiredText, WebUrl
+from app.schemas.fields import BlankToNone, DisplayOrder, NotNull, RequiredText, WebUrl
 from app.schemas.media import PublicMedia
 
 BIOGRAPHY_MAX_LENGTH = 10_000  # fits the TEXT column (65,535 bytes) in any UTF-8
@@ -23,7 +23,6 @@ Platform = Annotated[
         description="Lowercase name the frontend maps to an icon, e.g. `github`, `linkedin`.",
     ),
 ]
-DisplayOrder = Annotated[int, Field(ge=0, le=10_000)]
 
 
 class ProfileWrite(BaseModel):

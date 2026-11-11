@@ -56,9 +56,15 @@ class Project(IdMixin, TimestampMixin, Base):
     images: Mapped[list[ProjectImage]] = relationship(
         back_populates="project",
         lazy="raise",
+        # Loaded images are deleted with the project, not orphaned (project_id is NOT NULL).
+        cascade="all, delete-orphan",
         passive_deletes=True,
-        order_by="ProjectImage.display_order",
+        # Stable order for images with the same display_order.
+        order_by="(ProjectImage.display_order, ProjectImage.id)",
     )
     skills: Mapped[list[Skill]] = relationship(
-        secondary="project_skills", lazy="raise", passive_deletes=True
+        secondary="project_skills",
+        lazy="raise",
+        passive_deletes=True,
+        order_by="(Skill.display_order, Skill.id)",
     )

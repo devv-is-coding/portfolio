@@ -1,7 +1,7 @@
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from sqlalchemy import ColumnElement, Select, func, or_, select
+from sqlalchemy import ColumnElement, Select, func, inspect, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import QueryableAttribute
 
@@ -28,6 +28,14 @@ class BaseRepository[ModelT: Base]:
 
     async def delete(self, instance: ModelT) -> None:
         await self.session.delete(instance)
+
+    async def get_many(self, ids: Sequence[int]) -> list[ModelT]:
+        """The rows with these ids (missing ones are simply absent)."""
+        if not ids:
+            return []
+        [primary_key] = inspect(self.model).primary_key
+        rows = await self.session.scalars(select(self.model).where(primary_key.in_(ids)))
+        return list(rows.all())
 
     async def flush(self) -> None:
         """Send pending changes, so generated ids and constraint errors appear now."""
