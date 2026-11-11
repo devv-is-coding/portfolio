@@ -6,6 +6,8 @@ entry is saved or rolled back together with the change it describes.
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import date
+from enum import Enum
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -59,6 +61,35 @@ def record(
             ip_address=context.ip_address,
         )
     )
+
+
+def changes(
+    before: Mapping[str, object], after: Mapping[str, object]
+) -> dict[str, dict[str, object]]:
+    """The fields of `after` whose value differs from `before`, as audit details:
+    `{"alt_text": {"old": "A", "new": "B"}}`. Dates and enums become JSON values."""
+    return {
+        name: {"old": _json_value(before.get(name)), "new": _json_value(value)}
+        for name, value in after.items()
+        if before.get(name) != value
+    }
+
+
+def apply_changes(instance: object, values: Mapping[str, object]) -> dict[str, dict[str, object]]:
+    """Set `values` on `instance` and return the audit diff of what really changed
+    (empty when nothing did)."""
+    diff = changes({name: getattr(instance, name) for name in values}, values)
+    for name, value in values.items():
+        setattr(instance, name, value)
+    return diff
+
+
+def _json_value(value: object) -> object:
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, date):  # datetime is a date subclass
+        return value.isoformat()
+    return value
 
 
 def redact(details: Mapping[str, object]) -> dict[str, object]:

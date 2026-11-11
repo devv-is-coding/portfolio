@@ -50,7 +50,9 @@ def apply_sort[*RowTs](
     tiebreaker: QueryableAttribute[Any],
 ) -> Select[*RowTs]:
     """ORDER BY the requested fields, then `tiebreaker` (the id), so rows with equal
-    sort values keep a stable order and pages never repeat or skip a row.
+    sort values keep a stable order and pages never repeat or skip a row. The id
+    follows the first field's direction: with `-created_at`, rows created in the same
+    second still come newest first.
 
     `sort` comes from `parse_sort`, which only allows names that are in `columns`.
     """
@@ -58,10 +60,13 @@ def apply_sort[*RowTs](
         columns[field.name].desc() if field.descending else columns[field.name].asc()
         for field in sort
     ]
-    return statement.order_by(*clauses, tiebreaker.asc())
+    newest_first = bool(sort) and sort[0].descending
+    return statement.order_by(*clauses, tiebreaker.desc() if newest_first else tiebreaker.asc())
 
 
-def search_filter(columns: Sequence[QueryableAttribute[str]], term: str) -> ColumnElement[bool]:
+def search_filter(
+    columns: Sequence[QueryableAttribute[str] | QueryableAttribute[str | None]], term: str
+) -> ColumnElement[bool]:
     """Rows where any of `columns` contains `term`. `%` and `_` in the term are
     escaped, so they match literally; the collation makes it case-insensitive."""
     return or_(*(column.contains(term, autoescape=True) for column in columns))

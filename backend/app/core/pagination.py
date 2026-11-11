@@ -16,6 +16,7 @@ from fastapi import Query
 from pydantic import AfterValidator, BaseModel, Field
 
 from app.core.errors import ValidationFailedError
+from app.core.validators import blank_to_none
 from app.schemas.errors import ErrorDetail
 
 MAX_PAGE_SIZE = 100
@@ -101,13 +102,8 @@ def sort_query(*allowed: str, default: str) -> Callable[[str | None], Sort]:
     return dependency
 
 
-def _blank_to_none(value: str | None) -> str | None:
-    value = value.strip() if value else None
-    return value or None
-
-
 SearchQuery = Annotated[
     str | None,
     Query(max_length=MAX_SEARCH_LENGTH, description="Case-insensitive text search."),
-    AfterValidator(_blank_to_none),
+    AfterValidator(blank_to_none),
 ]

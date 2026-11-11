@@ -1,4 +1,4 @@
-"""Status values shared by models and API schemas (stored via `status_enum`)."""
+"""Enums shared by models, services and API schemas."""
 
 from enum import StrEnum
 
@@ -16,3 +16,10 @@ class ContactMessageStatus(StrEnum):
     READ = "read"
     REPLIED = "replied"
     ARCHIVED = "archived"
+
+
+class MediaKind(StrEnum):
+    """What a media file is, derived from its MIME type (see app/models/media.py)."""
+
+    IMAGE = "image"
+    DOCUMENT = "document"

@@ -91,6 +91,14 @@ class RateLimitedError(AppError):
         super().__init__(message, headers={"Retry-After": str(retry_after)})
 
 
+class UpstreamError(AppError):
+    """An external service (e.g. ImageKit) failed or answered unexpectedly."""
+
+    status_code = 502
+    code = "bad_gateway"
+    default_message = "An external service failed, try again later"
+
+
 class ServiceUnavailableError(AppError):
     status_code = 503
     code = "service_unavailable"

@@ -2,8 +2,8 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
+from pydantic import SecretStr
 
-from app.core.config import Settings
 from app.core.security import (
     JWT_ALGORITHM,
     create_access_token,
@@ -13,8 +13,9 @@ from app.core.security import (
     hash_refresh_token,
     verify_password,
 )
+from tests.fakes import IsolatedSettings
 
-SETTINGS = Settings(_env_file=None)
+SETTINGS = IsolatedSettings()
 
 
 def _encode(payload: dict[str, object], key: str | None = None) -> str:
@@ -44,7 +45,7 @@ def test_expired_access_token_is_rejected() -> None:
 
 def test_token_signed_with_another_key_is_rejected() -> None:
     token = create_access_token(1, SETTINGS)
-    other = Settings(_env_file=None, jwt_secret_key="another-secret-key-that-is-long-enough!")
+    other = IsolatedSettings(jwt_secret_key=SecretStr("another-secret-key-that-is-long-enough!"))
 
     with pytest.raises(jwt.InvalidSignatureError):
         decode_access_token(token, other)

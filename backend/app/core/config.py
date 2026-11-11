@@ -50,6 +50,28 @@ class Settings(BaseSettings):
     login_max_attempts: int = 5
     login_window_seconds: int = 900
 
+    # ImageKit (media files). Optional locally: media endpoints answer 503 without them.
+    # Production refuses to start unless all three are set.
+    imagekit_public_key: str | None = None
+    imagekit_private_key: SecretStr | None = None
+    imagekit_url_endpoint: str | None = None
+
+    @model_validator(mode="after")
+    def _check_imagekit(self) -> Self:
+        if self.imagekit_url_endpoint and not self.imagekit_url_endpoint.startswith("https://"):
+            raise ValueError("IMAGEKIT_URL_ENDPOINT must start with https://")
+        configured = (
+            self.imagekit_public_key,
+            self.imagekit_private_key,
+            self.imagekit_url_endpoint,
+        )
+        if self.environment == "production" and not all(configured):
+            raise ValueError(
+                "IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY and IMAGEKIT_URL_ENDPOINT "
+                "must be set in production"
+            )
+        return self
+
     @model_validator(mode="after")
     def _check_jwt_secret_key(self) -> Self:
         key = self.jwt_secret_key.get_secret_value()
