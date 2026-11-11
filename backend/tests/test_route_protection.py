@@ -112,3 +112,35 @@ def test_protected_route_rejects_requests_without_a_token(
     assert response.status_code == 401
     assert response.headers["www-authenticate"] == "Bearer"
     assert response.json()["error"]["code"] == "unauthorized"
+
+
+# The only routes outside /admin that change anything: auth and the contact form.
+PUBLIC_WRITES = {
+    ("POST", "/auth/login"),
+    ("POST", "/auth/refresh"),
+    ("POST", "/auth/logout"),
+    ("POST", "/contact"),
+}
+
+
+def test_public_routes_only_read_except_auth_and_contact() -> None:
+    writes = {
+        (method, route.path)
+        for route in _routes(app)
+        if not route.path.startswith(ADMIN_PREFIX)
+        for method in route.methods - {"GET", "HEAD"}
+    }
+
+    assert writes == PUBLIC_WRITES
+
+
+def test_every_request_body_rejects_unknown_fields() -> None:
+    """No mass assignment: a field the schema doesn't declare is a 422, never ignored."""
+    lenient = sorted(
+        f"{route.path}: {param.field_info.annotation}"
+        for route in _routes(app)
+        for param in route.dependant.body_params
+        if getattr(param.field_info.annotation, "model_config", {}).get("extra") != "forbid"
+    )
+
+    assert lenient == []

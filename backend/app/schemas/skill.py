@@ -4,7 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.slugs import Slug
-from app.schemas.fields import BlankToNone, NotNull, RequiredText
+from app.schemas.fields import BlankToNone, DisplayOrder, NotNull, RequiredText
 from app.schemas.media import PublicMedia
 
 NAME_MAX_LENGTH = 100
@@ -18,7 +18,6 @@ Category = Annotated[
     BlankToNone,
 ]
 IconMediaId = Annotated[int | None, Field(ge=1, description="An image from the media library.")]
-DisplayOrder = Annotated[int, Field(ge=0, le=10_000)]
 
 
 class SkillCreate(BaseModel):

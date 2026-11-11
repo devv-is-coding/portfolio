@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.imagekit import get_media_url_endpoint
 from app.main import app
-from app.models import AuditLog, Project, ProjectSkill, Skill, User
-from tests.integration.factories import create_media
+from app.models import Project, ProjectSkill, Skill, User
+from tests.integration.factories import audit_entries, create_media
 
 pytestmark = pytest.mark.anyio
 
@@ -30,10 +30,6 @@ async def _create(
     return body
 
 
-async def _audit(session: AsyncSession, action: str) -> list[AuditLog]:
-    return list((await session.scalars(select(AuditLog).where(AuditLog.action == action))).all())
-
-
 async def test_create_makes_the_slug_from_the_name_and_audits(
     client: AsyncClient, admin: User, admin_headers: dict[str, str], db_session: AsyncSession
 ) -> None:
@@ -45,7 +41,7 @@ async def test_create_makes_the_slug_from_the_name_and_audits(
         "frontend",
     )
     assert (skill["display_order"], skill["icon"]) == (0, None)
-    [entry] = await _audit(db_session, "skill.create")
+    [entry] = await audit_entries(db_session, "skill.create")
     assert (entry.user_id, entry.entity_id) == (admin.id, skill["id"])
 
 
@@ -162,7 +158,7 @@ async def test_get_update_and_audit(
     assert (updated.json()["category"], updated.json()["display_order"]) == (None, 5)
     assert updated.json()["slug"] == "python"
     assert unchanged.status_code == 200
-    [entry] = await _audit(db_session, "skill.update")
+    [entry] = await audit_entries(db_session, "skill.update")
     assert entry.details == {
         "category": {"old": "backend", "new": None},
         "display_order": {"old": 0, "new": 5},
@@ -205,5 +201,5 @@ async def test_delete_removes_the_skill_from_projects(
         select(ProjectSkill).where(ProjectSkill.project_id == project.id)
     )
     assert links.all() == []
-    [entry] = await _audit(db_session, "skill.delete")
+    [entry] = await audit_entries(db_session, "skill.delete")
     assert entry.details == {"name": "Python", "slug": "python"}

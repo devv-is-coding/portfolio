@@ -6,13 +6,17 @@ entry is saved or rolled back together with the change it describes.
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from enum import Enum
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.errors import ValidationFailedError
+from app.core.pagination import Page, PageParams, Sort
 from app.models import AuditLog
 from app.repositories.audit_logs import AuditLogRepository
+from app.schemas.audit_log import AuditLogRead
+from app.schemas.errors import ErrorDetail
 
 # Values under these keys (at any depth, any letter case) are never stored.
 SENSITIVE_KEYS = frozenset(
@@ -106,3 +110,37 @@ def _redact_value(value: object) -> object:
     if isinstance(value, list | tuple):
         return [_redact_value(item) for item in value]
     return value
+
+
+async def list_entries(
+    session: AsyncSession,
+    *,
+    user_id: int | None,
+    action: str | None,
+    entity_type: str | None,
+    entity_id: int | None,
+    since: datetime | None,
+    until: datetime | None,
+    sort: Sort,
+    page: PageParams,
+) -> Page[AuditLogRead]:
+    """The audit trail, read-only. `until` before `since` is a 422."""
+    if since is not None and until is not None and until < since:
+        raise ValidationFailedError(
+            details=[
+                ErrorDetail(
+                    field="query.until", message="Must not be before `since`", type="date_order"
+                )
+            ]
+        )
+    items, total = await AuditLogRepository(session).search(
+        user_id=user_id,
+        action=action,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        since=since,
+        until=until,
+        sort=sort,
+        page=page,
+    )
+    return Page.create([AuditLogRead.model_validate(item) for item in items], total, page)

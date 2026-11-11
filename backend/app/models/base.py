@@ -1,10 +1,12 @@
+from collections.abc import Mapping
 from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import DateTime, Enum, MetaData, text
-from sqlalchemy.dialects.mysql import BIGINT
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import CheckConstraint, DateTime, Dialect, MetaData, text
+from sqlalchemy.dialects.mysql import BIGINT, TINYINT
+from sqlalchemy.orm import DeclarativeBase, Mapped, MappedColumn, mapped_column
+from sqlalchemy.types import TypeDecorator
 
 # Deterministic constraint names, so Alembic autogenerate produces stable,
 # reversible migrations (MariaDB needs names to drop constraints).
@@ -31,21 +33,43 @@ TABLE_OPTIONS: dict[str, Any] = {
 UnsignedBigInt = BIGINT(unsigned=True)
 
 
-def status_enum(enum: type[StrEnum]) -> Enum:
-    """A status column: VARCHAR(20) + CHECK constraint `ck_<table>_status`, not a native ENUM.
+class StatusCode[EnumT: StrEnum](TypeDecorator[EnumT]):
+    """A `StrEnum` stored as a TINYINT UNSIGNED code (`draft` → 0). The API and the
+    code keep the readable values; only the database holds the numbers."""
 
-    Stores the member values (`"draft"`), not the names (`"DRAFT"`). Adding a value later
-    needs a migration that drops and re-creates the check constraint by hand; Alembic
-    doesn't detect check constraint changes.
+    impl = TINYINT
+    cache_ok = True
+
+    def __init__(self, codes: Mapping[EnumT, int]) -> None:
+        super().__init__(unsigned=True)
+        # A tuple, not a dict: SQLAlchemy's statement cache needs hashable arguments.
+        self.codes = tuple(codes.items())
+        self._to_code = dict(codes)
+        self._to_member = {code: member for member, code in codes.items()}
+
+    def process_bind_param(self, value: EnumT | None, dialect: Dialect) -> int | None:
+        return None if value is None else self._to_code[value]
+
+    def process_result_value(self, value: int | None, dialect: Dialect) -> EnumT | None:
+        return None if value is None else self._to_member[value]
+
+
+def status_column[EnumT: StrEnum](
+    codes: Mapping[EnumT, int], *, default: EnumT
+) -> MappedColumn[EnumT]:
+    """A `status` column: TINYINT UNSIGNED with CHECK `ck_<table>_status`, not a native
+    ENUM or a string.
+
+    `codes` fixes each member's number once and for all: never renumber a member, since
+    stored rows keep their numbers. Adding a member needs a hand-written migration that
+    drops and re-creates the check constraint (Alembic doesn't detect check changes).
     """
-    return Enum(
-        enum,
-        name="status",
-        native_enum=False,
-        create_constraint=True,
-        length=20,
-        validate_strings=True,
-        values_callable=lambda members: [member.value for member in members],
+    allowed = ", ".join(str(code) for code in sorted(codes.values()))
+    return mapped_column(
+        StatusCode(codes),
+        CheckConstraint(f"status IN ({allowed})", name="status"),
+        default=default,
+        server_default=text(str(codes[default])),
     )
 
 

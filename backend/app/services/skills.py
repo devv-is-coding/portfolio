@@ -2,15 +2,14 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import NotFoundError, ValidationFailedError
+from app.core.errors import NotFoundError
 from app.core.pagination import Page, PageParams, Sort
-from app.core.slugs import slugify
+from app.core.slugs import slug_or_explicit
 from app.models import Skill
 from app.models.enums import MediaKind
 from app.repositories.skills import SkillRepository
-from app.schemas.errors import ErrorDetail
 from app.schemas.skill import SLUG_MAX_LENGTH, SkillCreate, SkillRead, SkillUpdate
-from app.services import audit
+from app.services import crud
 from app.services.audit import AuditContext
 from app.services.media import require_media, to_public
 
@@ -61,40 +60,23 @@ async def get_skill(session: AsyncSession, url_endpoint: str | None, skill_id: i
     return to_read(await _load(session, skill_id), url_endpoint)
 
 
-def _slug_from_name(name: str) -> str:
-    slug = slugify(name, SLUG_MAX_LENGTH)
-    if not slug:
-        raise ValidationFailedError(
-            details=[
-                ErrorDetail(
-                    field="body.slug",
-                    message="Can't make a slug from this name; send one explicitly",
-                    type="invalid_slug",
-                )
-            ]
-        )
-    return slug
-
-
 async def create_skill(
     session: AsyncSession, url_endpoint: str | None, context: AuditContext, body: SkillCreate
 ) -> SkillRead:
     """Duplicate names or slugs fail on the unique indexes and come back as 409."""
     if body.icon_media_id is not None:
         await require_media(session, body.icon_media_id, MediaKind.IMAGE, "icon_media_id")
-    repo = SkillRepository(session)
-    skill = Skill(**body.model_dump(exclude={"slug"}), slug=body.slug or _slug_from_name(body.name))
-    repo.add(skill)
-    await repo.flush()
-    audit.record(
+    skill = Skill(
+        **body.model_dump(exclude={"slug"}),
+        slug=slug_or_explicit(body.slug, body.name, SLUG_MAX_LENGTH),
+    )
+    await crud.create(
         session,
         context,
-        "skill.create",
+        skill,
         entity_type=ENTITY_TYPE,
-        entity_id=skill.id,
         details={"name": skill.name, "slug": skill.slug},
     )
-    await session.commit()
     return to_read(await _load(session, skill.id), url_endpoint)
 
 
@@ -109,33 +91,18 @@ async def update_skill(
     if values.get("icon_media_id") is not None:
         await require_media(session, values["icon_media_id"], MediaKind.IMAGE, "icon_media_id")
     skill = await _load(session, skill_id)
-    diff = audit.apply_changes(skill, values)
-    if diff:
-        audit.record(
-            session,
-            context,
-            "skill.update",
-            entity_type=ENTITY_TYPE,
-            entity_id=skill.id,
-            details=diff,
-        )
-        await session.commit()
+    if await crud.update(session, context, skill, values, entity_type=ENTITY_TYPE):
         skill = await _load(session, skill_id)
     return to_read(skill, url_endpoint)
 
 
 async def delete_skill(session: AsyncSession, context: AuditContext, skill_id: int) -> None:
     """Also removes the skill from every project (project_skills cascade)."""
-    repo = SkillRepository(session)
     skill = await _load(session, skill_id)
-    details = {"name": skill.name, "slug": skill.slug}
-    await repo.delete(skill)
-    audit.record(
+    await crud.delete(
         session,
         context,
-        "skill.delete",
+        skill,
         entity_type=ENTITY_TYPE,
-        entity_id=skill_id,
-        details=details,
+        details={"name": skill.name, "slug": skill.slug},
     )
-    await session.commit()
