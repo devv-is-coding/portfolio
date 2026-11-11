@@ -3,6 +3,9 @@
 Add a builder here when a second test needs the same kind of row.
 """
 
+from typing import Any
+
+from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,3 +50,13 @@ async def audit_entries(session: AsyncSession, action: str) -> list[AuditLog]:
     """The audit rows with this action, e.g. `skill.create`, oldest first."""
     statement = select(AuditLog).where(AuditLog.action == action).order_by(AuditLog.id)
     return list((await session.scalars(statement)).all())
+
+
+async def create_via_api(
+    client: AsyncClient, path: str, headers: dict[str, str], **fields: object
+) -> dict[str, Any]:
+    """POST `fields` to an admin create endpoint and return the created JSON (asserts 201)."""
+    response = await client.post(path, json=fields, headers=headers)
+    assert response.status_code == 201, response.text
+    body: dict[str, Any] = response.json()
+    return body

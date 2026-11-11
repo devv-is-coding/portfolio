@@ -37,6 +37,10 @@ class BaseRepository[ModelT: Base]:
         rows = await self.session.scalars(select(self.model).where(primary_key.in_(ids)))
         return list(rows.all())
 
+    async def refresh(self, instance: ModelT) -> None:
+        """Reload the columns, e.g. the timestamps MariaDB set on insert or update."""
+        await self.session.refresh(instance)
+
     async def flush(self) -> None:
         """Send pending changes, so generated ids and constraint errors appear now."""
         await self.session.flush()
