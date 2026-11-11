@@ -1,8 +1,8 @@
 from sqlalchemy import Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.base import TABLE_OPTIONS, Base, IdMixin, TimestampMixin, status_enum
-from app.models.enums import ContactMessageStatus
+from app.models.base import TABLE_OPTIONS, Base, IdMixin, TimestampMixin, status_column
+from app.models.enums import CONTACT_MESSAGE_STATUS_CODES, ContactMessageStatus
 
 
 class ContactMessage(IdMixin, TimestampMixin, Base):
@@ -19,10 +19,8 @@ class ContactMessage(IdMixin, TimestampMixin, Base):
     email: Mapped[str] = mapped_column(String(255))
     subject: Mapped[str | None] = mapped_column(String(255))
     message: Mapped[str] = mapped_column(Text)
-    status: Mapped[ContactMessageStatus] = mapped_column(
-        status_enum(ContactMessageStatus),
-        default=ContactMessageStatus.UNREAD,
-        server_default=ContactMessageStatus.UNREAD.value,
+    status: Mapped[ContactMessageStatus] = status_column(
+        CONTACT_MESSAGE_STATUS_CODES, default=ContactMessageStatus.UNREAD
     )
     # Sender's IP (IPv6 fits in 45 characters), for spam rate limiting.
     ip_address: Mapped[str | None] = mapped_column(String(45))

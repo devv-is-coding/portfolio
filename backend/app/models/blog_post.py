@@ -13,9 +13,9 @@ from app.models.base import (
     IdMixin,
     TimestampMixin,
     UnsignedBigInt,
-    status_enum,
+    status_column,
 )
-from app.models.enums import PublicationStatus
+from app.models.enums import PUBLICATION_STATUS_CODES, PublicationStatus
 
 if TYPE_CHECKING:
     from app.models.blog_category import BlogCategory
@@ -29,7 +29,8 @@ class BlogPost(IdMixin, TimestampMixin, Base):
         # Public listing: published posts, newest first.
         Index(None, "status", "published_at"),
         CheckConstraint(
-            "status <> 'published' OR published_at IS NOT NULL",
+            f"status <> {PUBLICATION_STATUS_CODES[PublicationStatus.PUBLISHED]}"
+            " OR published_at IS NOT NULL",
             name="published_at_required",
         ),
         TABLE_OPTIONS,
@@ -46,10 +47,8 @@ class BlogPost(IdMixin, TimestampMixin, Base):
     cover_media_id: Mapped[int | None] = mapped_column(
         UnsignedBigInt, ForeignKey("media.id", ondelete="SET NULL")
     )
-    status: Mapped[PublicationStatus] = mapped_column(
-        status_enum(PublicationStatus),
-        default=PublicationStatus.DRAFT,
-        server_default=PublicationStatus.DRAFT.value,
+    status: Mapped[PublicationStatus] = status_column(
+        PUBLICATION_STATUS_CODES, default=PublicationStatus.DRAFT
     )
     published_at: Mapped[datetime | None] = mapped_column(DateTime)
 
