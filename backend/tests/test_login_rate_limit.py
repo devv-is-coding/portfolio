@@ -1,12 +1,11 @@
 import pytest
 
-from app.core.config import Settings
 from app.services.login_rate_limit import LoginRateLimiter
-from tests.fakes import BrokenRedis, FakeRedis, as_redis
+from tests.fakes import BrokenRedis, FakeRedis, IsolatedSettings, as_redis
 
 pytestmark = pytest.mark.anyio
 
-SETTINGS = Settings(_env_file=None, login_max_attempts=3, login_window_seconds=600)
+SETTINGS = IsolatedSettings(login_max_attempts=3, login_window_seconds=600)
 IP = "203.0.113.7"
 
 

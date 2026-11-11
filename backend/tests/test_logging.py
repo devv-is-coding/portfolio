@@ -6,7 +6,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.core.config import Settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import (
     REQUEST_ID_HEADER,
@@ -15,7 +14,7 @@ from app.core.logging import (
     configure_logging,
     request_id_var,
 )
-from tests.fakes import field
+from tests.fakes import IsolatedSettings, field
 
 
 def _build_app() -> FastAPI:
@@ -130,7 +129,7 @@ def test_configure_logging_is_idempotent_and_applies_the_level() -> None:
     root = logging.getLogger()
     before_level, before_handlers = root.level, root.handlers[:]
     try:
-        settings = Settings(_env_file=None, log_level="WARNING", log_format="json")
+        settings = IsolatedSettings(log_level="WARNING", log_format="json")
         configure_logging(settings)
         configure_logging(settings)
 

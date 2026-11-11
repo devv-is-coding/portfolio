@@ -2,9 +2,10 @@
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import SecretStr
 
-from app.core.config import Settings
 from app.core.security import create_access_token
+from tests.fakes import IsolatedSettings
 
 
 def test_me_without_token_is_401_with_bearer_challenge(client: TestClient) -> None:
@@ -28,7 +29,7 @@ def test_me_with_invalid_token_is_401(client: TestClient, authorization: str) ->
 
 
 def test_me_with_token_from_another_key_is_401(client: TestClient) -> None:
-    other = Settings(_env_file=None, jwt_secret_key="another-secret-key-that-is-long-enough!")
+    other = IsolatedSettings(jwt_secret_key=SecretStr("another-secret-key-that-is-long-enough!"))
     token = create_access_token(1, other)
 
     response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})

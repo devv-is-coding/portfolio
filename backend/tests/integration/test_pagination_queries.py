@@ -51,7 +51,21 @@ async def test_descending_sort_with_id_tiebreaker(db_session: AsyncSession) -> N
     await _users(db_session, "b", "a", "c")
     statement = apply_sort(
         select(User).where(User.email.endswith(DOMAIN)),
-        parse_sort("-created_at", SORTABLE),  # all equal: the id decides
+        parse_sort("-created_at", SORTABLE),  # all equal: the id decides, newest first
+        SORTABLE,
+        User.id,
+    )
+
+    items, _ = await UserRepository(db_session).paginate(statement, PageParams())
+
+    assert [user.email.split("@")[0] for user in items] == ["c", "a", "b"]
+
+
+async def test_ascending_sort_breaks_ties_oldest_first(db_session: AsyncSession) -> None:
+    await _users(db_session, "b", "a", "c")
+    statement = apply_sort(
+        select(User).where(User.email.endswith(DOMAIN)),
+        parse_sort("created_at", SORTABLE),
         SORTABLE,
         User.id,
     )

@@ -10,7 +10,7 @@ from app.core.errors import register_exception_handlers
 from app.core.logging import RequestContextMiddleware, configure_logging
 from app.core.redis import redis_client
 from app.core.sentry import init_sentry
-from app.routers import auth, health
+from app.routers import auth, health, media, profile, skills
 
 settings = get_settings()
 configure_logging(settings)
@@ -43,3 +43,8 @@ app.add_middleware(RequestContextMiddleware)
 
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(media.router)
+app.include_router(profile.router)
+app.include_router(profile.admin_router)
+app.include_router(skills.router)
+app.include_router(skills.admin_router)

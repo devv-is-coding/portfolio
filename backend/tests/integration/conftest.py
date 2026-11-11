@@ -14,7 +14,7 @@ from collections.abc import AsyncIterator, Iterator
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import pool
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from app.core.config import get_settings
@@ -65,7 +65,15 @@ async def api(db_session: AsyncSession, fake_redis: FakeRedis) -> AsyncIterator[
     """HTTP client for the app, using the test transaction and an in-memory Redis."""
 
     async def _session() -> AsyncIterator[AsyncSession]:
-        yield db_session
+        # In the app every request closes its own session, which rolls back a failed
+        # transaction. Here all requests share one session, so after a database error
+        # (e.g. a 409 from a unique index) roll back explicitly. Other errors (404, 422)
+        # leave the session usable and must not expire the test's objects.
+        try:
+            yield db_session
+        except SQLAlchemyError:
+            await db_session.rollback()
+            raise
 
     async def _redis() -> object:
         return as_redis(fake_redis)

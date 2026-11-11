@@ -1,22 +1,53 @@
+from typing import Any
+
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from app.core.config import Settings
+from tests.fakes import IsolatedSettings
 
 STRONG_KEY = "a-production-secret-key-of-at-least-32-chars"
+IMAGEKIT: dict[str, Any] = {
+    "imagekit_public_key": "public_test",
+    "imagekit_private_key": "private_test",
+    "imagekit_url_endpoint": "https://ik.imagekit.io/portfolio",
+}
+
+
+def _production(**overrides: Any) -> Settings:
+    values: dict[str, Any] = {"environment": "production", "jwt_secret_key": STRONG_KEY}
+    values |= IMAGEKIT | overrides
+    return IsolatedSettings(**values)
 
 
 def test_short_jwt_secret_key_is_rejected() -> None:
     with pytest.raises(ValidationError, match="at least 32 characters"):
-        Settings(_env_file=None, jwt_secret_key="too-short")
+        IsolatedSettings(jwt_secret_key=SecretStr("too-short"))
 
 
 def test_production_refuses_the_development_jwt_secret_key() -> None:
-    with pytest.raises(ValidationError, match="must be set in production"):
-        Settings(_env_file=None, environment="production")
+    with pytest.raises(ValidationError, match="JWT_SECRET_KEY must be set in production"):
+        IsolatedSettings(environment="production", **IMAGEKIT)
 
 
-def test_production_accepts_its_own_jwt_secret_key() -> None:
-    settings = Settings(_env_file=None, environment="production", jwt_secret_key=STRONG_KEY)
+def test_production_accepts_its_own_settings() -> None:
+    settings = _production()
 
     assert settings.jwt_secret_key.get_secret_value() == STRONG_KEY
+
+
+@pytest.mark.parametrize("missing", list(IMAGEKIT))
+def test_production_requires_every_imagekit_setting(missing: str) -> None:
+    with pytest.raises(ValidationError, match="must be set in production"):
+        _production(**{missing: None})
+
+
+def test_imagekit_is_optional_in_development() -> None:
+    settings = IsolatedSettings()
+
+    assert settings.imagekit_private_key is None
+
+
+def test_imagekit_url_endpoint_must_be_https() -> None:
+    with pytest.raises(ValidationError, match="must start with https://"):
+        IsolatedSettings(imagekit_url_endpoint="http://ik.imagekit.io/portfolio")

@@ -36,5 +36,6 @@ class Profile(IdMixin, TimestampMixin, Base):
         back_populates="profile",
         lazy="raise",
         passive_deletes=True,
-        order_by="SocialLink.display_order",
+        # Stable order for links with the same display_order.
+        order_by="(SocialLink.display_order, SocialLink.id)",
     )
