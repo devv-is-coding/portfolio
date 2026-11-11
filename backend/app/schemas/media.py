@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import MediaKind
 from app.schemas.fields import BlankToNone
@@ -37,6 +37,8 @@ class UploadAuthResponse(BaseModel):
 class MediaCreate(BaseModel):
     """Register a file the browser has just uploaded to ImageKit."""
 
+    model_config = ConfigDict(extra="forbid")
+
     file_id: str = Field(
         min_length=1,
         max_length=64,
@@ -48,6 +50,8 @@ class MediaCreate(BaseModel):
 
 
 class MediaUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     alt_text: AltText = None
 
 

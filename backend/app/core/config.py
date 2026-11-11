@@ -1,5 +1,6 @@
 from functools import lru_cache
 from typing import Annotated, Literal, Self
+from urllib.parse import urlsplit
 
 from fastapi import Depends
 from pydantic import SecretStr, model_validator
@@ -23,7 +24,11 @@ class Settings(BaseSettings):
 
     app_name: str = "Portfolio API"
     environment: str = "development"
+    # Exact origins (scheme://host[:port], no path); https:// only in production.
     cors_origins: list[str] = ["http://localhost:3000"]
+    # Largest accepted request body. Files go to ImageKit directly, never through the API;
+    # the biggest JSON body is a blog post (up to 200,000 characters of Markdown).
+    max_request_body_bytes: int = 1_048_576
 
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     # "json" (one JSON object per line) for production log collectors.
@@ -84,6 +89,22 @@ class Settings(BaseSettings):
                 "IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY and IMAGEKIT_URL_ENDPOINT "
                 "must be set in production"
             )
+        return self
+
+    @model_validator(mode="after")
+    def _check_cors_origins(self) -> Self:
+        for origin in self.cors_origins:
+            if origin == "*":
+                raise ValueError('CORS_ORIGINS can\'t contain "*": the API allows credentials')
+            # An origin never has a path: "https://example.com/" would match no request.
+            parts = urlsplit(origin)
+            has_path = bool(parts.path or parts.query or parts.fragment)
+            if parts.scheme not in ("http", "https") or not parts.netloc or has_path:
+                raise ValueError(
+                    f"CORS_ORIGINS entry {origin!r} must be scheme://host[:port] with no path"
+                )
+            if self.environment == "production" and parts.scheme != "https":
+                raise ValueError("CORS_ORIGINS must be https:// origins in production")
         return self
 
     @model_validator(mode="after")

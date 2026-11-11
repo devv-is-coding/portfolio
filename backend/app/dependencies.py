@@ -20,8 +20,9 @@ bearer_scheme = HTTPBearer(auto_error=False, description="Access token from POST
 
 
 def get_client_ip(request: Request) -> str | None:
-    """The caller's IP as the server sees it. Behind a proxy this is the proxy's IP
-    until trusted forwarded headers are configured (TODO.md, B12)."""
+    """The caller's IP. Behind a proxy, uvicorn takes it from X-Forwarded-For, but only
+    when the proxy's address is in FORWARDED_ALLOW_IPS (see .env.example); otherwise
+    it's the connecting address, so clients can't fake it."""
     return request.client.host if request.client else None
 
 

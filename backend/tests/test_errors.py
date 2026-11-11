@@ -116,6 +116,18 @@ def test_internals_never_leak(client: TestClient) -> None:
             assert leak not in body
 
 
+def test_duplicate_values_never_reach_the_log(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    with caplog.at_level("INFO", logger="app.core.errors"):
+        client.get("/duplicate")
+        client.get("/foreign-key")
+
+    assert "python" not in caplog.text  # the duplicate value
+    assert "Duplicate value on GET /duplicate" in caplog.text
+    assert "fk_projects_media" in caplog.text  # constraint names stay, for debugging
+
+
 def test_wrong_method_is_405(client: TestClient) -> None:
     response = client.delete("/not-found")
 

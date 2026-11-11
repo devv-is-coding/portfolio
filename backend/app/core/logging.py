@@ -72,6 +72,8 @@ def configure_logging(settings: Settings) -> None:
     root.setLevel(settings.log_level)
     # app.access (with request id, duration and user) replaces uvicorn's access log.
     logging.getLogger("uvicorn.access").disabled = True
+    # HTTPX logs every outgoing request (ImageKit) at INFO; keep only its warnings.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def _incoming_request_id(scope: Scope) -> str | None:

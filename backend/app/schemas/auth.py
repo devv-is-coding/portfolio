@@ -1,15 +1,19 @@
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class LoginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr
     # Upper bound so huge bodies can't make argon2 do expensive work.
     password: str = Field(min_length=1, max_length=256)
 
 
 class RefreshRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     refresh_token: str = Field(min_length=1, max_length=128)
 
 
