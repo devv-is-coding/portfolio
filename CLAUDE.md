@@ -36,7 +36,8 @@ Monorepo: Next.js 16 frontend (`frontend/`) + FastAPI backend (`backend/`). The 
 ## Git
 
 - **Never commit unless the user explicitly says so** ("commit", "push it"), local commits included. Never commit to `main` directly.
-- Conventional Commits, lowercase, imperative, title under 72 characters, and a detailed body (one paragraph per task). Branches `<type>/<1-4-words>`. Details in `.ai/rules/github.md`.
+- Conventional Commits, lowercase, imperative, title under 72 characters, and a detailed body. Branches `<type>/<1-4-words>`. Details in `.ai/rules/github.md`.
+- One commit per task (e.g. `B4`, `B12`): never bundle several tasks into one commit.
 - Before every push, run CI locally and push only when all pass:
   - `frontend/`: `npm run check && npm run build`
   - `backend/`: the checks in `backend/CLAUDE.md`, plus `uv run alembic check`
