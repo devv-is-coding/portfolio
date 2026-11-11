@@ -21,6 +21,7 @@ from app.routers import (
     media,
     profile,
     projects,
+    site_settings,
     skills,
 )
 
@@ -72,3 +73,5 @@ app.include_router(blog.router)
 app.include_router(blog.admin_router)
 app.include_router(contact.router)
 app.include_router(contact.admin_router)
+app.include_router(site_settings.router)
+app.include_router(site_settings.admin_router)
