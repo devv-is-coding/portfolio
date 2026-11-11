@@ -14,6 +14,7 @@ from app.routers import (
     auth,
     blog,
     certifications,
+    contact,
     education,
     experiences,
     health,
@@ -69,3 +70,5 @@ app.include_router(certifications.router)
 app.include_router(certifications.admin_router)
 app.include_router(blog.router)
 app.include_router(blog.admin_router)
+app.include_router(contact.router)
+app.include_router(contact.admin_router)

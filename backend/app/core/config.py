@@ -49,6 +49,20 @@ class Settings(BaseSettings):
     # Failed logins allowed per client IP within the window, then 429 until it ends.
     login_max_attempts: int = 5
     login_window_seconds: int = 900
+    # Contact form messages allowed per client IP within the window.
+    contact_max_messages: int = 5
+    contact_window_seconds: int = 3600
+
+    # Email about new contact messages (SMTP, e.g. Gmail with an app password).
+    # Optional: without SMTP_HOST and CONTACT_NOTIFY_EMAIL nothing is sent.
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    # True: STARTTLS on the port (587). False: implicit TLS (465).
+    smtp_starttls: bool = True
+    smtp_from: str | None = None
+    contact_notify_email: str | None = None
 
     # ImageKit (media files). Optional locally: media endpoints answer 503 without them.
     # Production refuses to start unless all three are set.

@@ -15,7 +15,7 @@ celery_app = Celery(
     "portfolio",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["app.tasks.media", "app.tasks.system"],
+    include=["app.tasks.contact", "app.tasks.media", "app.tasks.system"],
 )
 
 celery_app.conf.update(
