@@ -137,6 +137,41 @@ services:
         - action: rebuild
           path: ./backend/uv.lock
 
+  # The scheduler (Celery beat): sends scheduled tasks to the worker. Run exactly one.
+  beat:
+    build:
+      context: ./backend
+      target: dev
+    command: ["celery", "-A", "app.worker", "beat", "--loglevel=info", "--schedule", "/tmp/celerybeat-schedule"]
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment: *backend-env
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # Beat rewrites its schedule files (SQLite, with -wal/-shm) every few minutes while it runs.
+      test: ["CMD", "python", "-c", "import glob, os, sys, time; sys.exit(time.time() - max(map(os.path.getmtime, glob.glob('/tmp/celerybeat-schedule*'))) > 900)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./backend
+          target: /app
+          initial_sync: true
+          ignore:
+            - .venv/
+            - pyproject.toml
+            - uv.lock
+        - action: rebuild
+          path: ./backend/pyproject.toml
+        - action: rebuild
+          path: ./backend/uv.lock
+
   frontend:
     build:
       context: ./frontend

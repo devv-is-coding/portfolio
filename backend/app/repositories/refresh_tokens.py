@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select, update
+from sqlalchemy import CursorResult, delete, select, update
 
 from app.models import RefreshToken
 from app.repositories.base import BaseRepository
@@ -23,3 +23,12 @@ class RefreshTokenRepository(BaseRepository[RefreshToken]):
             .where(RefreshToken.user_id == user_id, RefreshToken.revoked_at.is_(None))
             .values(revoked_at=revoked_at)
         )
+
+    async def delete_expired_before(self, cutoff: datetime) -> int:
+        """Delete the tokens that expired before `cutoff`; returns how many."""
+        result = await self.session.execute(
+            delete(RefreshToken).where(RefreshToken.expires_at < cutoff)
+        )
+        if not isinstance(result, CursorResult):  # a DELETE always returns one
+            raise TypeError(f"unexpected result type {type(result).__name__}")
+        return result.rowcount

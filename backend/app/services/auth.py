@@ -29,6 +29,9 @@ from app.repositories.users import UserRepository
 from app.services import audit
 from app.services.audit import AuditContext
 
+# How long expired refresh tokens stay in the table before the daily cleanup deletes them.
+REFRESH_TOKEN_RETENTION = timedelta(days=7)
+
 
 class InvalidCredentialsError(UnauthorizedError):
     """Unknown email, wrong password or inactive account (deliberately not told apart)."""
@@ -140,6 +143,20 @@ async def logout(session: AsyncSession, refresh_token: str, *, ip_address: str |
         token.revoked_at = utc_now()
         audit.record(session, AuditContext(token.user_id, ip_address), "auth.logout")
     await session.commit()
+
+
+async def cleanup_refresh_tokens(session: AsyncSession) -> int:
+    """Delete refresh tokens that expired more than REFRESH_TOKEN_RETENTION ago.
+
+    Revoked tokens are kept until then: presenting a revoked token is how a stolen
+    one is detected (see `refresh`), so deleting it earlier would hide the theft.
+    An expired token can't be used either way. Returns the number deleted.
+    """
+    deleted = await RefreshTokenRepository(session).delete_expired_before(
+        utc_now() - REFRESH_TOKEN_RETENTION
+    )
+    await session.commit()
+    return deleted
 
 
 async def create_admin(
