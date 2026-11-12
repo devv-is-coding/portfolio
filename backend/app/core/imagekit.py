@@ -109,14 +109,23 @@ class _FilePayload(BaseModel):
     height: int | None = None
 
 
+# A file that is already gone counts as deleted.
+_MISSING = frozenset({httpx.codes.NOT_FOUND})
+# ImageKit answers 404 for a well-formed id it doesn't know and 400 for a string that
+# isn't a file id at all (e.g. a typo): both mean there is no such file.
+_NO_SUCH_FILE = frozenset({httpx.codes.NOT_FOUND, httpx.codes.BAD_REQUEST})
+
+
 class ImageKitClient:
     def __init__(self, http: httpx.AsyncClient) -> None:
         self._http = http
 
     async def get_file_details(self, file_id: str) -> FileDetails | None:
         """The file as ImageKit stores it, or None when it doesn't exist."""
-        response = await self._request("GET", f"/files/{quote(file_id, safe='')}/details")
-        if response.status_code == httpx.codes.NOT_FOUND:
+        response = await self._request(
+            "GET", f"/files/{quote(file_id, safe='')}/details", expected_errors=_NO_SUCH_FILE
+        )
+        if response.status_code in _NO_SUCH_FILE:
             return None
         try:
             payload = _FilePayload.model_validate(response.json())
@@ -137,13 +146,16 @@ class ImageKitClient:
         """Delete the file. A file that is already gone counts as deleted."""
         await self._request("DELETE", f"/files/{quote(file_id, safe='')}")
 
-    async def _request(self, method: str, path: str) -> httpx.Response:
+    async def _request(
+        self, method: str, path: str, *, expected_errors: frozenset[int] = _MISSING
+    ) -> httpx.Response:
+        """Any error status outside `expected_errors` means ImageKit failed (502)."""
         try:
             response = await self._http.request(method, path)
         except httpx.HTTPError as exc:
             logger.warning("ImageKit %s %s failed: %s", method, path, type(exc).__name__)
             raise ImageKitUnavailableError from exc
-        if response.is_error and response.status_code != httpx.codes.NOT_FOUND:
+        if response.is_error and response.status_code not in expected_errors:
             logger.warning("ImageKit %s %s answered %s", method, path, response.status_code)
             raise ImageKitUnavailableError
         return response
