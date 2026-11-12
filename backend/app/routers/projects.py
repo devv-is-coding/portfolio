@@ -102,6 +102,7 @@ async def create_project(
 async def get_any_project(
     project_id: ProjectId, session: SessionDep, url_endpoint: MediaUrlEndpointDep
 ) -> ProjectAdminRead:
+    """One project in any status, with gallery and skills, for editing."""
     return await projects_service.get(session, url_endpoint, project_id)
 
 

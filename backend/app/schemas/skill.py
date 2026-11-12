@@ -21,7 +21,12 @@ IconMediaId = Annotated[int | None, Field(ge=1, description="An image from the m
 
 
 class SkillCreate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [{"name": "FastAPI", "category": "backend", "display_order": 1}]
+        },
+    )
 
     name: SkillName
     slug: SkillSlug | None = Field(default=None, description="Made from the name when left out.")

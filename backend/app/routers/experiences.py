@@ -40,6 +40,7 @@ async def create_experience(
 
 @admin_router.get("/{experience_id}", responses=error_responses(404))
 async def get_experience(experience_id: ExperienceId, session: SessionDep) -> ExperienceRead:
+    """One job, for editing."""
     return await experiences_service.get_experience(session, experience_id)
 
 
@@ -60,5 +61,6 @@ async def update_experience(
 async def delete_experience(
     experience_id: ExperienceId, context: AuditContextDep, session: SessionDep
 ) -> Response:
+    """Remove the job from the timeline."""
     await experiences_service.delete_experience(session, context, experience_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

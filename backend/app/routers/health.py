@@ -22,4 +22,5 @@ async def check_database(session: SessionDep) -> None:
     responses=error_responses(503),
 )
 async def health() -> HealthResponse:
+    """Liveness and database check: 200 when MariaDB answers, else 503. Never cached."""
     return HealthResponse(status="ok")

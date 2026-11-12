@@ -79,6 +79,7 @@ async def add_social_link(
 async def update_social_link(
     link_id: LinkId, body: SocialLinkUpdate, context: AuditContextDep, session: SessionDep
 ) -> SocialLinkRead:
+    """Change only the fields sent (platform, URL, display order)."""
     return await profile_service.update_social_link(session, context, link_id, body)
 
 
@@ -90,5 +91,6 @@ async def update_social_link(
 async def delete_social_link(
     link_id: LinkId, context: AuditContextDep, session: SessionDep
 ) -> Response:
+    """Remove the link from the profile."""
     await profile_service.delete_social_link(session, context, link_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

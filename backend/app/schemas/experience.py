@@ -18,7 +18,20 @@ EndDate = Annotated[date | None, Field(description="Left out or null: the curren
 
 
 class ExperienceCreate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [
+                {
+                    "company": "Acme Inc.",
+                    "position": "Backend developer",
+                    "employment_type": "full-time",
+                    "location": "Remote",
+                    "start_date": "2023-03-01",
+                }
+            ]
+        },
+    )
 
     company: Company
     position: Position

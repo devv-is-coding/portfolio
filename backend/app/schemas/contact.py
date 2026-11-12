@@ -15,7 +15,19 @@ Message = Annotated[RequiredText, Field(max_length=5000)]
 
 
 class ContactMessageCreate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [
+                {
+                    "name": "Grace Hopper",
+                    "email": "grace@example.com",
+                    "subject": "A project for you",
+                    "message": "Hi! Do you have time for a small API next month?",
+                }
+            ]
+        },
+    )
 
     name: SenderName
     email: Annotated[EmailStr, Field(max_length=255)]

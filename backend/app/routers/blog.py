@@ -105,6 +105,7 @@ async def create_category(
 
 @admin_router.get("/categories/{category_id}", responses=error_responses(404))
 async def get_category(category_id: Id, session: SessionDep) -> BlogTermRead:
+    """One category, for editing."""
     return await blog_terms.get_term(session, CATEGORY, category_id)
 
 
@@ -112,6 +113,7 @@ async def get_category(category_id: Id, session: SessionDep) -> BlogTermRead:
 async def update_category(
     category_id: Id, body: BlogTermUpdate, context: AuditContextDep, session: SessionDep
 ) -> BlogTermRead:
+    """Rename the category or change its slug (409 if taken)."""
     return await blog_terms.update_term(session, context, CATEGORY, category_id, body)
 
 
@@ -138,6 +140,7 @@ async def create_tag(
 
 @admin_router.get("/tags/{tag_id}", responses=error_responses(404))
 async def get_tag(tag_id: Id, session: SessionDep) -> BlogTermRead:
+    """One tag, for editing."""
     return await blog_terms.get_term(session, TAG, tag_id)
 
 
@@ -145,6 +148,7 @@ async def get_tag(tag_id: Id, session: SessionDep) -> BlogTermRead:
 async def update_tag(
     tag_id: Id, body: BlogTermUpdate, context: AuditContextDep, session: SessionDep
 ) -> BlogTermRead:
+    """Rename the tag or change its slug (409 if taken)."""
     return await blog_terms.update_term(session, context, TAG, tag_id, body)
 
 
@@ -193,6 +197,7 @@ async def create_post(
 async def get_any_post(
     post_id: Id, session: SessionDep, url_endpoint: MediaUrlEndpointDep
 ) -> BlogPostAdminRead:
+    """One post in any status, with its Markdown, for editing."""
     return await blog_posts.get(session, url_endpoint, post_id)
 
 
@@ -213,6 +218,7 @@ async def update_post(
     "/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT, responses=error_responses(404)
 )
 async def delete_post(post_id: Id, context: AuditContextDep, session: SessionDep) -> Response:
+    """Delete the post; its tag links go with it, the category and tags stay."""
     await blog_posts.delete(session, context, post_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
