@@ -85,6 +85,7 @@ async def list_media(
 
 @router.get("/{media_id}", responses=error_responses(404))
 async def get_media(media_id: MediaId, session: SessionDep, config: ImageKitConfigDep) -> MediaRead:
+    """One media file with its public URL, kind and details."""
     return await media_service.get(session, config.url_endpoint, media_id)
 
 

@@ -10,8 +10,9 @@ class ContactMessage(IdMixin, TimestampMixin, Base):
 
     __tablename__ = "contact_messages"
     __table_args__ = (
-        # Admin inbox: unread first, newest first.
+        # Admin inbox: newest first, with or without a status filter.
         Index(None, "status", "created_at"),
+        Index(None, "created_at"),
         TABLE_OPTIONS,
     )
 

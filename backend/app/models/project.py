@@ -26,8 +26,9 @@ if TYPE_CHECKING:
 class Project(IdMixin, TimestampMixin, Base):
     __tablename__ = "projects"
     __table_args__ = (
-        # Public listing: published projects, newest first.
+        # Public listing: published projects, newest first or in display order.
         Index(None, "status", "published_at"),
+        Index(None, "status", "display_order"),
         CheckConstraint(
             f"status <> {PUBLICATION_STATUS_CODES[PublicationStatus.PUBLISHED]}"
             " OR published_at IS NOT NULL",

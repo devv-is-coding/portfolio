@@ -57,6 +57,7 @@ async def create_skill(
 async def get_skill(
     skill_id: SkillId, session: SessionDep, url_endpoint: MediaUrlEndpointDep
 ) -> SkillRead:
+    """One skill with its icon, for editing."""
     return await skills_service.get_skill(session, url_endpoint, skill_id)
 
 

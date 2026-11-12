@@ -19,7 +19,10 @@ TermSlug = Annotated[Slug, Field(max_length=TERM_SLUG_MAX_LENGTH)]
 class BlogTermCreate(BaseModel):
     """A category or a tag. Name and slug are unique (409)."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={"examples": [{"name": "Python"}]},
+    )
 
     name: TermName
     slug: TermSlug | None = Field(default=None, description="Made from the name when left out.")
@@ -61,7 +64,19 @@ CategoryId = Annotated[int, Field(ge=1)]
 
 
 class BlogPostCreate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [
+                {
+                    "title": "Why I moved to FastAPI",
+                    "excerpt": "Typed endpoints and fewer surprises.",
+                    "content": "## The short version\n\nPydantic does the validation.",
+                    "status": "draft",
+                }
+            ]
+        },
+    )
 
     title: Title
     slug: PostSlug | None = Field(default=None, description="Made from the title when left out.")

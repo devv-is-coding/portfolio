@@ -12,8 +12,11 @@ from app.core.config import get_settings
 CONNECT_ARGS = {"init_command": "SET time_zone = '+00:00'"}
 
 # Creating the engine doesn't connect; the first query does.
+_settings = get_settings()
 engine = create_async_engine(
-    get_settings().database_url,
+    _settings.database_url,
+    pool_size=_settings.db_pool_size,
+    max_overflow=_settings.db_max_overflow,
     pool_pre_ping=True,  # drop dead connections (e.g. after MariaDB restarts)
     pool_recycle=3600,  # stay below MariaDB's wait_timeout
     connect_args=CONNECT_ARGS,

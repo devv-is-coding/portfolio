@@ -26,7 +26,23 @@ Description = Annotated[str | None, Field(max_length=DESCRIPTION_MAX_LENGTH), Bl
 
 
 class ProjectCreate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [
+                {
+                    "title": "Online shop",
+                    "short_description": "A small shop with Stripe payments.",
+                    "description": "## What it does\n\nCatalog, cart and checkout.",
+                    "live_url": "https://shop.example.com",
+                    "repository_url": "https://github.com/ada/shop",
+                    "status": "published",
+                    "is_featured": True,
+                    "display_order": 1,
+                }
+            ]
+        },
+    )
 
     title: Title
     slug: ProjectSlug | None = Field(default=None, description="Made from the title when left out.")

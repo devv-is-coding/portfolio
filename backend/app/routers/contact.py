@@ -69,6 +69,7 @@ async def list_messages(
 
 @admin_router.get("/{message_id}", responses=error_responses(404))
 async def get_message(message_id: MessageId, session: SessionDep) -> ContactMessageRead:
+    """One message with the sender's details and IP."""
     return await contact_service.get_message(session, message_id)
 
 
@@ -89,5 +90,6 @@ async def update_message(
 async def delete_message(
     message_id: MessageId, context: AuditContextDep, session: SessionDep
 ) -> Response:
+    """Delete the message for good; the audit entry keeps only its id."""
     await contact_service.delete_message(session, context, message_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

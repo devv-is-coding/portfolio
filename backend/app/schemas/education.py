@@ -12,7 +12,20 @@ Description = Annotated[str | None, Field(max_length=16_000, description="Markdo
 
 
 class EducationCreate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [
+                {
+                    "institution": "University of Tokyo",
+                    "degree": "BSc",
+                    "field_of_study": "Computer science",
+                    "start_date": "2015-04-01",
+                    "end_date": "2019-03-31",
+                }
+            ]
+        },
+    )
 
     institution: Institution
     degree: OptionalName = None

@@ -4,10 +4,12 @@ from collections.abc import Iterator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from app.core.errors import register_exception_handlers
+from app.core.http_cache import HttpCacheMiddleware
 from app.core.http_security import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.logging import RequestContextMiddleware
 from app.main import app as real_app
@@ -92,13 +94,16 @@ def test_a_chunked_body_over_the_limit_is_413() -> None:
     assert large.json()["error"]["code"] == "payload_too_large"
 
 
-def test_the_app_uses_both_middlewares() -> None:
+def test_the_middleware_order() -> None:
     classes: list[object] = [middleware.cls for middleware in real_app.user_middleware]
 
-    # Outermost first: headers on everything, the limit inside CORS.
+    # Outermost first: headers on everything, gzip on every body, the cache and the
+    # limit inside CORS (a 304 or 413 still has the CORS headers).
     assert classes == [
         RequestContextMiddleware,
         SecurityHeadersMiddleware,
+        GZipMiddleware,
         CORSMiddleware,
+        HttpCacheMiddleware,
         BodySizeLimitMiddleware,
     ]

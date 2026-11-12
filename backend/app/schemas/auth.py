@@ -4,7 +4,12 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class LoginRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [{"email": "you@example.com", "password": "correct horse battery staple"}]
+        },
+    )
 
     email: EmailStr
     # Upper bound so huge bodies can't make argon2 do expensive work.

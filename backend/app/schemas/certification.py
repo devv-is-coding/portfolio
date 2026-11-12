@@ -13,7 +13,20 @@ ExpiresAt = Annotated[date | None, Field(description="Left out or null: doesn't 
 
 
 class CertificationCreate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [
+                {
+                    "name": "AWS Certified Developer",
+                    "issuing_organization": "Amazon Web Services",
+                    "credential_url": "https://www.credly.com/badges/example",
+                    "issued_at": "2024-05-01",
+                    "expires_at": "2027-05-01",
+                }
+            ]
+        },
+    )
 
     name: Name
     issuing_organization: Organization

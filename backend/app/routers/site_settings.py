@@ -51,6 +51,7 @@ async def list_settings(
 
 @admin_router.get("/{key}", responses=error_responses(404))
 async def get_setting(key: SettingKey, session: SessionDep) -> SiteSettingRead:
+    """One setting, public or not."""
     return await settings_service.get_setting(session, key)
 
 
@@ -80,5 +81,6 @@ async def put_setting(
 async def delete_setting(
     key: SettingKey, context: AuditContextDep, session: SessionDep
 ) -> Response:
+    """Remove the setting; a public one disappears from GET /settings."""
     await settings_service.delete_setting(session, context, key)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

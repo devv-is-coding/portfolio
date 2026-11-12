@@ -39,6 +39,7 @@ async def create_education(
 
 @admin_router.get("/{education_id}", responses=error_responses(404))
 async def get_education(education_id: EducationId, session: SessionDep) -> EducationRead:
+    """One education entry, for editing."""
     return await education_service.get_education(session, education_id)
 
 
@@ -59,5 +60,6 @@ async def update_education(
 async def delete_education(
     education_id: EducationId, context: AuditContextDep, session: SessionDep
 ) -> Response:
+    """Remove the entry."""
     await education_service.delete_education(session, context, education_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

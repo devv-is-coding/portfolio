@@ -106,9 +106,29 @@ async def test_documents_have_no_dimensions() -> None:
     assert (details.width, details.height) == (None, None)
 
 
-async def test_unknown_file_is_none() -> None:
+@pytest.mark.parametrize(
+    "file_id",
+    [
+        "6745dd8e432c476416dfe3f0",  # well-formed but unknown: ImageKit answers 404
+        "not-a-file-id",  # not an ImageKit id at all: ImageKit answers 400
+    ],
+)
+async def test_unknown_file_is_none(file_id: str) -> None:
     async with create_http_client(CONFIG, FakeImageKit().transport) as http:
-        assert await ImageKitClient(http).get_file_details("missing") is None
+        assert await ImageKitClient(http).get_file_details(file_id) is None
+
+
+async def test_deleting_with_an_invalid_id_is_still_an_upstream_error() -> None:
+    """Deletes only use ids ImageKit gave us, so a 400 there is a real failure."""
+    imagekit = FakeImageKit()
+    imagekit.files["abc"] = {}
+
+    def bad_request(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(400, json={"message": "Invalid fileId parameter."})
+
+    async with create_http_client(CONFIG, httpx.MockTransport(bad_request)) as http:
+        with pytest.raises(ImageKitUnavailableError):
+            await ImageKitClient(http).delete_file("abc")
 
 
 @pytest.mark.parametrize(

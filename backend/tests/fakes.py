@@ -1,6 +1,7 @@
 """In-memory stand-ins for external services, and small test helpers."""
 
 import logging
+import re
 from typing import cast
 from urllib.parse import unquote
 
@@ -61,6 +62,10 @@ def field(record: logging.LogRecord, name: str) -> object:
     return record.__dict__[name]
 
 
+# ImageKit file ids look like `6745dd8e432c476416dfe3f0` (24 hex characters).
+_IMAGEKIT_FILE_ID = re.compile(r"[0-9a-f]{24}")
+
+
 class FakeImageKit:
     """ImageKit's file REST API in memory, served through `httpx.MockTransport`."""
 
@@ -96,9 +101,12 @@ class FakeImageKit:
         file_id = unquote(parts[3]) if len(parts) > 3 else ""
         if request.method == "GET" and parts[4:] == ["details"]:
             file = self.files.get(file_id)
-            if file is None:
-                return httpx.Response(404, json={"message": "The requested file does not exist."})
-            return httpx.Response(200, json=file)
+            if file is not None:
+                return httpx.Response(200, json=file)
+            # Like ImageKit: 400 for a string that isn't a file id, 404 for an unknown one.
+            if not _IMAGEKIT_FILE_ID.fullmatch(file_id):
+                return httpx.Response(400, json={"message": "Invalid fileId parameter."})
+            return httpx.Response(404, json={"message": "The requested file does not exist."})
         if request.method == "DELETE" and len(parts) == 4:
             self.deleted.append(file_id)
             if self.files.pop(file_id, None) is None:

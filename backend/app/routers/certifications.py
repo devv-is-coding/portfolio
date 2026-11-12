@@ -43,6 +43,7 @@ async def create_certification(
 async def get_certification(
     certification_id: CertificationId, session: SessionDep
 ) -> CertificationRead:
+    """One certification, for editing."""
     return await certifications_service.get_certification(session, certification_id)
 
 
@@ -65,5 +66,6 @@ async def update_certification(
 async def delete_certification(
     certification_id: CertificationId, context: AuditContextDep, session: SessionDep
 ) -> Response:
+    """Remove the certification."""
     await certifications_service.delete_certification(session, context, certification_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

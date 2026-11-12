@@ -28,7 +28,20 @@ Platform = Annotated[
 class ProfileWrite(BaseModel):
     """`PUT /admin/profile`: the whole profile; fields left out become empty."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [
+                {
+                    "full_name": "Ada Lovelace",
+                    "headline": "Backend developer",
+                    "biography": "I build APIs and the tools around them.",
+                    "location": "London",
+                    "email": "ada@example.com",
+                }
+            ]
+        },
+    )
 
     full_name: FullName
     headline: Headline = None
@@ -56,7 +69,14 @@ class ProfileUpdate(BaseModel):
 
 
 class SocialLinkCreate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "examples": [
+                {"platform": "github", "url": "https://github.com/ada", "display_order": 0}
+            ]
+        },
+    )
 
     platform: Platform
     url: WebUrl
