@@ -84,7 +84,7 @@ def test_pool_and_worker_sizes_have_safe_defaults() -> None:
     settings = IsolatedSettings()
 
     assert (settings.db_pool_size, settings.db_max_overflow) == (5, 10)
-    assert settings.celery_worker_concurrency is None  # one per CPU core
+    assert settings.celery_worker_concurrency == 1  # small server: not one per CPU core
 
 
 @pytest.mark.parametrize(

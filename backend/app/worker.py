@@ -1,8 +1,10 @@
-"""Celery app. Start a worker with:  celery -A app.worker worker --loglevel=info
-and the scheduler with:              celery -A app.worker beat --schedule /tmp/celerybeat-schedule
+"""Celery app. Start the worker with its embedded scheduler (as the compose files do):
+
+    celery -A app.worker worker --beat --loglevel=info --schedule /tmp/celerybeat-schedule
 
 Tasks live in app/tasks/; list every task module in `include` below. Scheduled tasks
-are in `beat_schedule`; exactly one beat process may run, or tasks run twice.
+are in `beat_schedule`. Exactly one beat may run, or scheduled tasks run twice: with a
+second worker, drop `--beat` and run `celery -A app.worker beat` on its own.
 """
 
 from celery import Celery

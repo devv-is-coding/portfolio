@@ -29,9 +29,9 @@ docker compose up --watch
 ```
 
 This starts MariaDB (host port 3307), Redis (6380), a one-off `migrate` job
-(`alembic upgrade head`), the API on http://localhost:8000, the Celery `worker` and
-`beat`, and the frontend. `--watch` syncs your edits into the containers; the API
-reloads, the worker and beat restart.
+(`alembic upgrade head`), the API on http://localhost:8000, the Celery `worker` (with the
+beat scheduler inside it), and the frontend. `--watch` syncs your edits into the
+containers; the API reloads, the worker restarts.
 
 Create the admin account (you're asked for the password twice):
 
@@ -41,7 +41,7 @@ docker compose exec backend python -m app.commands.create_admin --email you@exam
 
 In Git Bash, prefix `docker compose exec` with `MSYS_NO_PATHCONV=1`. After changing
 `backend/.env`, recreate the containers that read it:
-`docker compose up -d --force-recreate backend worker beat`.
+`docker compose up -d --force-recreate backend worker`.
 
 ## Run it natively
 
@@ -57,13 +57,15 @@ uv run python -m app.commands.create_admin --email you@example.com
 uv run fastapi dev            # http://localhost:8000, reloads on changes
 ```
 
-Background jobs, in two more terminals. On Windows add `--pool=solo` to the worker, and
-give beat a schedule file outside the repository (e.g. `%TEMP%\celerybeat-schedule`):
+Background jobs, in another terminal (the worker with the beat scheduler inside it):
 
 ```bash
-uv run celery -A app.worker worker --loglevel=info
-uv run celery -A app.worker beat --loglevel=info --schedule /tmp/celerybeat-schedule
+uv run celery -A app.worker worker --beat --loglevel=info --schedule /tmp/celerybeat-schedule
 ```
+
+On Windows the embedded scheduler doesn't work: run `uv run celery -A app.worker worker
+--pool=solo --loglevel=info`, and beat in a third terminal with
+`uv run celery -A app.worker beat --loglevel=info --schedule %TEMP%\celerybeat-schedule`.
 
 ## Commands
 
@@ -109,7 +111,7 @@ missing from `.env.example`.
 | `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | local Docker values | MariaDB connection. |
 | `DB_POOL_SIZE`, `DB_MAX_OVERFLOW` | `5`, `10` | Connection pool per API process. |
 | `REDIS_URL` | `redis://localhost:6380/0` | Rate limits and the Celery broker. |
-| `CELERY_WORKER_CONCURRENCY` | one per CPU core | Celery worker processes. |
+| `CELERY_WORKER_CONCURRENCY` | `1` | Celery worker processes (each ~50 MB). |
 | `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE` | empty, `0.1` | Error monitoring; off without a DSN. |
 | `IMAGEKIT_PUBLIC_KEY`, `IMAGEKIT_PRIVATE_KEY`, `IMAGEKIT_URL_ENDPOINT` | empty | ImageKit account; media endpoints answer 503 without them; required in production. |
 | `LOG_LEVEL`, `LOG_FORMAT` | `INFO`, `text` | `json` writes one JSON object per line (use it in production). |
@@ -192,8 +194,10 @@ A request goes **router → service → repository → model**. Services raise t
 | `auth.cleanup_refresh_tokens` | daily at 03:00 UTC (beat) | Deletes refresh tokens that expired over 7 days ago. |
 | `system.ping` | on demand | Worker check: returns `pong`. |
 
-Run exactly one `beat` process, or scheduled tasks run twice. Worker and beat log in the
-same format as the API, with the task id where the API puts the request id.
+Beat runs inside the worker (`--beat`), which is right for one worker. Exactly one beat
+may run, or scheduled tasks run twice: with a second worker, drop `--beat` and run
+`celery -A app.worker beat` as its own service. Worker and beat log in the same format as
+the API, with the task id where the API puts the request id.
 
 ## Performance
 
@@ -203,19 +207,32 @@ Measured with `seed` and `load_test` (details in the project plan):
 - Each public read uses a fixed number of SQL queries (1–3, whatever the page size);
   `tests/integration/test_query_budget.py` fails if a change adds one.
 - Indexes back every list's default sort and filters (checked with `EXPLAIN`).
-- Throughput scales with processes: one dev process serves about 100–300 requests a
-  second per endpoint; use `WEB_CONCURRENCY` in production.
+- Throughput scales with processes: one production process serves about 155–520
+  requests a second per endpoint, with no errors at 50 concurrent requests; add
+  processes with `WEB_CONCURRENCY` only when traffic needs it.
+
+Footprint of the production stack, sized for a small server (measured idle; about
+310 MB after a load test):
+
+| Container | Memory | Why so small |
+| --- | --- | --- |
+| API (`fastapi run`, 1 process) | ~98 MB | `WEB_CONCURRENCY=1` |
+| Worker (Celery, with beat inside) | ~107 MB | one thread (`--pool=threads`, `CELERY_WORKER_CONCURRENCY=1`), beat embedded with `--beat` |
+| MariaDB | ~65 MB | 64 MB buffer pool, 8 MB key and log buffers (the data is a few MB) |
+| Redis | ~6 MB | |
+| **Backend total** | **~276 MB** | was ~1,350 MB with Celery's defaults and a separate beat |
 
 ## Production
 
 The production image (`Dockerfile`, default target) runs `fastapi run` as a non-root
-user; `compose.prod.yaml` runs it with MariaDB, Redis, the worker, beat and the frontend.
+user; `compose.prod.yaml` runs it with MariaDB, Redis, the worker (with beat) and the frontend.
 Before going live:
 
 - Set `ENVIRONMENT=production`, your own `JWT_SECRET_KEY`, the ImageKit keys, the
   database and Redis settings, `CORS_ORIGINS` (https), and `LOG_FORMAT=json`. The API
   refuses to start without the JWT key and ImageKit settings.
-- `WEB_CONCURRENCY`: one or two API processes per CPU core. Keep
+- `WEB_CONCURRENCY` (default 1, ~100 MB each): one API process serves a portfolio
+  easily; on a bigger server, one or two per CPU core. Keep
   `WEB_CONCURRENCY × (DB_POOL_SIZE + DB_MAX_OVERFLOW)` below MariaDB's
   `max_connections` (151 by default), with room for the worker and migrations.
 - Behind a proxy or the Next.js server, set `FORWARDED_ALLOW_IPS` to its address (or

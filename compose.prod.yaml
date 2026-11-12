@@ -15,6 +15,9 @@ x-backend-env: &backend-env
 services:
   mariadb:
     image: mariadb:11.8
+    # Small-server memory: the data is a few MB, every table is InnoDB (the MyISAM key
+    # buffer only needs a little), so the default 128 MB caches are mostly unused.
+    command: ["--innodb-buffer-pool-size=64M", "--key-buffer-size=8M", "--innodb-log-buffer-size=8M"]
     environment:
       MARIADB_DATABASE: ${DB_NAME:-portfolio}
       MARIADB_USER: ${DB_USER:-portfolio}
@@ -73,7 +76,9 @@ services:
   worker:
     build:
       context: ./backend
-    command: ["celery", "-A", "app.worker", "worker", "--loglevel=info"]
+    # One process, with the beat scheduler embedded (--beat): fine for a single worker; a
+    # second worker would need beat in its own service, or scheduled tasks run twice.
+    command: ["celery", "-A", "app.worker", "worker", "--pool=threads", "--beat", "--loglevel=info", "--schedule", "/tmp/celerybeat-schedule"]
     env_file:
       - path: ./backend/.env
         required: false
@@ -84,31 +89,13 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "celery", "-A", "app.worker", "inspect", "ping", "--timeout", "5"]
+      # The worker answers a ping, and beat rewrote its schedule files (SQLite, -wal/-shm)
+      # within 15 minutes (it does so every 5 while it runs).
+      test: ["CMD-SHELL", "celery -A app.worker inspect ping --timeout 5 && python -c \"import glob, os, sys, time; sys.exit(time.time() - max(map(os.path.getmtime, glob.glob('/tmp/celerybeat-schedule*'))) > 900)\""]
       interval: 30s
       timeout: 15s
       retries: 5
       start_period: 15s
-
-  # The scheduler (Celery beat): sends scheduled tasks to the worker. Run exactly one.
-  beat:
-    build:
-      context: ./backend
-    command: ["celery", "-A", "app.worker", "beat", "--loglevel=info", "--schedule", "/tmp/celerybeat-schedule"]
-    env_file:
-      - path: ./backend/.env
-        required: false
-    environment: *backend-env
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      # Beat rewrites its schedule files (SQLite, with -wal/-shm) every few minutes while it runs.
-      test: ["CMD", "python", "-c", "import glob, os, sys, time; sys.exit(time.time() - max(map(os.path.getmtime, glob.glob('/tmp/celerybeat-schedule*'))) > 900)"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
 
   frontend:
     build:

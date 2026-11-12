@@ -47,8 +47,9 @@ class Settings(BaseSettings):
 
     # Cache and Celery broker/result backend.
     redis_url: str = "redis://localhost:6380/0"
-    # Celery worker processes; unset uses one per CPU core.
-    celery_worker_concurrency: int | None = Field(default=None, ge=1)
+    # Celery worker processes. One is enough for a portfolio's few, short tasks; each more
+    # costs ~50 MB (Celery's own default, one per CPU core, used ~1 GB on 16 cores).
+    celery_worker_concurrency: int = Field(default=1, ge=1)
 
     # Sentry is enabled only when a DSN is set.
     sentry_dsn: str | None = None
