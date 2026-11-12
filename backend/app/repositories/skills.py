@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.core.pagination import PageParams, Sort
 from app.models import Skill
@@ -19,7 +19,7 @@ class SkillRepository(BaseRepository[Skill]):
         return await self.session.scalar(
             select(Skill)
             .where(Skill.id == skill_id)
-            .options(selectinload(Skill.icon))
+            .options(joinedload(Skill.icon))
             .execution_options(populate_existing=True)
         )
 
@@ -27,7 +27,7 @@ class SkillRepository(BaseRepository[Skill]):
         self, *, category: str | None, q: str | None, sort: Sort, page: PageParams
     ) -> tuple[list[Skill], int]:
         """Filter by category (exact, case-insensitive by collation), search the name."""
-        statement = select(Skill).options(selectinload(Skill.icon))
+        statement = select(Skill).options(joinedload(Skill.icon))
         if category is not None:
             statement = statement.where(Skill.category == category)
         if q:

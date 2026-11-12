@@ -31,6 +31,10 @@ celery_app.conf.update(
     enable_utc=True,
     task_track_started=True,
     broker_connection_retry_on_startup=True,
+    worker_concurrency=settings.celery_worker_concurrency,
+    # One task at a time per process: a task waiting to retry (SMTP, ImageKit) never
+    # holds back others that an idle process could run.
+    worker_prefetch_multiplier=1,
     beat_schedule={
         "cleanup-refresh-tokens": {
             "task": "auth.cleanup_refresh_tokens",

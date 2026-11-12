@@ -10,10 +10,12 @@ unreachable database fails the run instead of skipping it.
 
 import os
 from collections.abc import AsyncIterator, Iterator
+from typing import Any
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import pool
+from sqlalchemy import event, pool
+from sqlalchemy.engine import Connection
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
@@ -103,3 +105,18 @@ async def admin(db_session: AsyncSession) -> User:
 def admin_headers(admin: User) -> dict[str, str]:
     """Headers authenticating as `admin`."""
     return bearer_headers(admin)
+
+
+@pytest.fixture
+def sql_statements(db_session: AsyncSession) -> Iterator[list[str]]:
+    """Every SQL statement the test's connection runs, in order. Clear it right before
+    the request you measure: `sql_statements.clear(); await api.get(...)`."""
+    statements: list[str] = []
+
+    def record(_conn: Connection, _cursor: Any, statement: str, *_args: Any) -> None:
+        statements.append(statement)
+
+    connection = db_session.get_bind()
+    event.listen(connection, "before_cursor_execute", record)
+    yield statements
+    event.remove(connection, "before_cursor_execute", record)

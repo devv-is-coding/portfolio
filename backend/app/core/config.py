@@ -3,7 +3,7 @@ from typing import Annotated, Literal, Self
 from urllib.parse import urlsplit
 
 from fastapi import Depends
-from pydantic import SecretStr, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
@@ -39,9 +39,16 @@ class Settings(BaseSettings):
     db_name: str = "portfolio"
     db_user: str = "portfolio"
     db_password: SecretStr = SecretStr("portfolio")
+    # Connections per API process: up to pool_size kept open, max_overflow more under load.
+    # Keep WEB_CONCURRENCY x (DB_POOL_SIZE + DB_MAX_OVERFLOW) below MariaDB's
+    # max_connections (151 by default), with room for the worker and migrations.
+    db_pool_size: int = Field(default=5, ge=1)
+    db_max_overflow: int = Field(default=10, ge=0)
 
     # Cache and Celery broker/result backend.
     redis_url: str = "redis://localhost:6380/0"
+    # Celery worker processes; unset uses one per CPU core.
+    celery_worker_concurrency: int | None = Field(default=None, ge=1)
 
     # Sentry is enabled only when a DSN is set.
     sentry_dsn: str | None = None

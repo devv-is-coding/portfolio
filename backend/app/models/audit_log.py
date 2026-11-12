@@ -13,6 +13,9 @@ class AuditLog(IdMixin, TimestampMixin, Base):
     __table_args__ = (
         # History of one record: entity_type="project", entity_id=42.
         Index(None, "entity_type", "entity_id"),
+        # The admin list: newest first, optionally one action or a date range.
+        Index(None, "created_at"),
+        Index(None, "action", "created_at"),
         TABLE_OPTIONS,
     )
 

@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.models import Profile
 from app.repositories.base import BaseRepository
@@ -15,8 +15,8 @@ class ProfileRepository(BaseRepository[Profile]):
             select(Profile)
             .where(Profile.id == profile_id)
             .options(
-                selectinload(Profile.avatar),
-                selectinload(Profile.resume),
+                joinedload(Profile.avatar),
+                joinedload(Profile.resume),
                 selectinload(Profile.social_links),
             )
             .execution_options(populate_existing=True)

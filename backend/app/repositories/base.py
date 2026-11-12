@@ -48,11 +48,17 @@ class BaseRepository[ModelT: Base]:
     async def paginate(
         self, statement: Select[ModelT], params: PageParams
     ) -> tuple[list[ModelT], int]:
-        """One page of `statement` plus the total row count across all pages."""
+        """One page of `statement` plus the total row count across all pages.
+
+        A page that comes back less than full is the last one, so its total is known
+        without a COUNT query; most portfolio lists fit on one page.
+        """
+        result = await self.session.scalars(statement.limit(params.size).offset(params.offset))
+        rows = list(result.all())
+        if len(rows) < params.size and (rows or params.page == 1):
+            return rows, params.offset + len(rows)
         count = select(func.count()).select_from(statement.order_by(None).subquery())
-        total = await self.session.scalar(count) or 0
-        rows = await self.session.scalars(statement.limit(params.size).offset(params.offset))
-        return list(rows.all()), total
+        return rows, await self.session.scalar(count) or 0
 
 
 def apply_sort[*RowTs](

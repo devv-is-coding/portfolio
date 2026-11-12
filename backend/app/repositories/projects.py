@@ -1,5 +1,5 @@
 from sqlalchemy import ColumnElement, select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.sql.base import ExecutableOption
 
 from app.core.pagination import PageParams, Sort
@@ -16,13 +16,13 @@ SORT_COLUMNS: SortColumns = {
 
 
 def _summary_options() -> list[ExecutableOption]:
-    return [selectinload(Project.thumbnail), selectinload(Project.skills)]
+    return [joinedload(Project.thumbnail), selectinload(Project.skills)]
 
 
 def _detail_options() -> list[ExecutableOption]:
     return [
         *_summary_options(),
-        selectinload(Project.images).selectinload(ProjectImage.media),
+        selectinload(Project.images).joinedload(ProjectImage.media),
     ]
 
 

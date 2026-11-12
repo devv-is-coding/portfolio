@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload
 
 from app.models import ProjectImage
 from app.repositories.base import BaseRepository
@@ -13,6 +13,6 @@ class ProjectImageRepository(BaseRepository[ProjectImage]):
         return await self.session.scalar(
             select(ProjectImage)
             .where(ProjectImage.id == image_id, ProjectImage.project_id == project_id)
-            .options(selectinload(ProjectImage.media))
+            .options(joinedload(ProjectImage.media))
             .execution_options(populate_existing=True)
         )

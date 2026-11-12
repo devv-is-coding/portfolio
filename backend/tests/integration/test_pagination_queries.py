@@ -88,3 +88,30 @@ async def test_search_is_case_insensitive_and_escapes_wildcards(db_session: Asyn
     assert await emails("100%") == ["100%off"]
     assert await emails("under_") == ["under_score"]
     assert await emails("admin") == ["Admin"]
+
+
+@pytest.mark.parametrize(
+    ("users", "page", "expected_total", "queries"),
+    [
+        (3, 1, 3, 1),  # partial first page: the total is known, no COUNT
+        (25, 3, 25, 1),  # partial last page: offset + rows
+        (20, 2, 20, 2),  # full page: there may be more, so COUNT
+        (20, 1, 20, 2),
+        (5, 2, 5, 2),  # past the end: empty, the COUNT gives the total
+    ],
+)
+async def test_count_runs_only_when_the_page_does_not_tell_the_total(
+    db_session: AsyncSession,
+    sql_statements: list[str],
+    users: int,
+    page: int,
+    expected_total: int,
+    queries: int,
+) -> None:
+    await _users(db_session, *(f"user{i:02d}" for i in range(users)))
+    statement = select(User).where(User.email.endswith(DOMAIN)).order_by(User.id)
+
+    sql_statements.clear()
+    _, total = await UserRepository(db_session).paginate(statement, PageParams(page=page, size=10))
+
+    assert (total, len(sql_statements)) == (expected_total, queries)

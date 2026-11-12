@@ -54,3 +54,7 @@ def test_task_log_lines_use_the_app_format_with_the_task_id() -> None:
     assert "INFO [task-123] app.tasks.test: hi" in during
     assert "[-]" in after
     assert request_id_var.get() is None
+
+
+def test_each_process_takes_one_task_at_a_time() -> None:
+    assert celery_app.conf.worker_prefetch_multiplier == 1

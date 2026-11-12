@@ -3,10 +3,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.core.config import get_settings
 from app.core.database import engine
 from app.core.errors import register_exception_handlers
+from app.core.http_cache import HttpCacheMiddleware
 from app.core.http_security import BodySizeLimitMiddleware, SecurityHeadersMiddleware
 from app.core.logging import RequestContextMiddleware, configure_logging
 from app.core.redis import redis_client
@@ -43,8 +45,9 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 register_exception_handlers(app)
 
-# Inside CORS, so even a 413 carries the CORS headers the browser needs to read it.
+# Inside CORS, so even a 413 or a 304 carries the CORS headers the browser needs.
 app.add_middleware(BodySizeLimitMiddleware, max_bytes=settings.max_request_body_bytes)
+app.add_middleware(HttpCacheMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -54,6 +57,8 @@ app.add_middleware(
     # Lets the browser read the request id, e.g. to show it next to an error.
     expose_headers=["X-Request-ID"],
 )
+# JSON compresses well (a blog post is up to 200,000 characters); small bodies aren't worth it.
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
 app.add_middleware(SecurityHeadersMiddleware, hsts=settings.environment == "production")
 # Added last, so it's the outermost middleware: every response (CORS preflights and
 # errors included) gets a request id and an access log line.

@@ -78,3 +78,19 @@ def test_production_cors_origins_must_be_https() -> None:
 
     assert _production().cors_origins == ["https://example.com"]
     assert IsolatedSettings(cors_origins=["http://localhost:3000"]).cors_origins
+
+
+def test_pool_and_worker_sizes_have_safe_defaults() -> None:
+    settings = IsolatedSettings()
+
+    assert (settings.db_pool_size, settings.db_max_overflow) == (5, 10)
+    assert settings.celery_worker_concurrency is None  # one per CPU core
+
+
+@pytest.mark.parametrize(
+    "invalid",
+    [{"db_pool_size": 0}, {"db_max_overflow": -1}, {"celery_worker_concurrency": 0}],
+)
+def test_pool_and_worker_sizes_are_bounded(invalid: dict[str, Any]) -> None:
+    with pytest.raises(ValidationError):
+        IsolatedSettings(**invalid)

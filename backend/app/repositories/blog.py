@@ -1,5 +1,5 @@
 from sqlalchemy import ColumnElement, select
-from sqlalchemy.orm import defer, selectinload
+from sqlalchemy.orm import defer, joinedload, selectinload
 from sqlalchemy.sql.base import ExecutableOption
 
 from app.core.pagination import PageParams, Sort
@@ -39,8 +39,8 @@ POST_SORT_COLUMNS: SortColumns = {
 
 def _post_options() -> list[ExecutableOption]:
     return [
-        selectinload(BlogPost.cover),
-        selectinload(BlogPost.category),
+        joinedload(BlogPost.cover),
+        joinedload(BlogPost.category),
         selectinload(BlogPost.tags),
     ]
 
