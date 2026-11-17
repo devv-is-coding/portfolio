@@ -45,6 +45,12 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Lighthouse (mobile profile) on the production build: performance >= 0.95,
+      # LCP < 2.5 s, CLS < 0.1, TBT < 200 ms (lab stand-in for INP), JavaScript <= 160 KB.
+      # Pages and limits: frontend/lighthouserc.json.
+      - name: Performance budgets (Lighthouse CI)
+        run: npm run check:budgets
+
   backend:
     # Keep this name: it's a required status check in the GitHub ruleset.
     name: Backend (ruff, mypy, pytest)

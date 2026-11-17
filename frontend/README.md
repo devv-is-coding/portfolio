@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portfolio frontend
 
-## Getting Started
+Next.js 16 (App Router, Cache Components), React 19, TypeScript and Tailwind CSS v4. It talks to the FastAPI backend (`../backend`) over HTTP only.
 
-First, run the development server:
+## Commands
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Run from `frontend/`:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server on http://localhost:3000 (in Docker: `docker compose up --watch` from the repo root) |
+| `npm run check` | Conventions, ESLint and TypeScript (run before every commit) |
+| `npm run build` | Production build |
+| `npm run check:budgets` | Lighthouse CI on the production build (run `npm run build` first) |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Copy `.env.example` to `.env.local`. `NEXT_PUBLIC_API_URL` is the backend URL for the browser; `API_URL` is the backend URL for server code (`http://backend:8000` in Docker). Never give a secret the `NEXT_PUBLIC_` prefix.
 
-## Learn More
+## Design system
 
-To learn more about Next.js, take a look at the following resources:
+The tokens live in `app/globals.css` (`@theme`). The default Tailwind palette is removed, so only these colors exist:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Token | Use |
+|---|---|
+| `ink`, `ink-raised` | Page background, raised surfaces |
+| `line` | Borders and dividers |
+| `paper`, `muted` | Main and secondary text |
+| `accent`, `accent-ink` | Brand lime and the text on it |
+| `signal` | Second accent, used sparingly |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Type: `font-display` (Bricolage Grotesque) for headlines with the fluid `text-display` / `text-headline` sizes, `font-sans` (Geist) for body text, `font-mono` (system monospace) for small labels. Motion: `animate-rise` and `animate-marquee`, both off under `prefers-reduced-motion`.
 
-## Deploy on Vercel
+Shared components live in `components/` (`site-header`, `site-footer`, `mobile-nav`, `color-bends`) and `components/ui/` (`container`, `button-link`, `eyebrow`, `marquee`).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`ColorBends` (the hero background) is React Bits' ColorBends shader in plain WebGL (`lib/color-bends-webgl.ts`), without three.js. Its colors are theme variables (`--color-accent`, `--color-signal`). The WebGL code downloads on the visitor's first interaction (pointer, touch, scroll or key), so page load is unaffected; it renders at half resolution and 30 fps, pauses off screen, and draws one still frame under reduced motion.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Performance budgets
+
+`lighthouserc.json` runs Lighthouse 3 times (mobile profile) and fails CI when the median misses a budget:
+
+- Performance score ≥ 0.95
+- LCP < 2.5 s
+- CLS < 0.1
+- Total blocking time < 200 ms (the lab stand-in for INP)
+- JavaScript ≤ 160 KB transferred per page
+
+Add each new main page to `collect.url`. The check serves the build on port 3210, so it doesn't clash with the dev server on 3000. Reports go to `.lighthouseci/` (gitignored).
