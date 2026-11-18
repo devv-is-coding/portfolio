@@ -56,3 +56,12 @@ export function TextField({ label, name, error, hint, className, ...props }: Com
     </FieldFrame>
   );
 }
+
+export function TextAreaField({ label, name, error, hint, className, ...props }: ComponentProps<"textarea"> & OwnProps) {
+  const control = controlProps(name, error, hint);
+  return (
+    <FieldFrame id={control.id} label={label} error={error} hint={hint} className={className}>
+      <textarea className={cn(CONTROL, "min-h-40")} {...control} {...props} />
+    </FieldFrame>
+  );
+}

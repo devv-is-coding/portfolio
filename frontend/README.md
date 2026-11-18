@@ -56,7 +56,7 @@ Shared components live in `components/` (`site-header`, `site-footer`, `mobile-n
 
 ## Performance budgets
 
-`lighthouserc.json` runs Lighthouse 3 times (mobile profile) and fails CI when the median misses a budget:
+`lighthouserc.js` runs Lighthouse 3 times per page (mobile profile) and fails when the median misses a budget:
 
 - Performance score ≥ 0.95
 - LCP < 2.5 s
@@ -64,4 +64,4 @@ Shared components live in `components/` (`site-header`, `site-footer`, `mobile-n
 - Total blocking time < 200 ms (the lab stand-in for INP)
 - JavaScript ≤ 160 KB transferred per page
 
-Add each new main page to `collect.url`. The check serves the build on port 3210, so it doesn't clash with the dev server on 3000. Reports go to `.lighthouseci/` (gitignored).
+Pages: `/`, `/about`, `/projects`, `/blog`, `/contact` (add new main pages to `pages`). Locally, `npm run build && npm run check:budgets` serves the build on port 3210 (the dev server owns 3000) against the API in `.env.local`. CI runs it in the Docker job against the production images (`LHCI_BASE_URL=http://localhost:3000`), so the pages are measured with a real API. Reports go to `.lighthouseci/` (gitignored).

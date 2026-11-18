@@ -1,63 +1,21 @@
-import Image from "next/image";
-import { ColorBends } from "@/components/color-bends";
-import { ButtonLink } from "@/components/ui/button-link";
-import { Container } from "@/components/ui/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { Marquee } from "@/components/ui/marquee";
-import { SITE } from "@/lib/site";
-import portrait from "@/public/images/portrait.png";
-
-// Placeholder copy until F4 fills the hero from the profile API.
-const MARQUEE_WORDS = ["Plan", "Design", "Develop", "Test", "Deploy", "Repeat"] as const;
-// The theme's two accents, read from the design tokens.
-const BAND_COLORS = ["--color-accent", "--color-signal"] as const;
+import { Suspense } from "react";
+import { FeaturedProjects, LatestPosts, SkillsOverview } from "./_components/home-sections";
+import { Hero } from "./_components/hero";
 
 export default function HomePage() {
   return (
-    <section className="relative isolate overflow-x-clip">
-      {/* Behind the content (isolate + -z-10), dimmed so the headline stays readable. */}
-      <div aria-hidden="true" className="absolute inset-0 -z-10 opacity-40">
-        <ColorBends colors={BAND_COLORS} intensity={1} noise={0.08} />
-      </div>
-      {/* As tall as its content: the text block and the photo end up about the same height. */}
-      <Container className="grid gap-12 pt-16 sm:pt-20 lg:grid-cols-[1fr_auto]">
-        <div className="flex flex-col gap-10 lg:pb-12">
-          <Eyebrow>Full-stack developer</Eyebrow>
-          <h1 className="font-display text-display font-extrabold uppercase lg:text-[clamp(4rem,7.2vw,7.25rem)]">
-            <span className="block animate-rise">Building</span>
-            <span className="block animate-rise [animation-delay:80ms]">fast things</span>
-            <span className="block animate-rise text-accent [animation-delay:160ms]">
-              for the web.
-            </span>
-          </h1>
-          <p className="max-w-xl text-lg leading-relaxed text-muted">
-            APIs that answer in milliseconds and interfaces that feel instant. Here is the work,
-            the writing and the way to reach me.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/projects">See the work</ButtonLink>
-            <ButtonLink href="/contact" variant="outline">
-              Get in touch
-            </ButtonLink>
-          </div>
-        </div>
-        {/* Bottom edge sits on the marquee, so the photo's crop at the waist never shows. */}
-        <div className="relative mx-auto w-[min(70vw,300px)] self-end lg:mx-0 lg:w-[340px] xl:w-[370px]">
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-[-8%] top-[12%] bottom-0 rounded-t-full border border-line bg-ink-raised"
-          />
-          <Image
-            src={portrait}
-            alt={`Portrait of ${SITE.name}`}
-            loading="eager"
-            fetchPriority="high"
-            sizes="(min-width: 1280px) 370px, (min-width: 1024px) 340px, min(70vw, 300px)"
-            className="relative h-auto w-full animate-rise [animation-delay:120ms]"
-          />
-        </div>
-      </Container>
-      <Marquee items={MARQUEE_WORDS} />
-    </section>
+    <>
+      <Hero />
+      {/* Below the fold: each section streams in on its own if it isn't prerendered. */}
+      <Suspense>
+        <FeaturedProjects />
+      </Suspense>
+      <Suspense>
+        <SkillsOverview />
+      </Suspense>
+      <Suspense>
+        <LatestPosts />
+      </Suspense>
+    </>
   );
 }
