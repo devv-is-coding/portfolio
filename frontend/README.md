@@ -9,13 +9,23 @@ Run from `frontend/`:
 | Command | What it does |
 |---|---|
 | `npm run dev` | Development server on http://localhost:3000 (in Docker: `docker compose up --watch` from the repo root) |
-| `npm run check` | Conventions, ESLint and TypeScript (run before every commit) |
+| `npm run check` | Conventions, ESLint, TypeScript and unit tests (run before every commit) |
+| `npm test` | Unit tests (Vitest), e.g. `npm test -- lib/api` |
+| `npm run api:types` | Regenerate `lib/api/schema.ts` from the running backend's `/openapi.json` (after an API change) |
 | `npm run build` | Production build |
 | `npm run check:budgets` | Lighthouse CI on the production build (run `npm run build` first) |
 
 ## Environment
 
 Copy `.env.example` to `.env.local`. `NEXT_PUBLIC_API_URL` is the backend URL for the browser; `API_URL` is the backend URL for server code (`http://backend:8000` in Docker). Never give a secret the `NEXT_PUBLIC_` prefix.
+
+## Talking to the API
+
+Only server code calls the FastAPI backend, through `apiClient()` in `lib/api/client.ts` (`API_URL`). The browser never does: admin tokens live in httpOnly cookies on the Next.js server, and forms post to Server Actions. Paths, parameters and bodies are typed from the generated `lib/api/schema.ts`.
+
+- `unwrap(apiClient().GET("/skills"))` returns the data or throws an `ApiError` (`status`, `code`, `message`, `fieldErrors()` for forms). When the API can't be reached at all it throws `api_unreachable` (503).
+- `apiClient({ accessToken, clientIp })` adds `Authorization: Bearer ...` and `X-Forwarded-For`, so the API's per-IP limits see the visitor.
+- Cached public reads tag themselves with one of `CACHE_TAGS` (`lib/api/cache-tags.ts`); admin writes call `updateTag` for the tags they affect.
 
 ## Design system
 
