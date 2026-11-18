@@ -4,6 +4,11 @@ import { logout } from "@/lib/auth/actions";
 import { SITE } from "@/lib/site";
 import { AdminNav } from "./_components/admin-nav";
 
+// Every admin page reads the session (cookies) and blocks on the server; there's no cached
+// shell to show first. So they opt out of Next.js's instant-navigation validation, here and
+// in each page (validation covers every page segment on its own).
+export const instant = false;
+
 /** The signed-in admin area: navigation on the side (on top on phones), the page beside it. */
 export default function PanelLayout({ children }: LayoutProps<"/admin">) {
   return (

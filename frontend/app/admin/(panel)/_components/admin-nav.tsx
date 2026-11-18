@@ -4,7 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 
-const ITEMS = [{ href: "/admin", label: "Dashboard" }] as const;
+const ITEMS = [
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/messages", label: "Messages" },
+  { href: "/admin/profile", label: "Profile" },
+  { href: "/admin/projects", label: "Projects" },
+  { href: "/admin/skills", label: "Skills" },
+  { href: "/admin/experience", label: "Experience" },
+  { href: "/admin/education", label: "Education" },
+  { href: "/admin/certifications", label: "Certifications" },
+  { href: "/admin/blog/posts", label: "Blog posts" },
+  { href: "/admin/blog/categories", label: "Blog categories" },
+  { href: "/admin/blog/tags", label: "Blog tags" },
+  { href: "/admin/media", label: "Media" },
+  { href: "/admin/settings", label: "Settings" },
+] as const;
 
 /** The admin sections; the current one is marked for sight and for screen readers. */
 export function AdminNav() {
