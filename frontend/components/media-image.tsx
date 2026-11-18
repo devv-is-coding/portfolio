@@ -1,11 +1,5 @@
-import { getImageProps, type ImageLoaderProps } from "next/image";
-
-/** ImageKit resizes and converts on its CDN (`tr=w-…,q-…,f-auto`): no Next.js optimizer needed. */
-function imagekitLoader({ src, width, quality }: ImageLoaderProps): string {
-  const url = new URL(src);
-  url.searchParams.set("tr", `w-${width},q-${quality ?? 75},f-auto`);
-  return url.toString();
-}
+import { getImageProps } from "next/image";
+import { imagekitLoader } from "@/lib/imagekit";
 
 type MediaImageProps = {
   src: string;

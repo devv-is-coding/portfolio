@@ -48,7 +48,7 @@ The tokens live in `app/globals.css` (`@theme`). The default Tailwind palette is
 | `accent`, `accent-ink` | Brand lime and the text on it |
 | `signal` | Second accent, used sparingly |
 
-Type: `font-display` (Bricolage Grotesque) for headlines with the fluid `text-display` / `text-headline` sizes, `font-sans` (Geist) for body text, `font-mono` (system monospace) for small labels. Motion: `animate-rise` and `animate-marquee`, both off under `prefers-reduced-motion`.
+Type: `font-display` (Bricolage Grotesque) for headlines with the fluid `text-display` / `text-headline` sizes, `font-sans` (the system font: a body web font kept LCP over budget) for body text, `font-mono` (system monospace) for small labels. Motion: `animate-rise` and `animate-marquee`, both off under `prefers-reduced-motion`.
 
 Shared components live in `components/` (`site-header`, `site-footer`, `mobile-nav`, `color-bends`) and `components/ui/` (`container`, `button-link`, `eyebrow`, `marquee`).
 

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Geist } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -12,10 +12,8 @@ const display = Bricolage_Grotesque({
   weight: "800",
 });
 
-const sans = Geist({
-  variable: "--font-geist",
-  subsets: ["latin"],
-});
+// Body text uses the system font (globals.css): measured, the Geist web font (30 KB) kept
+// LCP above its 2.5 s budget on Lighthouse's phone profile; without it every page passes.
 
 export const metadata: Metadata = {
   title: { default: SITE.title, template: `%s · ${SITE.name}` },
@@ -31,7 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${display.variable} ${sans.variable} h-full antialiased`}
+      className={`${display.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-ink font-sans text-paper">
         <a

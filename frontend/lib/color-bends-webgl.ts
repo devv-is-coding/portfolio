@@ -162,7 +162,7 @@ function compileShader(gl: WebGLRenderingContext, type: number, source: string) 
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.error(gl.getShaderInfoLog(shader));
+    console.error("ColorBends: the shader did not compile.", gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
     return null;
   }
@@ -182,7 +182,7 @@ function createProgram(gl: WebGLRenderingContext) {
   gl.deleteShader(vertex);
   gl.deleteShader(fragment);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error(gl.getProgramInfoLog(program));
+    console.error("ColorBends: the shader program did not link.", gl.getProgramInfoLog(program));
     gl.deleteProgram(program);
     return null;
   }
@@ -203,8 +203,12 @@ export function startColorBends(
     premultipliedAlpha: true,
     powerPreference: "low-power",
   });
-  const program = gl && createProgram(gl);
-  if (!gl || !program) {
+  // A lost context (GPU reset, too many contexts) can't compile anything: show no bands.
+  if (!gl || gl.isContextLost()) {
+    return null;
+  }
+  const program = createProgram(gl);
+  if (!program) {
     return null;
   }
   gl.useProgram(program);
@@ -324,6 +328,8 @@ export function startColorBends(
     window.removeEventListener("pointermove", trackPointer);
     gl.deleteBuffer(buffer);
     gl.deleteProgram(program);
-    gl.getExtension("WEBGL_lose_context")?.loseContext();
+    // The context is not force-lost here: Next.js keeps a visited page mounted but hidden,
+    // and coming back restarts on this same canvas, which would get the dead context back.
+    // The browser frees it with the canvas.
   };
 }

@@ -23,7 +23,8 @@
   --text-headline--line-height: 0.95;
   --text-headline--letter-spacing: -0.03em;
 
-  /* System monospace for the small labels: a web font there added 23 KB before LCP. */
+  /* System fonts for body text and labels: web fonts there cost LCP (Geist 30 KB, Geist Mono 23 KB). */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -47,7 +48,6 @@
 /* Fonts come from next/font (app/layout.tsx), which sets these variables on <html>. */
 @theme inline {
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {

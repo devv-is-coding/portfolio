@@ -6,14 +6,13 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      {/* Below the fold: each section streams in on its own if it isn't prerendered. */}
-      <Suspense>
+      {/*
+        Below the fold. One boundary with a screen-tall fallback: when the page renders per
+        request the sections stream in together, and the footer never jumps into view first.
+      */}
+      <Suspense fallback={<div className="min-h-svh" />}>
         <FeaturedProjects />
-      </Suspense>
-      <Suspense>
         <SkillsOverview />
-      </Suspense>
-      <Suspense>
         <LatestPosts />
       </Suspense>
     </>
