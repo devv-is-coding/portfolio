@@ -27,6 +27,15 @@ Only server code calls the FastAPI backend, through `apiClient()` in `lib/api/cl
 - `apiClient({ accessToken, clientIp })` adds `Authorization: Bearer ...` and `X-Forwarded-For`, so the API's per-IP limits see the visitor.
 - Cached public reads tag themselves with one of `CACHE_TAGS` (`lib/api/cache-tags.ts`); admin writes call `updateTag` for the tags they affect.
 
+## Admin sign-in
+
+The admin lives under `/admin` (`app/admin/`), never indexed. Create the account in the backend (`create_admin`, see `backend/README.md`), then sign in at `/admin/login`.
+
+- **Tokens stay on the server.** The login Server Action (`lib/auth/actions.ts`) stores the API's access and refresh tokens in httpOnly, SameSite=Lax cookies (`pf_access`, `pf_refresh`; `Secure` in production). Browser JavaScript never sees them.
+- **`proxy.ts`** guards `/admin/*`: no session sends the visitor to `/admin/login?next=...`, and an access token within 60 seconds of expiry is refreshed there, before the page renders. The API rotates refresh tokens and treats a second use as theft, so `lib/auth/refresh.ts` refreshes each token only once per server process (parallel requests share the answer for 30 seconds).
+- **Every admin read and Server Action checks the session itself** through `asAdmin()` (`lib/auth/session.ts`); a 401 from the API sends the visitor to the login page.
+- **Visitor IP:** calls forward the last `X-Forwarded-For` entry (written by the proxy in front of this server) so the API's login limit counts per visitor. The API must trust this server for that (`FORWARDED_ALLOW_IPS` in `backend/.env.example`); without a proxy (local Docker) every login counts as this server's IP.
+
 ## Design system
 
 The tokens live in `app/globals.css` (`@theme`). The default Tailwind palette is removed, so only these colors exist:

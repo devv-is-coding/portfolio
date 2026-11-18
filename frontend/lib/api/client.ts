@@ -30,7 +30,9 @@ export function apiClient({ accessToken, clientIp }: ClientOptions = {}) {
   return createClient<paths>({ baseUrl, headers });
 }
 
-type ApiResult<T> = { data?: T; error?: unknown; response: Response };
+export type ApiClient = ReturnType<typeof apiClient>;
+
+export type ApiResult<T> = { data?: T; error?: unknown; response: Response };
 
 /**
  * Waits for a client call and returns its data, or throws an ApiError: the API's own error
