@@ -28,6 +28,8 @@ CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0", "--port", "3000"]
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# public/ is optional in the repo (Git drops empty folders); the runner copies it.
+RUN mkdir -p public
 # NEXT_PUBLIC_* values are inlined into the browser bundle at build time,
 # so they must be build args, not runtime env vars.
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000

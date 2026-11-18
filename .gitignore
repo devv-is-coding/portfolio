@@ -29,6 +29,7 @@ node_modules/
 out/
 frontend/build/
 coverage/
+.lighthouseci/
 .vercel
 
 npm-debug.log*

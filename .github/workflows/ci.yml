@@ -42,6 +42,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Unit tests (Vitest)
+        run: npm test
+
       - name: Build
         run: npm run build
 
@@ -135,6 +138,19 @@ jobs:
         run: |
           curl -fsS http://localhost:8000/health
           curl -fsS -o /dev/null http://localhost:3000
+
+      # Lighthouse (mobile profile) on the production images with a real API: performance
+      # >= 0.95, LCP < 2.5 s, CLS < 0.1, TBT < 200 ms (lab stand-in for INP), JavaScript
+      # <= 160 KB per page. Pages and limits: frontend/lighthouserc.js.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Performance budgets (Lighthouse CI)
+        working-directory: frontend
+        env:
+          LHCI_BASE_URL: http://localhost:3000
+        run: npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.js
 
       - name: Logs on failure
         if: failure()

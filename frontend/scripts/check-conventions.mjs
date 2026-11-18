@@ -25,6 +25,7 @@ const IGNORED_DIRS = new Set([
   "out",
   "build",
   "coverage",
+  ".lighthouseci",
 ]);
 
 const CODE_EXTS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"]);

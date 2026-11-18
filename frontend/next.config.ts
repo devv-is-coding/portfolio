@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   // Docker builds set NEXT_OUTPUT=standalone for a minimal self-contained server (see Dockerfile).
   // Vercel builds leave it unset and use Vercel's own output.
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
+  images: {
+    // AVIF first: about half the bytes of WebP for the hero portrait, which is the LCP on phones.
+    formats: ["image/avif", "image/webp"],
+  },
   cacheComponents: true,
   partialPrefetching: true,
   // Monorepo: the repo root also has a package-lock.json (commitlint), so pin the

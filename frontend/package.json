@@ -9,15 +9,22 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "check:conventions": "node scripts/check-conventions.mjs",
-    "check": "npm run check:conventions && npm run lint && npm run typecheck"
+    "check": "npm run check:conventions && npm run lint && npm run typecheck && npm run test",
+    "check:budgets": "npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.js",
+    "test": "node scripts/run-vitest.mjs run",
+    "api:types": "openapi-typescript http://127.0.0.1:8000/openapi.json --output lib/api/schema.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "gsap": "^3.15.1",
     "motion": "^14.9.1",
     "next": "16.4.5",
+    "openapi-fetch": "^0.17.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
@@ -26,7 +33,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "^16.4.5",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.12"
   }
 }
