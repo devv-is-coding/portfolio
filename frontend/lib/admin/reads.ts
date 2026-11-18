@@ -32,6 +32,13 @@ export function getSkillsForAdmin() {
   return asAdmin((api) => api.GET("/skills", { params: { query: { size: ALL } } })).then((page) => page.items);
 }
 
+export function getCategoriesForAdmin() {
+  return asAdmin((api) => api.GET("/blog/categories", { params: { query: { size: ALL } } })).then((page) => page.items);
+}
+
+export function getTagsForAdmin() {
+  return asAdmin((api) => api.GET("/blog/tags", { params: { query: { size: ALL } } })).then((page) => page.items);
+}
 
 /** The profile for editing (not the cached public read), or null before the first save. */
 export async function adminProfile() {
