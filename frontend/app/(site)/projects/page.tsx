@@ -38,8 +38,9 @@ async function ProjectList({ searchParams }: Pick<PageProps<"/projects">, "searc
     getSkills(),
   ]);
 
+  // At least a screen tall, like the fallback: a short (empty) list never pulls the footer up.
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex min-h-svh flex-col gap-10">
       {skills.length > 0 && (
         <nav aria-label="Filter by skill">
           <ul className="flex flex-wrap gap-2">
