@@ -1,0 +1,9 @@
+# The only public entry point of the single-server setup (see docs/deployment.md).
+# Caddy gets and renews the HTTPS certificate for SITE_DOMAIN itself.
+#
+# It sets X-Forwarded-For to the visitor's address and drops any value the visitor sent, so
+# the Next.js server (which forwards the last entry to the API) passes on the real address.
+{$SITE_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy frontend:3000
+}

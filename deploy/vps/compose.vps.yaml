@@ -1,0 +1,77 @@
+# Single-server production (option A in docs/deployment.md): Caddy (HTTPS) -> Next.js -> API,
+# everything on one machine. Used on top of compose.prod.yaml, from the repo root:
+#
+#   SITE_DOMAIN=example.com docker compose -f compose.prod.yaml -f deploy/vps/compose.vps.yaml up -d --build
+#
+# Only Caddy is published (80/443). The API trusts X-Forwarded-For from the Next.js server
+# alone (its fixed address below), so the login and contact limits count each visitor.
+
+# The API in production mode (it then refuses dev secrets and non-https origins), JSON logs,
+# and real database passwords: compose.prod.yaml falls back to the local "portfolio"/"root".
+# The browser never calls the API (forms go through the Next.js server): no CORS origins.
+x-production-env: &production-env
+  ENVIRONMENT: production
+  LOG_FORMAT: json
+  CORS_ORIGINS: "[]"
+  DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.31.240.0/24
+
+services:
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?Set SITE_DOMAIN, e.g. example.com}
+    volumes:
+      - ./deploy/vps/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      frontend:
+        condition: service_healthy
+
+  frontend:
+    restart: unless-stopped
+    ports: !reset []
+    networks:
+      default:
+        ipv4_address: 172.31.240.10
+
+  backend:
+    restart: unless-stopped
+    ports: !reset []
+    environment:
+      <<: *production-env
+      FORWARDED_ALLOW_IPS: 172.31.240.10
+
+  # Back after a crash or a reboot (compose.prod.yaml sets no restart policy).
+  worker:
+    restart: unless-stopped
+    environment: *production-env
+
+  # Migrations only need the database (no env file, so no production-mode settings).
+  migrate:
+    environment:
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+
+  mariadb:
+    restart: unless-stopped
+    environment:
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD}
+
+  redis:
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:

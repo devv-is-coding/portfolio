@@ -42,8 +42,9 @@ async function PostList({ searchParams }: Pick<PageProps<"/blog">, "searchParams
   const tagName = tags.find((item) => item.slug === tag)?.name;
   const filtered = Boolean(category || tag);
 
+  // At least a screen tall, like the fallback: a short (empty) list never pulls the footer up.
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex min-h-svh flex-col gap-10">
       {categories.length > 0 && (
         <nav aria-label="Filter by category">
           <ul className="flex flex-wrap gap-2">
