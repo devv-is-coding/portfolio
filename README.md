@@ -22,8 +22,12 @@ docker compose -f compose.prod.yaml up --build   # production images
 ## Checks
 
 ```bash
-cd frontend && npm run check                                   # conventions, lint, types
+cd frontend && npm run check                                   # conventions, lint, types, unit tests
 cd backend && uv run ruff check . && uv run mypy app tests && uv run pytest
 ```
 
 CI (`.github/workflows/ci.yml`) runs the frontend checks, the backend checks, a Docker build + smoke test, and the commit-message check ([Conventional Commits](https://www.conventionalcommits.org)) on every push and pull request.
+
+## Deployment
+
+[`docs/deployment.md`](docs/deployment.md): one server with Docker and Caddy (`deploy/vps/`), or Vercel for the frontend; production settings and the checks after deploying.
