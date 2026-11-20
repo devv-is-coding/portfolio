@@ -45,15 +45,15 @@ export function Hero() {
         <div className="flex flex-col gap-10 lg:pb-12">
           <Eyebrow>Full-stack developer</Eyebrow>
           <h1 className="font-display text-display font-extrabold uppercase lg:text-[clamp(4rem,7.2vw,7.25rem)]">
-            <span className="block animate-rise">Building</span>
-            <span className="block animate-rise [animation-delay:80ms]">fast things</span>
-            <span className="block animate-rise text-accent [animation-delay:160ms]">
-              for the web.
+            <span className="block animate-rise">Building the systems</span>
+            <span className="block animate-rise text-accent [animation-delay:120ms]">
+              that power the web.
             </span>
           </h1>
           <p className="max-w-xl text-lg leading-relaxed text-muted">
-            APIs that answer in milliseconds and interfaces that feel instant. Here is the work,
-            the writing and the way to reach me.
+            I engineer APIs, architect backend systems, and build web applications that solve
+            real-world problems. Focused on clean code, thoughtful architecture, and meaningful
+            solutions.
           </p>
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/projects">See the work</ButtonLink>
