@@ -17,7 +17,9 @@
   --color-signal: #ff6b5b; /* errors and warnings only (4.9:1 on slate) */
 
   /* Fluid display sizes: phone -> wide desktop. */
-  --text-display: clamp(2.5rem, 11.5vw, 10.5rem);
+  /* The hero headline, sized to its column (an @container): its longest line ("Creating
+     solutions", 10.32em) fits on one line from sm up; phones stack one word per line. */
+  --text-display: clamp(2.75rem, 9.2cqi, 6rem);
   --text-display--line-height: 0.88;
   --text-display--letter-spacing: -0.035em;
   --text-headline: clamp(2.25rem, 6vw, 4.75rem);

@@ -36,21 +36,25 @@ export function Hero() {
   });
   return (
     <section className="relative isolate overflow-x-clip">
-      {/* Behind the content (isolate + -z-10), dimmed so the headline stays readable. */}
-      <div aria-hidden="true" className="absolute inset-0 -z-10 opacity-40">
+      {/* Behind the content (isolate + -z-10), dimmed and softened so it never competes with the headline. */}
+      <div aria-hidden="true" className="absolute inset-0 -z-10 opacity-25 blur-lg">
         <ColorBends colors={BAND_COLORS} intensity={1} noise={0.08} />
       </div>
       {/* As tall as its content: the text block and the photo end up about the same height. */}
       <Container className="grid gap-12 pt-16 sm:pt-20 lg:grid-cols-[1fr_auto]">
-        <div className="flex flex-col gap-10 lg:pb-12">
+        {/* A size container: the headline's size follows this column's width (cqi). */}
+        <div className="@container flex flex-col gap-10 lg:pb-12">
           <Eyebrow>Full-stack developer</Eyebrow>
-          <h1 className="font-display text-display font-extrabold uppercase lg:text-[clamp(4rem,7.2vw,7.25rem)]">
-            <span className="block animate-rise">Building the systems</span>
+          <h1 className="font-display text-display font-extrabold uppercase">
+            {/* Two lines from sm up; on phones one word per line, so the size can stay big. */}
+            <span className="block animate-rise">
+              Building <span className="max-sm:block">systems</span>
+            </span>
             <span className="block animate-rise text-accent [animation-delay:120ms]">
-              that power the web.
+              Creating <span className="max-sm:block">solutions</span>
             </span>
           </h1>
-          <p className="max-w-xl text-lg leading-relaxed text-muted">
+          <p className="max-w-2xl text-lg leading-[1.7] text-muted sm:text-xl">
             I engineer APIs, architect backend systems, and build web applications that solve
             real-world problems. Focused on clean code, thoughtful architecture, and meaningful
             solutions.
