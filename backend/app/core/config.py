@@ -10,6 +10,7 @@ from sqlalchemy import URL
 # Local development only. Production refuses to start with it (see Settings).
 DEV_JWT_SECRET_KEY = "dev-only-insecure-jwt-secret-key-change-me"
 MIN_JWT_SECRET_KEY_LENGTH = 32
+MIN_FRONTEND_API_KEY_LENGTH = 32
 
 
 class Settings(BaseSettings):
@@ -54,6 +55,11 @@ class Settings(BaseSettings):
     # Sentry is enabled only when a DSN is set.
     sentry_dsn: str | None = None
     sentry_traces_sample_rate: float = 0.1
+
+    # Shared with the Next.js server, which sends it in X-Frontend-Key. In production the API
+    # answers only requests that carry it (and /health), so nobody else can call it; in
+    # development it isn't checked. Required in production.
+    frontend_api_key: SecretStr | None = None
 
     # Signs access tokens (HS256). Production must set its own random value.
     jwt_secret_key: SecretStr = SecretStr(DEV_JWT_SECRET_KEY)
@@ -125,6 +131,21 @@ class Settings(BaseSettings):
         if self.environment == "production" and key == DEV_JWT_SECRET_KEY:
             raise ValueError("JWT_SECRET_KEY must be set in production")
         return self
+
+    @model_validator(mode="after")
+    def _check_frontend_api_key(self) -> Self:
+        key = self.frontend_api_key.get_secret_value() if self.frontend_api_key else ""
+        if self.environment == "production" and not key:
+            raise ValueError("FRONTEND_API_KEY must be set in production")
+        if key and len(key) < MIN_FRONTEND_API_KEY_LENGTH:
+            raise ValueError(
+                f"FRONTEND_API_KEY must be at least {MIN_FRONTEND_API_KEY_LENGTH} characters"
+            )
+        return self
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment == "production"
 
     @property
     def database_url(self) -> URL:

@@ -3,7 +3,8 @@
 const MONTH_YEAR = new Intl.DateTimeFormat("en", { month: "short", year: "numeric", timeZone: "UTC" });
 const FULL_DATE = new Intl.DateTimeFormat("en", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
-function parse(value: string): Date {
+/** An API date or timestamp as a Date. */
+export function parseApiDate(value: string): Date {
   // A date-only value would otherwise be read as UTC midnight already; timestamps from the
   // API are naive UTC, so mark them as UTC explicitly.
   return new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(value) || value.length === 10 ? value : `${value}Z`);
@@ -11,12 +12,12 @@ function parse(value: string): Date {
 
 /** `Mar 2024` */
 export function formatMonthYear(value: string): string {
-  return MONTH_YEAR.format(parse(value));
+  return MONTH_YEAR.format(parseApiDate(value));
 }
 
 /** `March 1, 2024` */
 export function formatDate(value: string): string {
-  return FULL_DATE.format(parse(value));
+  return FULL_DATE.format(parseApiDate(value));
 }
 
 /** `Mar 2021 – Present`, `Mar 2021 – Jan 2024`, or just the known end. */

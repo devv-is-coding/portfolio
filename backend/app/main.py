@@ -9,7 +9,11 @@ from app.core.config import get_settings
 from app.core.database import engine
 from app.core.errors import register_exception_handlers
 from app.core.http_cache import HttpCacheMiddleware
-from app.core.http_security import BodySizeLimitMiddleware, SecurityHeadersMiddleware
+from app.core.http_security import (
+    BodySizeLimitMiddleware,
+    FrontendOnlyMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.core.logging import RequestContextMiddleware, configure_logging
 from app.core.redis import redis_client
 from app.core.sentry import init_sentry
@@ -98,6 +102,9 @@ app = FastAPI(
     version=API_VERSION,
     description=API_DESCRIPTION,
     openapi_tags=TAGS,
+    # Swagger UI, ReDoc and the schema only outside production: there the API answers the
+    # Next.js server alone, which never needs them.
+    openapi_url=None if settings.is_production else "/openapi.json",
     lifespan=lifespan,
 )
 register_exception_handlers(app)
@@ -116,7 +123,10 @@ app.add_middleware(
 )
 # JSON compresses well (a blog post is up to 200,000 characters); small bodies aren't worth it.
 app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
-app.add_middleware(SecurityHeadersMiddleware, hsts=settings.environment == "production")
+# Only production checks the key (and refuses to start without one, see Settings).
+gate_key = settings.frontend_api_key if settings.is_production else None
+app.add_middleware(FrontendOnlyMiddleware, key=gate_key.get_secret_value() if gate_key else None)
+app.add_middleware(SecurityHeadersMiddleware, hsts=settings.is_production)
 # Added last, so it's the outermost middleware: every response (CORS preflights and
 # errors included) gets a request id and an access log line.
 app.add_middleware(RequestContextMiddleware)

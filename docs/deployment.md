@@ -57,7 +57,7 @@ The Next.js app on Vercel (project root `frontend`), the backend on a server as 
 
 - **Vercel environment variables:** `API_URL=https://api.example.com` (Production and Preview). It must be reachable during the build, so pages prerender with their data; without it the build reads data per request instead.
 - **Open issue, before going live:** Vercel calls the API from changing addresses, so `FORWARDED_ALLOW_IPS` can't name them. The login and contact limits would then count Vercel's addresses instead of visitors (one attacker could lock the admin login for everyone), and trusting all addresses would let anyone fake theirs. This option needs a small backend change first: the Next.js server signs the visitor address with a shared secret, and the API trusts the address only with that secret.
-- `/docs` stays public on the API domain (decision D7); admin routes still need a token.
+- Only the Next.js server can call the API: it sends `FRONTEND_API_KEY` in `X-Frontend-Key`, and a production API answers 403 to anything else except `/health`. `/docs` and `/openapi.json` are off in production.
 
 ## Settings
 
@@ -66,6 +66,7 @@ The Next.js app on Vercel (project root `frontend`), the backend on a server as 
 | Variable | Value |
 |---|---|
 | `JWT_SECRET_KEY` | A long random value, e.g. `openssl rand -base64 48`. The API refuses to start with the development key. |
+| `FRONTEND_API_KEY` | Another long random value, the same as the frontend's. Required in production: the API answers only requests carrying it. On one server it goes in the shell environment instead (`compose.vps.yaml` passes it to both apps). |
 | `IMAGEKIT_PUBLIC_KEY`, `IMAGEKIT_PRIVATE_KEY`, `IMAGEKIT_URL_ENDPOINT` | From the ImageKit dashboard; required in production. A custom ImageKit domain must also be added to the CSP in `frontend/next.config.ts`. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_STARTTLS`, `SMTP_FROM`, `CONTACT_NOTIFY_EMAIL` | Optional: email notice for new contact messages. |
 | `SENTRY_DSN` | Optional: error reporting. |
@@ -78,6 +79,7 @@ The Next.js app on Vercel (project root `frontend`), the backend on a server as 
 | Variable | Value |
 |---|---|
 | `API_URL` | Where the Next.js server reaches the API: `http://backend:8000` on one server (set in `compose.prod.yaml`), `https://api.example.com` on Vercel. |
+| `FRONTEND_API_KEY` | The backend's `FRONTEND_API_KEY`, same value (server only, never `NEXT_PUBLIC_`). Without it a production API answers 403 to every page. |
 
 `NEXT_PUBLIC_API_URL` is still passed to the image build but no code uses it: the browser never calls the API.
 

@@ -5,7 +5,8 @@ to manage its content. Python 3.13, FastAPI, Pydantic v2, SQLAlchemy 2 (async) w
 Alembic on MariaDB 11.8, Redis, Celery, managed with [uv](https://docs.astral.sh/uv/).
 Files live in [ImageKit](https://imagekit.io).
 
-Interactive API docs: http://localhost:8000/docs (OpenAPI at `/openapi.json`).
+Interactive API docs: http://localhost:8000/docs (OpenAPI at `/openapi.json`), in
+development only: production hides them.
 
 ## Contents
 
@@ -116,6 +117,7 @@ missing from `.env.example`.
 | `IMAGEKIT_PUBLIC_KEY`, `IMAGEKIT_PRIVATE_KEY`, `IMAGEKIT_URL_ENDPOINT` | empty | ImageKit account; media endpoints answer 503 without them; required in production. |
 | `LOG_LEVEL`, `LOG_FORMAT` | `INFO`, `text` | `json` writes one JSON object per line (use it in production). |
 | `JWT_SECRET_KEY` | development key | Signs access tokens; 32+ random characters, required in production. |
+| `FRONTEND_API_KEY` | empty | Shared with the Next.js server (`X-Frontend-Key`); in production the API answers only requests with it (and `/health`). 32+ random characters, required in production, not checked in development. |
 | `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS` | `15`, `30` | Token lifetimes. |
 | `LOGIN_MAX_ATTEMPTS`, `LOGIN_WINDOW_SECONDS` | `5`, `900` | Failed logins per IP before 429. |
 | `CONTACT_MAX_MESSAGES`, `CONTACT_WINDOW_SECONDS` | `5`, `3600` | Contact messages per IP before 429. |
@@ -124,7 +126,7 @@ missing from `.env.example`.
 | `WEB_CONCURRENCY` | `1` | API processes (read by uvicorn under `fastapi run`). |
 | `FORWARDED_ALLOW_IPS` | `127.0.0.1,::1` | Proxies trusted for `X-Forwarded-For` (read by uvicorn). |
 
-Secrets (`DB_PASSWORD`, `JWT_SECRET_KEY`, `IMAGEKIT_PRIVATE_KEY`, `SMTP_PASSWORD`) belong
+Secrets (`DB_PASSWORD`, `JWT_SECRET_KEY`, `FRONTEND_API_KEY`, `IMAGEKIT_PRIVATE_KEY`, `SMTP_PASSWORD`) belong
 only in `.env` or the platform's settings, never in code, `.env.example` or images.
 
 ## Architecture
@@ -228,9 +230,10 @@ The production image (`Dockerfile`, default target) runs `fastapi run` as a non-
 user; `compose.prod.yaml` runs it with MariaDB, Redis, the worker (with beat) and the frontend.
 Before going live:
 
-- Set `ENVIRONMENT=production`, your own `JWT_SECRET_KEY`, the ImageKit keys, the
-  database and Redis settings, `CORS_ORIGINS` (https), and `LOG_FORMAT=json`. The API
-  refuses to start without the JWT key and ImageKit settings.
+- Set `ENVIRONMENT=production`, your own `JWT_SECRET_KEY`, `FRONTEND_API_KEY` (the same
+  value as the frontend's), the ImageKit keys, the database and Redis settings,
+  `CORS_ORIGINS` (https), and `LOG_FORMAT=json`. The API refuses to start without the JWT
+  key, the frontend key and the ImageKit settings.
 - `WEB_CONCURRENCY` (default 1, ~100 MB each): one API process serves a portfolio
   easily; on a bigger server, one or two per CPU core. Keep
   `WEB_CONCURRENCY × (DB_POOL_SIZE + DB_MAX_OVERFLOW)` below MariaDB's
@@ -240,4 +243,6 @@ Before going live:
   directly: clients could fake their IP.
 - Migrations run with `alembic upgrade head` before the new version starts (the
   `migrate` service in both compose files does this).
-- The API docs (`/docs`, `/openapi.json`) stay public; admin routes still need a token.
+- Only the Next.js server can call the API: every request without `X-Frontend-Key`
+  answers 403, except `/health` (health checks). `/docs`, `/redoc` and `/openapi.json`
+  don't exist in production; use a local development API to read them.
