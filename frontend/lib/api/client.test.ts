@@ -48,13 +48,27 @@ describe("apiClient", () => {
     expect(calls[0]?.headers.get("X-Forwarded-For")).toBe("203.0.113.7");
   });
 
-  it("sends neither header by default", async () => {
+  it("sends none of the optional headers by default", async () => {
     const calls = stubFetch(() => json(200, { status: "ok" }));
 
     await unwrap(apiClient().GET("/health"));
 
     expect(calls[0]?.headers.has("Authorization")).toBe(false);
     expect(calls[0]?.headers.has("X-Forwarded-For")).toBe(false);
+    expect(calls[0]?.headers.has("X-Frontend-Key")).toBe(false);
+  });
+
+  it("sends FRONTEND_API_KEY on every call when it is set", async () => {
+    vi.stubEnv("FRONTEND_API_KEY", "frontend-key-1");
+    const calls = stubFetch(() => json(200, { status: "ok" }));
+
+    await unwrap(apiClient().GET("/health"));
+    await unwrap(apiClient({ accessToken: "token-1" }).GET("/auth/me"));
+
+    expect(calls.map((call) => call.headers.get("X-Frontend-Key"))).toEqual([
+      "frontend-key-1",
+      "frontend-key-1",
+    ]);
   });
 
   it("refuses to run without API_URL", () => {

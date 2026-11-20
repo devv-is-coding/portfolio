@@ -27,6 +27,11 @@ export function apiClient({ accessToken, clientIp }: ClientOptions = {}) {
   if (clientIp) {
     headers["X-Forwarded-For"] = clientIp;
   }
+  // A production API answers only callers with this key (development doesn't check it).
+  const frontendKey = process.env.FRONTEND_API_KEY;
+  if (frontendKey) {
+    headers["X-Frontend-Key"] = frontendKey;
+  }
   return createClient<paths>({ baseUrl, headers });
 }
 

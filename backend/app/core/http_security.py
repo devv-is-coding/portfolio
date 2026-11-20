@@ -1,4 +1,7 @@
-"""HTTP hardening middleware (pure ASGI): security headers and a request body limit."""
+"""HTTP hardening middleware (pure ASGI): security headers, a request body limit and the
+production gate that lets only the site's own Next.js server call the API."""
+
+import hmac
 
 from starlette.datastructures import Headers, MutableHeaders
 from starlette.exceptions import HTTPException
@@ -7,7 +10,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from app.core.errors import error_response
 
 # The API serves JSON, never pages to frame or content to sniff. (No Content-Security-
-# Policy: the public Swagger UI at /docs loads its scripts from a CDN.)
+# Policy: the Swagger UI at /docs, development only, loads its scripts from a CDN.)
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
@@ -15,6 +18,13 @@ SECURITY_HEADERS = {
 }
 # One year, production only: once a browser sees it, it refuses plain HTTP to this host.
 HSTS_HEADER = ("Strict-Transport-Security", "max-age=31536000")
+
+# The header the Next.js server sends FRONTEND_API_KEY in.
+FRONTEND_KEY_HEADER = "x-frontend-key"
+# Answered without the key: platform and container health checks can't send it.
+OPEN_PATHS = frozenset({"/health"})
+FORBIDDEN = 403
+FORBIDDEN_MESSAGE = "This API only answers the site's own server"
 
 PAYLOAD_TOO_LARGE = 413
 PAYLOAD_TOO_LARGE_MESSAGE = "Request body too large"
@@ -81,3 +91,28 @@ class BodySizeLimitMiddleware:
             return message
 
         await self.app(scope, receive_with_limit, send)
+
+
+class FrontendOnlyMiddleware:
+    """403 for every request without the shared frontend key, except OPEN_PATHS.
+
+    The browser never calls the API (pages and forms go through the Next.js server), so in
+    production the only legitimate caller is that server. `key=None` turns the gate off
+    (development: Swagger UI, curl and tests keep working).
+    """
+
+    def __init__(self, app: ASGIApp, *, key: str | None) -> None:
+        self.app = app
+        self.key = key.encode() if key else None
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if self.key is None or scope["type"] != "http" or scope["path"] in OPEN_PATHS:
+            await self.app(scope, receive, send)
+            return
+        sent = Headers(scope=scope).get(FRONTEND_KEY_HEADER, "")
+        # Constant-time comparison, so the response time never gives the key away.
+        if not hmac.compare_digest(sent.encode(), self.key):
+            response = error_response(FORBIDDEN, "forbidden", FORBIDDEN_MESSAGE)
+            await response(scope, receive, send)
+            return
+        await self.app(scope, receive, send)

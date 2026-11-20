@@ -7,6 +7,7 @@ from app.core.config import Settings
 from tests.fakes import IsolatedSettings
 
 STRONG_KEY = "a-production-secret-key-of-at-least-32-chars"
+FRONTEND_KEY = "a-frontend-api-key-of-at-least-32-characters"
 IMAGEKIT: dict[str, Any] = {
     "imagekit_public_key": "public_test",
     "imagekit_private_key": "private_test",
@@ -18,6 +19,7 @@ def _production(**overrides: Any) -> Settings:
     values: dict[str, Any] = {
         "environment": "production",
         "jwt_secret_key": STRONG_KEY,
+        "frontend_api_key": FRONTEND_KEY,
         "cors_origins": ["https://example.com"],
     }
     values |= IMAGEKIT | overrides
@@ -38,6 +40,23 @@ def test_production_accepts_its_own_settings() -> None:
     settings = _production()
 
     assert settings.jwt_secret_key.get_secret_value() == STRONG_KEY
+
+
+def test_production_requires_the_frontend_api_key() -> None:
+    with pytest.raises(ValidationError, match="FRONTEND_API_KEY must be set in production"):
+        _production(frontend_api_key=None)
+
+
+def test_a_short_frontend_api_key_is_rejected() -> None:
+    with pytest.raises(ValidationError, match="FRONTEND_API_KEY must be at least 32 characters"):
+        IsolatedSettings(frontend_api_key=SecretStr("too-short"))
+
+
+def test_the_frontend_api_key_is_optional_in_development() -> None:
+    settings = IsolatedSettings()
+
+    assert settings.frontend_api_key is None
+    assert not settings.is_production
 
 
 @pytest.mark.parametrize("missing", list(IMAGEKIT))
