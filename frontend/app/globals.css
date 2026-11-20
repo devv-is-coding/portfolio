@@ -6,15 +6,16 @@
  */
 @theme {
   --color-*: initial;
-  /* Mostly charcoal, then off-white text, lime only for accents (about 75 / 20 / 5). */
-  --color-ink: #111318; /* page background: deep charcoal */
-  --color-ink-raised: #292d35; /* cards, menus, surfaces: slate charcoal */
-  --color-line: #3a3f4a; /* borders, dividers: still visible on slate */
-  --color-paper: #f5f5f0; /* headings and text: off-white */
-  --color-muted: #a3a8b3; /* secondary text (7.8:1 on ink, 5.8:1 on slate) */
-  --color-accent: #b7f34a; /* electric lime: accents and highlights only */
-  --color-accent-ink: #111318; /* text on accent */
-  --color-signal: #ff6b5b; /* errors and warnings only (4.9:1 on slate) */
+  /* "Marigold": warm black, warm off-white text, and the amber of the portrait's sweater
+     for accents only (about 75 / 20 / 5). */
+  --color-ink: #12110f; /* page background: warm black */
+  --color-ink-raised: #1f1d1a; /* cards, menus, surfaces */
+  --color-line: #35312b; /* borders, dividers */
+  --color-paper: #f5f1e8; /* headings and text: warm off-white (16.7:1 on ink) */
+  --color-muted: #aba49b; /* secondary text (7.7:1 on ink, 6.8:1 on surfaces) */
+  --color-accent: #f2b43a; /* marigold: accents and highlights only (10.2:1 on ink) */
+  --color-accent-ink: #12110f; /* text on accent */
+  --color-signal: #ff6b5b; /* errors and warnings only (6.0:1 on surfaces) */
 
   /* Fluid display sizes: phone -> wide desktop. */
   /* The hero headline, sized to its column (an @container): its longest line ("Creating

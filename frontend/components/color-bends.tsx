@@ -16,7 +16,7 @@ const FIRST_INTERACTION_EVENTS = [
 ] as const;
 
 type ColorBendsProps = Partial<ColorBendsSettings> & {
-  /** Up to 8 colors: hex (`#b7f34a`) or a theme variable (`--color-accent`). */
+  /** Up to 8 colors: hex (`#f2b43a`) or a theme variable (`--color-accent`). */
   colors: readonly string[];
   className?: string;
 };
