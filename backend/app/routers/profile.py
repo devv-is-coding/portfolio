@@ -16,18 +16,18 @@ from app.schemas.profile import (
 )
 from app.services import profile as profile_service
 
-router = APIRouter(prefix="/profile", tags=["profile"])
+router = APIRouter(prefix="/profile", tags=["profile"], responses=error_responses(503))
 admin_router = APIRouter(
     prefix="/admin/profile",
     tags=["profile"],
     dependencies=[Depends(get_current_user)],
-    responses=error_responses(401, 422),
+    responses=error_responses(401, 422, 503),
 )
 
 LinkId = Annotated[int, Path(ge=1)]
 
 
-@router.get("", responses=error_responses(404, 503))
+@router.get("", responses=error_responses(404))
 async def get_profile(session: SessionDep, url_endpoint: MediaUrlEndpointDep) -> ProfileRead:
     """The portfolio owner's public profile with avatar, resume and social links.
 
@@ -36,7 +36,7 @@ async def get_profile(session: SessionDep, url_endpoint: MediaUrlEndpointDep) ->
     return await profile_service.get_profile(session, url_endpoint)
 
 
-@admin_router.put("", responses={201: {"description": "Profile created"}, **error_responses(503)})
+@admin_router.put("", responses={201: {"description": "Profile created"}})
 async def replace_profile(
     body: ProfileWrite,
     response: Response,
@@ -54,7 +54,7 @@ async def replace_profile(
     return profile
 
 
-@admin_router.patch("", responses=error_responses(404, 503))
+@admin_router.patch("", responses=error_responses(404))
 async def update_profile(
     body: ProfileUpdate,
     context: AuditContextDep,

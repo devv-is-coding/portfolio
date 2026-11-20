@@ -15,7 +15,7 @@ from typing import Any, ClassVar
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.schemas.errors import ErrorBody, ErrorDetail, ErrorResponse
@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 
 # MariaDB error code for a duplicate value in a unique index.
 _ER_DUP_ENTRY = 1062
+
+# The message for every "database can't be reached" answer (/health and the handler below),
+# so clients such as the Next.js site can tell an outage from a bug.
+DATABASE_UNAVAILABLE = "Database unavailable"
 
 # Codes for errors raised by FastAPI/Starlette themselves (unknown route, wrong method).
 _HTTP_ERROR_CODES = {
@@ -182,6 +186,14 @@ async def _handle_integrity_error(request: Request, exc: Exception) -> JSONRespo
     return error_response(409, ConflictError.code, ConflictError.default_message)
 
 
+async def _handle_database_unavailable(request: Request, exc: Exception) -> JSONResponse:
+    """MariaDB can't be reached (down, restarting, connection lost): 503, not a 500, so
+    clients know it's an outage. The driver's message names the host, never credentials."""
+    assert isinstance(exc, OperationalError)  # registered for it only
+    logger.warning("Database unavailable on %s %s: %s", request.method, request.url.path, exc.orig)
+    return error_response(503, ServiceUnavailableError.code, DATABASE_UNAVAILABLE)
+
+
 async def _handle_unexpected_error(_request: Request, _exc: Exception) -> JSONResponse:
     # Logged by the server; the request middleware (app/core/logging.py) logs it
     # with the request id before this fallback is reached.
@@ -193,4 +205,5 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(StarletteHTTPException, _handle_http_exception)
     app.add_exception_handler(RequestValidationError, _handle_validation_error)
     app.add_exception_handler(IntegrityError, _handle_integrity_error)
+    app.add_exception_handler(OperationalError, _handle_database_unavailable)
     app.add_exception_handler(Exception, _handle_unexpected_error)

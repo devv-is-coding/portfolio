@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.database import SessionDep, ping
-from app.core.errors import ServiceUnavailableError, error_responses
+from app.core.errors import DATABASE_UNAVAILABLE, ServiceUnavailableError, error_responses
 from app.schemas.health import HealthResponse
 
 router = APIRouter(tags=["health"])
@@ -13,7 +13,7 @@ async def check_database(session: SessionDep) -> None:
     try:
         await ping(session)
     except SQLAlchemyError as exc:
-        raise ServiceUnavailableError("Database unavailable") from exc
+        raise ServiceUnavailableError(DATABASE_UNAVAILABLE) from exc
 
 
 @router.get(

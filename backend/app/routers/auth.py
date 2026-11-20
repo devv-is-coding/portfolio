@@ -10,7 +10,7 @@ from app.schemas.user import UserRead
 from app.services import auth as auth_service
 from app.services.rate_limit import login_rate_limiter
 
-router = APIRouter(prefix="/auth", tags=["auth"], responses=error_responses(422))
+router = APIRouter(prefix="/auth", tags=["auth"], responses=error_responses(422, 503))
 
 
 def _token_response(tokens: auth_service.TokenPair) -> TokenResponse:
