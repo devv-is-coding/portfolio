@@ -16,8 +16,13 @@ const display = Bricolage_Grotesque({
 // LCP above its 2.5 s budget on Lighthouse's phone profile; without it every page passes.
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE.url),
   title: { default: SITE.title, template: `%s · ${SITE.name}` },
   description: SITE.description,
+  applicationName: SITE.name,
+  authors: [{ name: SITE.name, url: SITE.url }],
+  openGraph: { type: "website", siteName: SITE.name, locale: "en_US" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

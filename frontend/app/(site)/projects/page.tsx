@@ -13,6 +13,7 @@ import { SITE } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Projects",
   description: `Projects built by ${SITE.name}.`,
+  alternates: { canonical: "/projects" },
 };
 
 const PAGE_SIZE = 12;

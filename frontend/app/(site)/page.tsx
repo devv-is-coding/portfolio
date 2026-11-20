@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
 import { FeaturedProjects, LatestPosts, SkillsOverview } from "./_components/home-sections";
 import { Hero } from "./_components/hero";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default function HomePage() {
   return (

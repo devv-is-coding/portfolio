@@ -14,6 +14,7 @@ import {
 export const metadata: Metadata = {
   title: "About",
   description: `Who ${SITE.name} is: experience, education, certifications and skills.`,
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {
