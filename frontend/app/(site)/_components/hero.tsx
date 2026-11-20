@@ -9,8 +9,8 @@ import { SITE } from "@/lib/site";
 import portrait from "@/public/images/portrait.png";
 
 const MARQUEE_WORDS = ["Plan", "Design", "Develop", "Test", "Deploy", "Repeat"] as const;
-// The theme's two accents, read from the design tokens.
-const BAND_COLORS = ["--color-accent", "--color-signal"] as const;
+// Lime with a slate band for depth, read from the design tokens: no color outside the palette.
+const BAND_COLORS = ["--color-accent", "--color-line"] as const;
 
 const PORTRAIT_ALT = `Portrait of ${SITE.name}`;
 

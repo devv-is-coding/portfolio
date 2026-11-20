@@ -11,7 +11,7 @@ export default function SiteError({ reset }: { error: Error & { digest?: string 
     <Container className="flex flex-col items-start gap-8 py-24 sm:py-32">
       <Eyebrow>Something went wrong</Eyebrow>
       <h1 className="font-display text-headline font-extrabold uppercase">
-        This page didn&apos;t <span className="text-signal">load.</span>
+        This page didn&apos;t <span className="text-accent">load.</span>
       </h1>
       <p className="max-w-md text-lg text-muted">
         Part of the site is briefly unavailable. Try again in a moment.
