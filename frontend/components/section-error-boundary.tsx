@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, type ReactNode } from "react";
+import { OutageMessage } from "@/components/outage-message";
 import { Container } from "@/components/ui/container";
 
 type Props = { children: ReactNode };
@@ -25,7 +26,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
     }
     return (
       <Container className="flex flex-col items-start gap-4 border-t border-line py-16">
-        <p className="text-muted">This part of the page couldn&apos;t load right now.</p>
+        <OutageMessage fallback="This part of the page couldn't load right now." className="text-muted" />
         <button
           type="button"
           onClick={() => window.location.reload()}

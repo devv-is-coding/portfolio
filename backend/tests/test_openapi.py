@@ -73,6 +73,9 @@ def test_bearer_auth_and_errors_are_documented(name: str, operation: dict[str, A
         assert "401" in responses, name
     if operation.get("parameters") or operation.get("requestBody"):
         assert "422" in responses, name
+    # Every operation reads the database (admin routes at least load the admin), so each
+    # can answer 503 "Database unavailable" during an outage.
+    assert "503" in responses, name
 
 
 def _body_models() -> dict[str, type[BaseModel]]:

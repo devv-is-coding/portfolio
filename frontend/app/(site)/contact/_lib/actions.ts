@@ -2,6 +2,7 @@
 
 import { apiClient, unwrap } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/errors";
+import { isDatabaseDown } from "@/lib/api/status";
 import { clientIp } from "@/lib/request";
 
 export type ContactValues = { name: string; email: string; subject: string; message: string };
@@ -13,6 +14,13 @@ export type ContactState =
 
 function text(formData: FormData, name: string): string {
   return String(formData.get(name) ?? "").trim();
+}
+
+function failureMessage(error: unknown): string {
+  if (isDatabaseDown(error)) {
+    return "My database is offline right now, so the message can't be saved. Please try again in a few minutes.";
+  }
+  return error instanceof ApiError ? error.message : "Sending failed. Please try again.";
 }
 
 /**
@@ -36,8 +44,7 @@ export async function sendMessage(_state: ContactState, formData: FormData): Pro
     if (error instanceof ApiError && error.status === 422) {
       return { status: "failed", error: "Please check the highlighted fields.", fieldErrors: error.fieldErrors(), values };
     }
-    const message = error instanceof ApiError ? error.message : "Sending failed. Please try again.";
-    return { status: "failed", error: message, fieldErrors: {}, values };
+    return { status: "failed", error: failureMessage(error), fieldErrors: {}, values };
   }
   return { status: "sent" };
 }

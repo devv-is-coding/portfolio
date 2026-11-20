@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel, Field
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from app.core.errors import (
     ConflictError,
@@ -55,6 +55,11 @@ def _build_app() -> FastAPI:
     async def foreign_key() -> None:
         raise _integrity_error(1452, "Cannot add or update a child row: fk_projects_media")
 
+    @app.get("/database-down")
+    async def database_down() -> None:
+        cause = Exception(2003, "Can't connect to MySQL server on 'db.internal'")
+        raise OperationalError("SELECT skills ...", {}, cause)
+
     @app.get("/crash")
     async def crash() -> None:
         raise RuntimeError("secret internal detail")
@@ -85,6 +90,7 @@ def _error(code: str, message: str) -> dict[str, object]:
         ("/rate-limited", 429, "rate_limited", "Too many requests, try again later"),
         ("/duplicate", 409, "conflict", "A record with these values already exists"),
         ("/foreign-key", 409, "conflict", "The request conflicts with existing data"),
+        ("/database-down", 503, "service_unavailable", "Database unavailable"),
         ("/crash", 500, "internal_error", "Internal server error"),
         ("/no-such-route", 404, "not_found", "Not Found"),
     ],
@@ -104,13 +110,15 @@ def test_headers_are_kept(client: TestClient) -> None:
 
 
 def test_internals_never_leak(client: TestClient) -> None:
-    for path in ("/crash", "/duplicate", "/foreign-key"):
+    for path in ("/crash", "/duplicate", "/foreign-key", "/database-down"):
         body = client.get(path).text
         for leak in (
             "secret internal detail",
             "INSERT",
+            "SELECT",
             "uq_skills_slug",
             "fk_projects",
+            "db.internal",
             "Traceback",
         ):
             assert leak not in body
@@ -126,6 +134,16 @@ def test_duplicate_values_never_reach_the_log(
     assert "python" not in caplog.text  # the duplicate value
     assert "Duplicate value on GET /duplicate" in caplog.text
     assert "fk_projects_media" in caplog.text  # constraint names stay, for debugging
+
+
+def test_database_outage_is_logged_for_the_operator(
+    client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    with caplog.at_level("WARNING", logger="app.core.errors"):
+        client.get("/database-down")
+
+    assert "Database unavailable on GET /database-down" in caplog.text
+    assert "Can't connect to MySQL server" in caplog.text  # the cause, in the log only
 
 
 def test_wrong_method_is_405(client: TestClient) -> None:

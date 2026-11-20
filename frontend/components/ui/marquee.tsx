@@ -15,7 +15,7 @@ export function Marquee({ items }: MarqueeProps) {
   const half = Array.from({ length: REPEATS }, () => items).flat();
 
   return (
-    <div aria-hidden="true" className="overflow-hidden bg-accent text-accent-ink">
+    <div aria-hidden="true" className="overflow-hidden border-y border-line bg-ink-raised text-paper">
       <div className="flex w-max animate-marquee">
         {[0, 1].map((copy) => (
           <ul
@@ -25,7 +25,7 @@ export function Marquee({ items }: MarqueeProps) {
             {half.map((item, index) => (
               <li key={index} className="flex items-center gap-8">
                 {item}
-                <span className="text-xl">✦</span>
+                <span className="text-xl text-accent">✦</span>
               </li>
             ))}
           </ul>
