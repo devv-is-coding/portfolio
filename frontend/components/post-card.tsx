@@ -16,7 +16,7 @@ export function PostCard({ post, headingLevel: Heading = "h3" }: PostCardProps) 
         {post.published_at && <time dateTime={post.published_at}>{formatDate(post.published_at)}</time>}
         {post.category && <span className="text-accent">{post.category.name}</span>}
       </p>
-      <Heading className="font-display text-2xl font-extrabold transition-colors group-hover:text-accent sm:text-3xl">
+      <Heading className="font-display text-2xl font-extrabold transition-colors group-hover:text-accent">
         <Link href={`/blog/${post.slug}`} className="after:absolute after:inset-0">
           {post.title}
         </Link>

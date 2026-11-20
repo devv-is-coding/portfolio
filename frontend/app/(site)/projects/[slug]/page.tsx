@@ -48,7 +48,7 @@ async function ProjectDetails({ params }: Pick<PageProps<"/projects/[slug]">, "p
         </Link>
         <header className="flex flex-col gap-6">
           <Eyebrow>{project.published_at ? formatMonthYear(project.published_at) : "Project"}</Eyebrow>
-          <h1 className="font-display text-display font-extrabold uppercase">{project.title}</h1>
+          <h1 className="font-display text-headline font-extrabold uppercase">{project.title}</h1>
           {project.short_description && <p className="max-w-2xl text-xl text-muted">{project.short_description}</p>}
           <div className="flex flex-wrap gap-3">
             {project.live_url && (

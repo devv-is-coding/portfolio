@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { SectionHeading } from "@/components/section-heading";
 import { Container } from "@/components/ui/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { SITE } from "@/lib/site";
 import { SkillsOverview } from "@/app/(site)/_components/home-sections";
 import {
@@ -19,9 +19,8 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <Container className="flex flex-col gap-6 pt-16 sm:pt-24">
-        <Eyebrow>About</Eyebrow>
-        <h1 className="font-display text-display font-extrabold uppercase">About me</h1>
+      <Container className="pt-16 sm:pt-24">
+        <SectionHeading as="h1" eyebrow="About" title="About me" />
       </Container>
       {/*
         One boundary for everything below the title, at least a screen tall, fallback and
