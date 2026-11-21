@@ -6,15 +6,16 @@ import { ResourceForm } from "@/components/admin/resource-form";
 import { MediaImage } from "@/components/media-image";
 import { mediaOptions } from "@/lib/admin/media-options";
 import { adminItem, getSkillsForAdmin, idParam } from "@/lib/admin/reads";
+import { GalleryPicker } from "../_components/gallery-picker";
 import {
-  addProjectImage,
+  addProjectImages,
   deleteProject,
   deleteProjectImage,
   saveProject,
   saveProjectImage,
   saveProjectSkills,
 } from "../_lib/actions";
-import { IMAGE_ADD_FIELDS, IMAGE_EDIT_FIELDS, PROJECT_FIELDS } from "../_lib/fields";
+import { IMAGE_EDIT_FIELDS, PROJECT_FIELDS } from "../_lib/fields";
 
 // Session-gated: blocks on the server (see the panel layout).
 export const instant = false;
@@ -30,6 +31,9 @@ export default async function EditProjectPage({ params }: PageProps<"/admin/proj
     getSkillsForAdmin(),
     mediaOptions(),
   ]);
+  const inGallery = new Set(project.images.map((item) => item.media_id));
+  // New pictures go after the last one.
+  const nextOrder = Math.max(-1, ...project.images.map((item) => item.display_order)) + 1;
 
   return (
     <>
@@ -76,8 +80,43 @@ export default async function EditProjectPage({ params }: PageProps<"/admin/proj
             </div>
           </div>
         ))}
-        <h3 className="mt-4 font-semibold">Add an image</h3>
-        <ResourceForm fields={IMAGE_ADD_FIELDS} action={addProjectImage.bind(null, id)} media={media} submitLabel="Add image" />
+        <h3 className="mt-4 font-semibold">Add pictures</h3>
+        {media.image.length === 0 ? (
+          <p className="text-muted">No pictures in the library yet: upload them under Media first.</p>
+        ) : (
+          <GalleryPicker action={addProjectImages.bind(null, id, nextOrder)}>
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {media.image.map((choice) => {
+                const added = inGallery.has(choice.id);
+                return (
+                  <li key={choice.id}>
+                    <label
+                      className={
+                        added
+                          ? "flex h-full flex-col gap-2 rounded-xl border border-line p-2 opacity-50"
+                          : "flex h-full cursor-pointer flex-col gap-2 rounded-xl border border-line p-2 hover:border-paper has-checked:border-accent has-checked:bg-accent/10 has-focus-visible:outline-2 has-focus-visible:outline-accent"
+                      }
+                    >
+                      <MediaImage
+                        src={choice.url}
+                        alt=""
+                        width={choice.width}
+                        height={choice.height}
+                        sizes="(min-width: 1024px) 200px, 45vw"
+                        loading="lazy"
+                        className="aspect-[4/3] w-full rounded-lg bg-ink-raised object-contain"
+                      />
+                      <span className="flex items-start gap-2 text-xs">
+                        <input type="checkbox" name="ids" value={choice.id} disabled={added} className="mt-0.5 accent-accent" />
+                        <span className="break-all">{added ? `In the gallery · ${choice.label}` : choice.label}</span>
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          </GalleryPicker>
+        )}
       </section>
     </>
   );

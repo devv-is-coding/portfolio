@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { DataTable, PageHeader } from "@/components/admin/admin-ui";
-import { Pagination } from "@/components/pagination";
+import { ListPagination } from "@/components/admin/list-pagination";
 import { Tag } from "@/components/ui/tag";
+import { ADMIN_PAGE_SIZE, keepPageInRange } from "@/lib/admin/list-pages";
 import { asAdmin } from "@/lib/auth/session";
 import { formatDate } from "@/lib/format";
 import { firstParam, listHref, pageParam } from "@/lib/search-params";
@@ -12,16 +13,15 @@ export const instant = false;
 
 export const metadata: Metadata = { title: "Messages" };
 
-const PAGE_SIZE = 25;
-
 export default async function MessagesPage({ searchParams }: PageProps<"/admin/messages">) {
   const params = await searchParams;
   const requested = firstParam(params.status);
   const status = isMessageStatus(requested) ? requested : undefined;
   const page = pageParam(params.page);
   const messages = await asAdmin((api) =>
-    api.GET("/admin/contact-messages", { params: { query: { status, page, size: PAGE_SIZE } } }),
+    api.GET("/admin/contact-messages", { params: { query: { status, page, size: ADMIN_PAGE_SIZE } } }),
   );
+  keepPageInRange(messages, "/admin/messages", { status });
 
   return (
     <>
@@ -58,13 +58,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/admin/m
           },
         ]}
       />
-      <div className="mt-8">
-        <Pagination
-          page={messages.page}
-          pages={messages.pages}
-          href={(target) => listHref("/admin/messages", { status, page: target })}
-        />
-      </div>
+      <ListPagination path="/admin/messages" list={messages} params={{ status }} />
     </>
   );
 }

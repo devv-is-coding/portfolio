@@ -15,12 +15,6 @@ export const PROJECT_FIELDS: readonly Field[] = [
   { kind: "number", name: "display_order", label: "Display order", min: 0, max: 10000, hint: "Lower comes first." },
 ];
 
-export const IMAGE_ADD_FIELDS: readonly Field[] = [
-  { kind: "media", name: "media_id", label: "Image", mediaKind: "image", required: true },
-  { kind: "text", name: "alt_text", label: "Alt text", maxLength: 255, hint: "Empty: the image's own alt text." },
-  { kind: "number", name: "display_order", label: "Display order", min: 0, max: 10000 },
-];
-
 export const IMAGE_EDIT_FIELDS: readonly Field[] = [
   { kind: "text", name: "alt_text", label: "Alt text", maxLength: 255 },
   { kind: "number", name: "display_order", label: "Display order", min: 0, max: 10000 },

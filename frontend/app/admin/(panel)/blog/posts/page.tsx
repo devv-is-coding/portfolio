@@ -4,14 +4,20 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { statusLabel } from "@/lib/admin/options";
 import { asAdmin } from "@/lib/auth/session";
 import { formatDate } from "@/lib/format";
+import { ListPagination } from "@/components/admin/list-pagination";
+import { ADMIN_PAGE_SIZE, keepPageInRange } from "@/lib/admin/list-pages";
+import { pageParam } from "@/lib/search-params";
 
 // Session-gated: blocks on the server (see the panel layout).
 export const instant = false;
 
 export const metadata: Metadata = { title: "Posts" };
 
-export default async function PostsAdminPage() {
-  const { items, total } = await asAdmin((api) => api.GET("/admin/blog/posts", { params: { query: { size: 100 } } }));
+export default async function PostsAdminPage({ searchParams }: PageProps<"/admin/blog/posts">) {
+  const page = pageParam((await searchParams).page);
+  const list = await asAdmin((api) => api.GET("/admin/blog/posts", { params: { query: { page, size: ADMIN_PAGE_SIZE } } }));
+  keepPageInRange(list, "/admin/blog/posts");
+  const { items } = list;
   return (
     <>
       <PageHeader
@@ -34,7 +40,7 @@ export default async function PostsAdminPage() {
           { label: "Published", value: (post) => (post.published_at ? formatDate(post.published_at) : "—") },
         ]}
       />
-      {total > items.length && <p className="mt-6 text-sm text-muted">Showing the newest {items.length} of {total}.</p>}
+      <ListPagination path="/admin/blog/posts" list={list} />
     </>
   );
 }

@@ -7,14 +7,20 @@ import { Tag } from "@/components/ui/tag";
 import { asAdmin } from "@/lib/auth/session";
 import { deleteSetting, saveSetting } from "./_lib/actions";
 import { SETTING_EDIT_FIELDS, SETTING_NEW_FIELDS } from "./_lib/fields";
+import { ListPagination } from "@/components/admin/list-pagination";
+import { ADMIN_PAGE_SIZE, keepPageInRange } from "@/lib/admin/list-pages";
+import { pageParam } from "@/lib/search-params";
 
 // Session-gated: blocks on the server (see the panel layout).
 export const instant = false;
 
 export const metadata: Metadata = { title: "Settings" };
 
-export default async function SettingsPage() {
-  const { items } = await asAdmin((api) => api.GET("/admin/settings", { params: { query: { size: 100 } } }));
+export default async function SettingsPage({ searchParams }: PageProps<"/admin/settings">) {
+  const page = pageParam((await searchParams).page);
+  const list = await asAdmin((api) => api.GET("/admin/settings", { params: { query: { page, size: ADMIN_PAGE_SIZE } } }));
+  keepPageInRange(list, "/admin/settings");
+  const { items } = list;
 
   return (
     <>
@@ -39,6 +45,7 @@ export default async function SettingsPage() {
           </article>
         ))}
       </div>
+      <ListPagination path="/admin/settings" list={list} />
       <section className="mt-16 flex flex-col gap-6 border-t border-line pt-10" aria-labelledby="new-setting">
         <h2 id="new-setting" className="font-display text-2xl font-extrabold">
           New setting

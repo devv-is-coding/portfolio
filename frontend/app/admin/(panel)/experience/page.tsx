@@ -3,14 +3,20 @@ import { DataTable, PageHeader } from "@/components/admin/admin-ui";
 import { ButtonLink } from "@/components/ui/button-link";
 import { formatPeriod } from "@/lib/format";
 import { asAdmin } from "@/lib/auth/session";
+import { ListPagination } from "@/components/admin/list-pagination";
+import { ADMIN_PAGE_SIZE, keepPageInRange } from "@/lib/admin/list-pages";
+import { pageParam } from "@/lib/search-params";
 
 // Session-gated: blocks on the server (see the panel layout).
 export const instant = false;
 
 export const metadata: Metadata = { title: "Experience" };
 
-export default async function ExperienceAdminPage() {
-  const { items } = await asAdmin((api) => api.GET("/experiences", { params: { query: { size: 100 } } }));
+export default async function ExperienceAdminPage({ searchParams }: PageProps<"/admin/experience">) {
+  const page = pageParam((await searchParams).page);
+  const list = await asAdmin((api) => api.GET("/experiences", { params: { query: { page, size: ADMIN_PAGE_SIZE } } }));
+  keepPageInRange(list, "/admin/experience");
+  const { items } = list;
   return (
     <>
       <PageHeader
@@ -32,6 +38,7 @@ export default async function ExperienceAdminPage() {
           { label: "Period", value: (item) => formatPeriod(item.start_date, item.end_date) },
         ]}
       />
+      <ListPagination path="/admin/experience" list={list} />
     </>
   );
 }
