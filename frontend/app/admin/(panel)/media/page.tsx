@@ -8,6 +8,9 @@ import { asAdmin } from "@/lib/auth/session";
 import { MediaUploader } from "./_components/media-uploader";
 import { deleteMedia, saveMediaAlt } from "./_lib/actions";
 import { MEDIA_FIELDS } from "./_lib/fields";
+import { ListPagination } from "@/components/admin/list-pagination";
+import { ADMIN_PAGE_SIZE, keepPageInRange } from "@/lib/admin/list-pages";
+import { pageParam } from "@/lib/search-params";
 
 // Session-gated: blocks on the server (see the panel layout).
 export const instant = false;
@@ -20,8 +23,11 @@ function fileSize(bytes: number): string {
   return bytes < KB * KB ? `${Math.round(bytes / KB)} KB` : `${(bytes / KB / KB).toFixed(1)} MB`;
 }
 
-export default async function MediaPage() {
-  const { items, total } = await asAdmin((api) => api.GET("/admin/media", { params: { query: { size: 100 } } }));
+export default async function MediaPage({ searchParams }: PageProps<"/admin/media">) {
+  const page = pageParam((await searchParams).page);
+  const list = await asAdmin((api) => api.GET("/admin/media", { params: { query: { page, size: ADMIN_PAGE_SIZE } } }));
+  keepPageInRange(list, "/admin/media");
+  const { items } = list;
 
   return (
     <>
@@ -55,7 +61,7 @@ export default async function MediaPage() {
             </article>
           ))}
         </div>
-        {total > items.length && <p className="text-sm text-muted">Showing the newest {items.length} of {total}.</p>}
+        <ListPagination path="/admin/media" list={list} />
       </section>
     </>
   );
