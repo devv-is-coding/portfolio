@@ -59,27 +59,30 @@ export default async function EditProjectPage({ params }: PageProps<"/admin/proj
 
       <section className={SECTION} aria-labelledby="gallery-heading">
         <h2 id="gallery-heading" className="font-display text-2xl font-extrabold">Gallery</h2>
-        {project.images.map((item) => (
-          <div key={item.id} className="grid gap-6 rounded-2xl border border-line p-5 md:grid-cols-[12rem_1fr]">
-            <MediaImage
-              src={item.image.url}
-              alt={item.image.alt_text ?? ""}
-              width={item.image.width}
-              height={item.image.height}
-              sizes="192px"
-              className="h-auto w-full rounded-lg"
-            />
-            <div className="flex flex-col gap-4">
-              <ResourceForm
-                fields={IMAGE_EDIT_FIELDS}
-                action={saveProjectImage.bind(null, id, item.id)}
-                values={{ alt_text: item.image.alt_text, display_order: item.display_order }}
-                submitLabel="Save image"
-              />
-              <DeleteButton action={deleteProjectImage.bind(null, id, item.id)} what="this image from the gallery" label="Remove" />
-            </div>
-          </div>
-        ))}
+        {project.images.length > 0 && (
+          // Three to a row on wide screens, so a long gallery takes a few rows, not a long scroll.
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {project.images.map((item) => (
+              <li key={item.id} className="flex flex-col gap-4 rounded-2xl border border-line p-4">
+                <MediaImage
+                  src={item.image.url}
+                  alt={item.image.alt_text ?? ""}
+                  width={item.image.width}
+                  height={item.image.height}
+                  sizes="(min-width: 1024px) 320px, (min-width: 640px) 45vw, 100vw"
+                  className="aspect-[4/3] w-full rounded-lg bg-ink-raised object-contain"
+                />
+                <ResourceForm
+                  fields={IMAGE_EDIT_FIELDS}
+                  action={saveProjectImage.bind(null, id, item.id)}
+                  values={{ alt_text: item.image.alt_text, display_order: item.display_order }}
+                  submitLabel="Save image"
+                />
+                <DeleteButton action={deleteProjectImage.bind(null, id, item.id)} what="this image from the gallery" label="Remove" />
+              </li>
+            ))}
+          </ul>
+        )}
         <h3 className="mt-4 font-semibold">Add pictures</h3>
         {media.image.length === 0 ? (
           <p className="text-muted">No pictures in the library yet: upload them under Media first.</p>
