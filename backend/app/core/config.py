@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     # Celery worker processes. One is enough for a portfolio's few, short tasks; each more
     # costs ~50 MB (Celery's own default, one per CPU core, used ~1 GB on 16 cores).
     celery_worker_concurrency: int = Field(default=1, ge=1)
+    # Who runs background work (ImageKit deletions, contact emails): "celery" queues it for
+    # the worker; "api" runs it in the API process right after the response, for hosts
+    # without a worker (FastAPI Cloud). Scheduled jobs (the daily refresh token cleanup)
+    # need Celery beat, so they don't run with "api".
+    task_runner: Literal["celery", "api"] = "celery"
 
     # Sentry is enabled only when a DSN is set.
     sentry_dsn: str | None = None

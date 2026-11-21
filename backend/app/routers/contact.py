@@ -1,10 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 
 from app.core.config import SettingsDep
 from app.core.database import SessionDep
-from app.core.email import SmtpConfig
+from app.core.email import ContactNotification, SmtpConfig
 from app.core.errors import error_responses
 from app.core.pagination import Page, PageParamsDep, SearchQuery, Sort, sort_query
 from app.core.redis import RedisDep
@@ -13,7 +13,7 @@ from app.models.enums import ContactMessageStatus
 from app.schemas.contact import ContactMessageCreate, ContactMessageRead, ContactMessageUpdate
 from app.services import contact as contact_service
 from app.services.rate_limit import contact_rate_limiter
-from app.tasks.contact import enqueue_notification
+from app.tasks.contact import enqueue_notification, notify_admin_in_api
 
 router = APIRouter(prefix="/contact", tags=["contact"], responses=error_responses(422, 503))
 admin_router = APIRouter(
@@ -27,9 +27,21 @@ MessageId = Annotated[int, Path(ge=1)]
 MessageSort = Annotated[Sort, Depends(sort_query("created_at", "name", default="-created_at"))]
 
 
-def get_notifier(settings: SettingsDep) -> contact_service.Notifier | None:
-    """Queues the email (Celery) when SMTP is configured. Overridden in tests."""
-    return enqueue_notification if SmtpConfig.from_settings(settings) else None
+def get_notifier(
+    settings: SettingsDep, background: BackgroundTasks
+) -> contact_service.Notifier | None:
+    """Emails the site owner after the response when SMTP is configured: queued for the
+    Celery worker, or sent by the API itself with TASK_RUNNER=api. Overridden in tests."""
+    config = SmtpConfig.from_settings(settings)
+    if config is None:
+        return None
+    if settings.task_runner == "celery":
+        return enqueue_notification
+
+    def notify_in_api(notification: ContactNotification) -> None:
+        background.add_task(notify_admin_in_api, notification, config)
+
+    return notify_in_api
 
 
 NotifierDep = Annotated[contact_service.Notifier | None, Depends(get_notifier)]

@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { TextAreaField, TextField } from "@/components/ui/fields";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { type ContactState, sendMessage } from "../_lib/actions";
@@ -9,16 +10,48 @@ import { type ContactState, sendMessage } from "../_lib/actions";
 // Limits from the API (ContactMessageCreate), so the browser catches them first.
 const MAX = { name: 150, email: 255, subject: 255, message: 5000 } as const;
 
+/** The contact form; after a message is sent, a confirmation with a way to write another. */
 export function ContactForm() {
+  // A new key starts a fresh form (empty fields, no state) for "Send another message".
+  const [round, setRound] = useState(0);
+  return <MessageForm key={round} onSendAnother={() => setRound((n) => n + 1)} />;
+}
+
+/**
+ * Shown in place of the form once the message is saved. It takes focus, so it's scrolled into
+ * view and read out by screen readers, and the visitor can't miss that it worked.
+ */
+function SentConfirmation({ onSendAnother }: { onSendAnother: () => void }) {
+  const panel = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    panel.current?.focus();
+  }, []);
+  return (
+    <div
+      ref={panel}
+      tabIndex={-1}
+      role="status"
+      className="flex flex-col items-start gap-4 rounded-2xl border border-accent/50 bg-accent/10 p-6 outline-none sm:p-8"
+    >
+      <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-full bg-accent text-2xl font-extrabold text-accent-ink">
+        ✓
+      </span>
+      <h2 className="font-display text-2xl font-extrabold">Message sent</h2>
+      <p className="text-muted">
+        Thanks for reaching out. Your message arrived safely; I read every one and reply to the email you gave as soon as I can.
+      </p>
+      <Button type="button" variant="outline" size="sm" onClick={onSendAnother}>
+        Send another message
+      </Button>
+    </div>
+  );
+}
+
+function MessageForm({ onSendAnother }: { onSendAnother: () => void }) {
   const [state, action] = useActionState<ContactState, FormData>(sendMessage, { status: "idle" });
 
   if (state.status === "sent") {
-    return (
-      <Alert tone="success" className="text-base">
-        <p className="font-semibold">Thanks, your message is on its way.</p>
-        <p className="mt-1 text-muted">I read every message and reply as soon as I can.</p>
-      </Alert>
-    );
+    return <SentConfirmation onSendAnother={onSendAnother} />;
   }
 
   const failed = state.status === "failed" ? state : undefined;

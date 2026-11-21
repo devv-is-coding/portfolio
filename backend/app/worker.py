@@ -7,6 +7,9 @@ are in `beat_schedule`. Exactly one beat may run, or scheduled tasks run twice: 
 second worker, drop `--beat` and run `celery -A app.worker beat` on its own.
 """
 
+import ssl
+from typing import Any
+
 from celery import Celery
 from celery.schedules import crontab
 from celery.signals import setup_logging, task_postrun, task_prerun
@@ -17,6 +20,13 @@ from app.core.sentry import init_sentry
 
 settings = get_settings()
 init_sentry(settings)
+
+
+def redis_ssl_options(redis_url: str) -> dict[str, Any] | None:
+    """Celery refuses a rediss:// URL unless told how to check the server's certificate:
+    verify it, as a browser would."""
+    return {"ssl_cert_reqs": ssl.CERT_REQUIRED} if redis_url.startswith("rediss://") else None
+
 
 celery_app = Celery(
     "portfolio",
@@ -37,6 +47,8 @@ celery_app.conf.update(
     # One task at a time per process: a task waiting to retry (SMTP, ImageKit) never
     # holds back others that an idle process could run.
     worker_prefetch_multiplier=1,
+    broker_use_ssl=redis_ssl_options(settings.redis_url),
+    redis_backend_use_ssl=redis_ssl_options(settings.redis_url),
     beat_schedule={
         "cleanup-refresh-tokens": {
             "task": "auth.cleanup_refresh_tokens",
