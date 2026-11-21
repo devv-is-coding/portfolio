@@ -113,6 +113,7 @@ missing from `.env.example`.
 | `DB_POOL_SIZE`, `DB_MAX_OVERFLOW` | `5`, `10` | Connection pool per API process. |
 | `REDIS_URL` | `redis://localhost:6380/0` | Rate limits and the Celery broker. |
 | `CELERY_WORKER_CONCURRENCY` | `1` | Celery worker processes (each ~50 MB). |
+| `TASK_RUNNER` | `celery` | Who runs background work: the Celery worker, or `api` (the API right after the response, 3 attempts) on hosts without a worker; scheduled jobs need Celery beat. |
 | `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE` | empty, `0.1` | Error monitoring; off without a DSN. |
 | `IMAGEKIT_PUBLIC_KEY`, `IMAGEKIT_PRIVATE_KEY`, `IMAGEKIT_URL_ENDPOINT` | empty | ImageKit account; media endpoints answer 503 without them; required in production. |
 | `LOG_LEVEL`, `LOG_FORMAT` | `INFO`, `text` | `json` writes one JSON object per line (use it in production). |

@@ -1,16 +1,22 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 
+from app.core.config import SettingsDep
 from app.core.database import SessionDep
 from app.core.errors import error_responses
-from app.core.imagekit import ImageKitClientDep, ImageKitConfigDep, create_upload_auth
+from app.core.imagekit import (
+    ImageKitClientDep,
+    ImageKitConfig,
+    ImageKitConfigDep,
+    create_upload_auth,
+)
 from app.core.pagination import Page, PageParamsDep, SearchQuery, Sort, sort_query
 from app.dependencies import AuditContextDep, get_current_user
 from app.models.enums import MediaKind
 from app.schemas.media import MediaCreate, MediaRead, MediaUpdate, UploadAuthResponse
 from app.services import media as media_service
-from app.tasks.media import enqueue_delete_file
+from app.tasks.media import delete_file_in_api, enqueue_delete_file
 
 UPLOAD_URL = "https://upload.imagekit.io/api/v1/files/upload"
 
@@ -29,9 +35,18 @@ MediaSort = Annotated[
 ]
 
 
-def get_file_deleter() -> media_service.FileDeleter:
-    """Queues the ImageKit deletion (Celery). Overridden in tests."""
-    return enqueue_delete_file
+def get_file_deleter(
+    settings: SettingsDep, background: BackgroundTasks
+) -> media_service.FileDeleter:
+    """Deletes the ImageKit file after the response: queued for the Celery worker, or run
+    by the API itself with TASK_RUNNER=api. Overridden in tests."""
+    if settings.task_runner == "celery":
+        return enqueue_delete_file
+
+    def delete_in_api(file_id: str) -> None:
+        background.add_task(delete_file_in_api, file_id, ImageKitConfig.from_settings(settings))
+
+    return delete_in_api
 
 
 FileDeleterDep = Annotated[media_service.FileDeleter, Depends(get_file_deleter)]

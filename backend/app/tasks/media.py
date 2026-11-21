@@ -4,7 +4,6 @@ import asyncio
 import logging
 
 import httpx
-from kombu.exceptions import OperationalError as BrokerError
 
 from app.core.config import get_settings
 from app.core.imagekit import (
@@ -13,6 +12,7 @@ from app.core.imagekit import (
     ImageKitUnavailableError,
     create_http_client,
 )
+from app.tasks.inline import run_with_retries
 from app.worker import celery_app
 
 logger = logging.getLogger(__name__)
@@ -39,9 +39,21 @@ async def delete_file_from_imagekit(
 
 
 def enqueue_delete_file(file_id: str) -> None:
-    """Queue the ImageKit deletion. If the broker is down, the file stays in ImageKit
-    (the database row is already gone): log it, don't fail the request."""
+    """Queue the ImageKit deletion. The database row is already gone, so whatever goes
+    wrong here (broker down, broker misconfigured), the file only stays in ImageKit: log
+    it, never fail the request."""
     try:
         delete_file.delay(file_id)
-    except BrokerError:
+    except Exception:
         logger.exception("Could not queue the ImageKit deletion of file %s", file_id)
+
+
+async def delete_file_in_api(
+    file_id: str, config: ImageKitConfig, transport: httpx.AsyncBaseTransport | None = None
+) -> None:
+    """The ImageKit deletion, run by the API after the response (TASK_RUNNER=api)."""
+    await run_with_retries(
+        lambda: delete_file_from_imagekit(file_id, config, transport),
+        retry_on=(ImageKitUnavailableError,),
+        description=f"ImageKit deletion of file {file_id}",
+    )
