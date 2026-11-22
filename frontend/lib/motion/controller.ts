@@ -17,6 +17,8 @@ gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({ ignoreMobileResize: true });
 
 const EASE = "expo.out";
+// Frames without scrolling before Lenis stops being ticked (and GSAP's ticker may sleep).
+const IDLE_FRAMES_BEFORE_SLEEP = 3;
 // The pinned sideways projects strip needs this many cards to have anything to scroll.
 const SIDEWAYS_MIN_CARDS = 3;
 
@@ -34,12 +36,34 @@ export type MotionController = {
  * again whenever `main` (the part that changes between pages) changes.
  */
 export function startMotion(main: HTMLElement): MotionController {
-  // GSAP's ticker drives Lenis, so ScrollTrigger always reads the smoothed position.
+  // GSAP's ticker drives Lenis, so ScrollTrigger reads the smoothed position in the same
+  // frame, but only while Lenis glides (from a wheel or touch input until it settles): a
+  // listener that stays attached keeps the ticker from ever sleeping, so it ran every frame
+  // on a page where nothing moved. Lenis gets its own clock, because GSAP's jumps ahead by
+  // the time it slept.
   const lenis = new Lenis({ autoRaf: false });
   lenis.on("scroll", ScrollTrigger.update);
-  const tick = (seconds: number) => lenis.raf(seconds * 1000);
-  gsap.ticker.add(tick);
-  gsap.ticker.lagSmoothing(0);
+  let gliding = false;
+  let idleFrames = 0;
+  const tick = () => {
+    lenis.raf(performance.now());
+    // A few still frames in a row, not one: a sleeping ticker runs a new listener at once,
+    // before Lenis has started the glide the input asked for.
+    idleFrames = lenis.isScrolling ? 0 : idleFrames + 1;
+    if (idleFrames > IDLE_FRAMES_BEFORE_SLEEP) {
+      gsap.ticker.remove(tick);
+      gliding = false;
+    }
+  };
+  lenis.on("virtual-scroll", () => {
+    idleFrames = 0;
+    if (!gliding) {
+      gliding = true;
+      // The pause since the last glide isn't one long frame.
+      lenis.time = performance.now();
+      gsap.ticker.add(tick);
+    }
+  });
 
   // Every element seen so far, with what undoes its animation. Next.js keeps visited pages
   // mounted but hidden: their elements are dropped (and shown as they are) while hidden.
@@ -91,6 +115,7 @@ export function startMotion(main: HTMLElement): MotionController {
       running.clear();
       stopCoverPreview();
       gsap.ticker.remove(tick);
+      gliding = false;
       lenis.destroy();
     },
   };

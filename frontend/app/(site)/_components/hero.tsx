@@ -1,5 +1,4 @@
 import { getImageProps } from "next/image";
-import { preload } from "react-dom";
 import { ColorBends } from "@/components/color-bends";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Container } from "@/components/ui/container";
@@ -27,14 +26,6 @@ const { props: portraitProps } = getImageProps({
 
 /** The home page's first screen: headline, calls to action and the portrait. */
 export function Hero() {
-  // What next/image's `preload` does: a <link rel="preload"> in <head>, so the browser asks
-  // for the portrait before it reaches the <img> (it was requested ~0.9 s late without it).
-  preload(portraitProps.src, {
-    as: "image",
-    imageSrcSet: portraitProps.srcSet,
-    imageSizes: portraitProps.sizes,
-    fetchPriority: "high",
-  });
   return (
     // One screen below the header (h-16 + its 1px border), so the marquee is the first screen's
     // bottom edge; taller only when the content can't fit (min-h-fit: very short screens).
