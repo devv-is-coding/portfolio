@@ -1,7 +1,8 @@
 /**
- * Lighthouse CI budgets (`npm run check:budgets`): three mobile runs per page, median against
+ * Lighthouse CI budgets (`npm run check:budgets`): five mobile runs per page, median against
  * the targets in TODO.md (performance >= 0.95, LCP < 2.5 s, CLS < 0.1, TBT < 200 ms as the lab
- * stand-in for INP, at most 160 KB of JavaScript).
+ * stand-in for INP, at most 160 KB of JavaScript). Five, not three: on shared CI runners one
+ * slow run in three decided the median (home TBT 698 / 202 / 34 ms failed a merge).
  *
  * Locally it serves the last `npm run build` on port 3210 (the dev server owns 3000) against
  * the API in .env.local. CI sets LHCI_BASE_URL to the running production stack instead.
@@ -18,7 +19,7 @@ module.exports = {
         ? {}
         : { startServerCommand: "npm run start -- --port 3210", startServerReadyPattern: "Ready" }),
       url: pages.map((page) => new URL(page, origin).href),
-      numberOfRuns: 3,
+      numberOfRuns: 5,
       settings: { chromeFlags: "--headless=new --no-sandbox" },
     },
     assert: {
