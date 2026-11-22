@@ -15,7 +15,8 @@ export function Marquee({ items }: MarqueeProps) {
   const half = Array.from({ length: REPEATS }, () => items).flat();
 
   return (
-    <div aria-hidden="true" className="overflow-hidden border-y border-line bg-ink-raised text-paper">
+    // Positioned above the hero's portrait, which sinks behind it on scroll (lib/motion parallax).
+    <div aria-hidden="true" className="relative z-10 overflow-hidden border-y border-line bg-ink-raised text-paper">
       <div className="flex w-max animate-marquee">
         {[0, 1].map((copy) => (
           <ul

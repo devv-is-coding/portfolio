@@ -46,8 +46,14 @@ export function Hero() {
       {/* Phones and tablets: text, then the photo in whatever height is left (at least 11rem).
           Desktop: text centered beside the photo. */}
       <Container className="grid flex-1 grid-rows-[auto_minmax(11rem,1fr)] gap-6 pt-8 sm:gap-8 sm:pt-10 lg:grid-cols-[1fr_auto] lg:grid-rows-[auto] lg:gap-12">
-        {/* A size container: the headline's size follows this column's width (cqi). */}
-        <div className="@container flex flex-col gap-5 sm:gap-7 lg:self-center lg:pb-10">
+        {/* A size container: the headline's size follows this column's width (cqi). While the
+            hero scrolls away the text drifts up faster and fades (lib/motion parallax). */}
+        <div
+          data-motion="parallax"
+          data-motion-y="-25"
+          data-motion-fade
+          className="@container flex flex-col gap-5 sm:gap-7 lg:self-center lg:pb-10"
+        >
           <Eyebrow>Full-stack developer</Eyebrow>
           <h1 className="font-display text-display font-extrabold uppercase">
             {/* Two lines from sm up; on phones one word per line, so the size can stay big. */}
@@ -76,7 +82,12 @@ export function Hero() {
             height (64svh - 120px) so it fills the hero top to bottom and everything fits one
             screen; on xl up to 460 px (1.24x the file, slightly soft but never distorted). */}
         <div className="flex h-0 min-h-full items-end justify-center lg:block lg:h-auto lg:min-h-0 lg:self-end">
-          <div className="relative aspect-[372/574] h-full max-h-[574px] max-w-full lg:h-auto lg:max-h-none lg:w-[clamp(260px,calc(64svh-120px),340px)] xl:w-[clamp(260px,calc(64svh-120px),460px)]">
+          {/* While the hero scrolls away the portrait sinks slower than the page, behind the marquee. */}
+          <div
+            data-motion="parallax"
+            data-motion-y="14"
+            className="relative aspect-[372/574] h-full max-h-[574px] max-w-full lg:h-auto lg:max-h-none lg:w-[clamp(260px,calc(64svh-120px),340px)] xl:w-[clamp(260px,calc(64svh-120px),460px)]"
+          >
             <div
               aria-hidden="true"
               className="absolute inset-x-[-8%] top-[12%] bottom-0 rounded-t-full border border-line bg-ink-raised"

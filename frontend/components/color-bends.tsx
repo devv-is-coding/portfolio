@@ -3,17 +3,7 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 import type { ColorBendsSettings } from "@/lib/color-bends-webgl";
-
-// The WebGL code loads on the first of these: during page load the shader cost Lighthouse's
-// phone profile ~150 ms of blocking time and pushed LCP past 2.5 s, so loading runs without it.
-const FIRST_INTERACTION_EVENTS = [
-  "pointermove",
-  "pointerdown",
-  "keydown",
-  "scroll",
-  "wheel",
-  "touchstart",
-] as const;
+import { afterFirstInteraction } from "@/lib/first-interaction";
 
 type ColorBendsProps = Partial<ColorBendsSettings> & {
   /** Up to 8 colors: hex (`#f2b43a`) or a theme variable (`--color-accent`). */
@@ -71,8 +61,6 @@ export function ColorBends({
     }
     let stopped = false;
     let stop: (() => void) | null = null;
-    let idleId: number | undefined;
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const start = async () => {
       const { startColorBends } = await import("@/lib/color-bends-webgl");
@@ -88,35 +76,13 @@ export function ColorBends({
       }
     };
 
-    // Safari has no requestIdleCallback: a short timeout stands in.
-    const scheduleStart = () => {
-      if ("requestIdleCallback" in window) {
-        idleId = window.requestIdleCallback(() => void start(), { timeout: 2000 });
-      } else {
-        timeoutId = setTimeout(() => void start(), 300);
-      }
-    };
-
-    const stopWaiting = () => {
-      for (const type of FIRST_INTERACTION_EVENTS) {
-        window.removeEventListener(type, onFirstInteraction);
-      }
-    };
-    function onFirstInteraction() {
-      stopWaiting();
-      scheduleStart();
-    }
-    for (const type of FIRST_INTERACTION_EVENTS) {
-      window.addEventListener(type, onFirstInteraction, { passive: true });
-    }
+    // During page load the shader cost Lighthouse's phone profile ~150 ms of blocking time and
+    // pushed LCP past 2.5 s, so it waits for the visitor's first interaction.
+    const cancel = afterFirstInteraction(() => void start());
 
     return () => {
       stopped = true;
-      stopWaiting();
-      if (idleId !== undefined) {
-        window.cancelIdleCallback(idleId);
-      }
-      clearTimeout(timeoutId);
+      cancel();
       stop?.();
     };
   }, []);

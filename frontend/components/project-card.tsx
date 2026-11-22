@@ -16,8 +16,9 @@ type ProjectCardProps = {
 export function ProjectCard({ project, sizes, headingLevel: Heading = "h3" }: ProjectCardProps) {
   const { thumbnail } = project;
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-ink-raised transition-colors hover:border-accent">
-      <div className="aspect-[16/10] overflow-hidden bg-ink">
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-ink-raised transition-[border-color,box-shadow] duration-500 hover:border-accent hover:shadow-[0_30px_80px_-40px] hover:shadow-accent/50">
+      {/* The picture uncovers as the card scrolls into view (lib/motion "image"). */}
+      <div data-motion="image" className="aspect-[16/10] overflow-hidden bg-ink">
         {thumbnail ? (
           <MediaImage
             src={thumbnail.url}
