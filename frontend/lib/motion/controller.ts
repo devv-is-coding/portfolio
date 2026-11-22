@@ -1,7 +1,6 @@
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
-import { startCoverPreview } from "@/lib/motion/cover-preview";
 
 /*
  * The public site's motion: Lenis smooth scrolling and GSAP scroll animations. Loaded by
@@ -98,8 +97,6 @@ export function startMotion(main: HTMLElement): MotionController {
   observer.observe(main, { childList: true, subtree: true });
   update();
 
-  const stopCoverPreview = startCoverPreview();
-
   return {
     pageChanged() {
       // Next.js has scrolled the new page into place: don't glide on from the old position.
@@ -113,7 +110,6 @@ export function startMotion(main: HTMLElement): MotionController {
         cleanup();
       }
       running.clear();
-      stopCoverPreview();
       gsap.ticker.remove(tick);
       gliding = false;
       lenis.destroy();
