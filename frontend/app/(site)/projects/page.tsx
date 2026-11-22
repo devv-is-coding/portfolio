@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Pagination } from "@/components/pagination";
 import { ProjectCard } from "@/components/project-card";
 import { SectionHeading } from "@/components/section-heading";
+import { ProjectListSkeleton } from "@/components/skeletons";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";
@@ -23,7 +24,7 @@ export default function ProjectsPage({ searchParams }: PageProps<"/projects">) {
     <Container className="flex flex-col gap-12 py-16 sm:py-24">
       <SectionHeading as="h1" eyebrow="Work" title="Projects" />
       {/* The fallback fills the screen, so the footer never jumps when the list streams in. */}
-      <Suspense fallback={<div className="min-h-svh animate-pulse rounded-2xl bg-ink-raised" />}>
+      <Suspense fallback={<ProjectListSkeleton />}>
         <ProjectList searchParams={searchParams} />
       </Suspense>
     </Container>

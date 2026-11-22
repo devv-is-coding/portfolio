@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Markdown } from "@/components/markdown";
 import { MediaImage } from "@/components/media-image";
+import { ArticleSkeleton } from "@/components/skeletons";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: PageProps<"/projects/[slug]">
 /** Not prerendered per slug: the first visit renders and caches it (no API needed at build). */
 export default function ProjectPage({ params }: PageProps<"/projects/[slug]">) {
   return (
-    <Suspense fallback={<Container className="h-[60vh] py-24" />}>
+    <Suspense fallback={<ArticleSkeleton />}>
       <ProjectDetails params={params} />
     </Suspense>
   );

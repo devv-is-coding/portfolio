@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SectionHeading } from "@/components/section-heading";
+import { AboutSkeleton } from "@/components/skeletons";
 import { Container } from "@/components/ui/container";
 import { SITE } from "@/lib/site";
 import { SkillsOverview } from "@/app/(site)/_components/home-sections";
@@ -28,7 +29,7 @@ export default function AboutPage() {
         content alike: when the page renders per request, the sections stream in without
         pushing each other (or the footer) around. Measured: CLS 0.43 with one per section.
       */}
-      <Suspense fallback={<div className="min-h-svh" />}>
+      <Suspense fallback={<AboutSkeleton />}>
         <div className="min-h-svh">
           <Container className="py-12 sm:py-16">
             <ProfileIntro />

@@ -7,7 +7,7 @@ import type { MotionController } from "@/lib/motion/controller";
 
 /**
  * Starts the public site's motion (lib/motion/controller.ts: GSAP scroll animations, Lenis
- * smooth scrolling, the post cover preview) in idle time after the visitor's first interaction, so
+ * smooth scrolling) in idle time after the visitor's first interaction, so
  * the ~50 KB it loads never weighs on page load. Nothing at all with reduced motion.
  */
 export function Motion() {
