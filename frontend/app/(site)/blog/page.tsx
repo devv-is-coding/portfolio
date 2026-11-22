@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Pagination } from "@/components/pagination";
 import { PostCard } from "@/components/post-card";
 import { SectionHeading } from "@/components/section-heading";
+import { PostListSkeleton } from "@/components/skeletons";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";
@@ -23,7 +24,7 @@ export default function BlogPage({ searchParams }: PageProps<"/blog">) {
     <Container className="flex flex-col gap-12 py-16 sm:py-24">
       <SectionHeading as="h1" eyebrow="Writing" title="Blog" />
       {/* The fallback fills the screen, so the footer never jumps when the list streams in. */}
-      <Suspense fallback={<div className="min-h-svh animate-pulse rounded-2xl bg-ink-raised" />}>
+      <Suspense fallback={<PostListSkeleton />}>
         <PostList searchParams={searchParams} />
       </Suspense>
     </Container>

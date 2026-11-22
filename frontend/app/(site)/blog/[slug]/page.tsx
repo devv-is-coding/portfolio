@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Markdown } from "@/components/markdown";
 import { MediaImage } from "@/components/media-image";
+import { ArticleSkeleton } from "@/components/skeletons";
 import { Container } from "@/components/ui/container";
 import { Tag } from "@/components/ui/tag";
 import { getPost } from "@/lib/api/public";
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): P
 /** Not prerendered per slug: the first visit renders and caches it (no API needed at build). */
 export default function PostPage({ params }: PageProps<"/blog/[slug]">) {
   return (
-    <Suspense fallback={<Container className="h-[60vh] py-24" />}>
+    <Suspense fallback={<ArticleSkeleton narrow />}>
       <PostArticle params={params} />
     </Suspense>
   );

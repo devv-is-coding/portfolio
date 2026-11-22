@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
+import { HomeSectionsSkeleton } from "@/components/skeletons";
 import { FeaturedProjects, LatestPosts, SkillsOverview } from "./_components/home-sections";
 import { Hero } from "./_components/hero";
 
@@ -18,7 +19,7 @@ export default function HomePage() {
       */}
       {/* The hero needs no data: if the API fails, only these sections show a notice. */}
       <SectionErrorBoundary>
-        <Suspense fallback={<div className="min-h-svh" />}>
+        <Suspense fallback={<HomeSectionsSkeleton />}>
           <FeaturedProjects />
           <SkillsOverview />
           <LatestPosts />
