@@ -89,15 +89,17 @@ async function ProjectDetails({ params }: Pick<PageProps<"/projects/[slug]">, "p
         {project.images.length > 0 && (
           <section aria-label="Gallery" className="grid gap-6 md:grid-cols-2">
             {project.images.map(({ id, image }) => (
-              <MediaImage
-                key={id}
-                src={image.url}
-                alt={image.alt_text ?? ""}
-                width={image.width}
-                height={image.height}
-                sizes="(min-width: 768px) 600px, 100vw"
-                className="h-auto w-full rounded-2xl border border-line"
-              />
+              // Each picture uncovers as it scrolls into view (lib/motion "image").
+              <div key={id} data-motion="image" className="h-fit overflow-hidden rounded-2xl border border-line">
+                <MediaImage
+                  src={image.url}
+                  alt={image.alt_text ?? ""}
+                  width={image.width}
+                  height={image.height}
+                  sizes="(min-width: 768px) 600px, 100vw"
+                  className="block h-auto w-full"
+                />
+              </div>
             ))}
           </section>
         )}

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
+import { Intro } from "@/components/intro";
+import { INTRO_GATE_SCRIPT } from "@/lib/intro";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
@@ -32,11 +34,19 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // suppressHydrationWarning: the gate script in <body> may add data-intro to <html> before
+    // React hydrates; it applies to <html>'s own attributes only, not to anything inside it.
     <html
       lang="en"
       className={`${display.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-ink font-sans text-paper">
+        {/* Decides, before anything below it is painted, whether the welcome screen plays
+            (lib/intro.ts): inline and tiny, so a returning visitor never sees it flash. First in
+            <body>, not in <head>: browser extensions add their own scripts to <head>, and React
+            then hydrated one of theirs in its place (a hydration mismatch). */}
+        <script dangerouslySetInnerHTML={{ __html: INTRO_GATE_SCRIPT }} />
         <a
           href="#main"
           className="sr-only z-50 rounded-full bg-accent px-4 py-2 font-semibold text-accent-ink focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -44,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         {children}
+        <Intro />
       </body>
     </html>
   );

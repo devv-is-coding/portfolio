@@ -52,6 +52,8 @@ export function MobileNav() {
         id={panelId}
         aria-label="Main"
         hidden={!open}
+        // Scrolls on its own: smooth scrolling must leave it alone (lib/motion).
+        data-lenis-prevent
         className="fixed inset-0 z-10 overflow-y-auto bg-ink px-5 pt-24 pb-10"
       >
         <ul className="flex flex-col gap-2">

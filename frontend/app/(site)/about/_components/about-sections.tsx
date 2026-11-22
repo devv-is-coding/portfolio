@@ -61,14 +61,17 @@ export async function ProfileIntro() {
         )}
       </div>
       {avatar && (
-        <MediaImage
-          src={avatar.url}
-          alt={avatar.alt_text ?? `Portrait of ${profile.full_name}`}
-          width={avatar.width}
-          height={avatar.height}
-          sizes="(min-width: 1024px) 320px, 100vw"
-          className="h-auto w-full rounded-2xl border border-line"
-        />
+        // Uncovers as it scrolls into view (lib/motion "image").
+        <div data-motion="image" className="h-fit overflow-hidden rounded-2xl border border-line">
+          <MediaImage
+            src={avatar.url}
+            alt={avatar.alt_text ?? `Portrait of ${profile.full_name}`}
+            width={avatar.width}
+            height={avatar.height}
+            sizes="(min-width: 1024px) 320px, 100vw"
+            className="block h-auto w-full"
+          />
+        </div>
       )}
     </div>
   );

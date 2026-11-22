@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Smooth scrolling's own rules (lib/motion/controller.ts); they only apply once it runs. */
+@import "lenis/dist/lenis.css";
 
 /*
  * Design tokens. The default Tailwind palette is removed, so every color in the
@@ -72,6 +74,221 @@
   }
 }
 
+/*
+ * Motion (lib/motion/). Everything here is visible as it is until that code runs; it only
+ * moves elements still below the screen, so nothing ever disappears in front of the visitor.
+ */
+
+/* A word in its clipping box (components/ui/split-words.tsx). The padding keeps tall glyphs
+   (accents, the display font's caps) inside the box; the negative margin keeps the line height. */
+.motion-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-block: 0.12em;
+  margin-block: -0.12em;
+}
+
+.motion-word-inner {
+  display: inline-block;
+}
+
+/* The pinned sideways strip of projects (scrollSideways): one row of wide cards. Unlayered,
+   so it wins over the grid utilities it replaces. */
+[data-sideways] [data-motion-track] {
+  display: flex;
+  width: max-content;
+}
+
+/* Most of a card in view on phones, about two on tablets, two and a half on computers. */
+[data-sideways] [data-motion-track] > * {
+  width: 80vw;
+}
+
+@media (min-width: 768px) {
+  [data-sideways] [data-motion-track] > * {
+    width: 55vw;
+  }
+}
+
+@media (min-width: 1024px) {
+  [data-sideways] [data-motion-track] > * {
+    width: min(40vw, 36rem);
+  }
+}
+
+/* The cover that follows the pointer over a list of posts (lib/motion/cover-preview.ts). */
+.motion-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  width: 18rem;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 1px solid var(--color-line);
+  border-radius: 1rem;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/*
+ * The welcome screen (components/intro.tsx, lib/intro.ts). Shown only while <html> carries
+ * data-intro, which the gate script in <head> sets before the first paint. The words rise in,
+ * then the panel lifts away while the hero's own entrance plays.
+ */
+.intro {
+  display: none;
+}
+
+html[data-intro] .intro {
+  display: grid;
+}
+
+/* If the page's JavaScript never runs, the panel still leaves on its own. */
+html[data-intro="playing"] .intro {
+  animation: intro-fallback 0.6s ease-in 4.5s forwards;
+}
+
+html[data-intro="playing"] .animate-rise {
+  animation-play-state: paused;
+}
+
+.intro .intro-label {
+  animation: intro-fade 0.8s var(--ease-out-expo) 0.1s both;
+}
+
+.intro .motion-word-inner {
+  animation: intro-word 1s var(--ease-out-expo) both;
+  animation-delay: calc(0.2s + var(--intro-word, 0) * 0.09s);
+}
+
+/* Fills while the greeting may wait for the backend (MAX_HOLD_MS); cut short when it leaves. */
+.intro .intro-progress {
+  transform-origin: left;
+  animation: intro-progress 3s linear both;
+}
+
+html[data-intro="leaving"] .intro {
+  animation: intro-out 0.9s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+html[data-intro="leaving"] .intro-content {
+  animation: intro-content-out 0.45s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+}
+
+html[data-intro="leaving"] .intro-progress {
+  animation: intro-fade 0.3s ease-in reverse forwards;
+}
+
+@keyframes intro-word {
+  from {
+    transform: translateY(110%);
+  }
+}
+
+@keyframes intro-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes intro-progress {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes intro-content-out {
+  to {
+    opacity: 0;
+    transform: translateY(-3rem);
+  }
+}
+
+/* Transform only, so the lift runs on the compositor (an animated curved edge repainted the
+   whole screen every frame). */
+@keyframes intro-out {
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes intro-fallback {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* The reading progress line under the header, driven by the scroll itself (no JavaScript);
+   left out where scroll-driven animations aren't supported. */
+.scroll-progress {
+  display: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    display: block;
+    transform-origin: left;
+    animation: scroll-progress linear both;
+    animation-timeline: scroll(root);
+  }
+}
+
+@keyframes scroll-progress {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Page transitions (app/(site)/template.tsx): the old page lifts away fast, the new one rises
+   and uncovers from the bottom. The header stays put, the rest of the frame swaps at once. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(site-header) {
+  z-index: 100;
+  animation: none;
+}
+
+::view-transition-old(site-header) {
+  display: none;
+}
+
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+::view-transition-old(.page-exit) {
+  animation: page-out 220ms cubic-bezier(0.7, 0, 0.84, 0) both;
+}
+
+::view-transition-new(.page-enter) {
+  animation: page-in 700ms var(--ease-out-expo) 150ms both;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+    translate: 0 -2rem;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    translate: 0 3rem;
+    clip-path: inset(20% 0 0 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -80,5 +297,11 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

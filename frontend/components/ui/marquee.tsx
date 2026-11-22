@@ -15,7 +15,14 @@ export function Marquee({ items }: MarqueeProps) {
   const half = Array.from({ length: REPEATS }, () => items).flat();
 
   return (
-    <div aria-hidden="true" className="overflow-hidden border-y border-line bg-ink-raised text-paper">
+    // Positioned above the hero's portrait, which sinks behind it on scroll (lib/motion parallax).
+    // content-visibility: auto lets the browser skip the strip while it's off screen: its
+    // endless animation recalculated styles every frame even then (~half the main thread's
+    // idle work, measured with the CPU slowed 4x). Its height stays reserved, so nothing moves.
+    <div
+      aria-hidden="true"
+      className="relative z-10 overflow-hidden border-y border-line bg-ink-raised text-paper [contain-intrinsic-size:auto_4.5rem] [content-visibility:auto]"
+    >
       <div className="flex w-max animate-marquee">
         {[0, 1].map((copy) => (
           <ul

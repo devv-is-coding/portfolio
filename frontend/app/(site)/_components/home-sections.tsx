@@ -17,7 +17,9 @@ export async function FeaturedProjects() {
     return null;
   }
   return (
-    <section className={SECTION}>
+    // The motion code pins this section and slides the cards sideways as the page scrolls
+    // (lib/motion "sideways"); clipped, so the row never adds a sideways scroll.
+    <section data-motion="sideways" className={`${SECTION} overflow-x-clip`}>
       <Container className="flex flex-col gap-12">
         <SectionHeading
           eyebrow="Selected work"
@@ -28,12 +30,13 @@ export async function FeaturedProjects() {
             </ButtonLink>
           }
         />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div data-motion-track className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
             <ProjectCard
               key={project.id}
               project={project}
-              sizes="(min-width: 1024px) 400px, (min-width: 768px) 50vw, 100vw"
+              // In the sideways row a card is 80vw / 55vw / up to 576 px wide (globals.css).
+              sizes="(min-width: 1024px) 576px, (min-width: 768px) 55vw, 100vw"
             />
           ))}
         </div>
