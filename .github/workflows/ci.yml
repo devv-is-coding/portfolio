@@ -14,7 +14,9 @@ concurrency:
 permissions:
   contents: read
 
-# Every push and pull request runs ALL jobs: frontend, backend and commit messages.
+# Every push and pull request runs the frontend, backend and commit-message jobs. The Docker
+# job (image builds, production stack, Lighthouse budgets) runs on pull requests only: the
+# merge commit on main has already passed it on its pull request.
 jobs:
   frontend:
     name: Frontend (conventions, lint, types, build)
@@ -117,6 +119,7 @@ jobs:
 
   docker:
     name: Docker (build + smoke test)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
