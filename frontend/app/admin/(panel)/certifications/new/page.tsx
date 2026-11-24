@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/admin/admin-ui";
 import { ResourceForm } from "@/components/admin/resource-form";
+import { mediaOptions } from "@/lib/admin/media-options";
 import { saveCertification } from "../_lib/actions";
 import { CERTIFICATIONS_FIELDS } from "../_lib/fields";
 
@@ -9,11 +10,16 @@ export const instant = false;
 
 export const metadata: Metadata = { title: "New certification" };
 
-export default function NewCertificationPage() {
+export default async function NewCertificationPage() {
   return (
     <>
       <PageHeader eyebrow="Certifications" title="New certification" back={{ href: "/admin/certifications", label: "All certifications" }} />
-      <ResourceForm fields={CERTIFICATIONS_FIELDS} action={saveCertification.bind(null, null)} submitLabel="Create certification" />
+      <ResourceForm
+        fields={CERTIFICATIONS_FIELDS}
+        action={saveCertification.bind(null, null)}
+        media={await mediaOptions()}
+        submitLabel="Create certification"
+      />
     </>
   );
 }

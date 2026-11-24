@@ -5,8 +5,8 @@ import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/fields";
+import { uploadMedia } from "@/lib/admin/upload-media";
 import { mapWithConcurrency } from "@/lib/concurrency";
-import { getUploadAuth, registerMedia } from "../_lib/actions";
 
 // Files uploading at the same time: quicker than one by one, gentle on a phone connection.
 const PARALLEL_UPLOADS = 3;
@@ -18,33 +18,6 @@ type Status =
   | { kind: "busy"; done: number; total: number }
   | { kind: "finished"; results: Result[] }
   | { kind: "failed"; error: string };
-
-/**
- * Uploads one file straight from the browser to ImageKit with its own signature from the API
- * (ImageKit accepts each signature once; the file never passes through this server), then
- * registers it in the media library. Returns why it failed, or null.
- */
-async function uploadFile(file: File, altText: string): Promise<string | null> {
-  try {
-    const auth = await getUploadAuth();
-    const body = new FormData();
-    body.set("file", file);
-    body.set("fileName", file.name);
-    body.set("publicKey", auth.public_key);
-    body.set("signature", auth.signature);
-    body.set("expire", String(auth.expire));
-    body.set("token", auth.token);
-    const response = await fetch(auth.upload_url, { method: "POST", body });
-    const uploaded: { fileId?: string; message?: string } = await response.json();
-    if (!response.ok || !uploaded.fileId) {
-      return uploaded.message ?? "ImageKit refused the upload.";
-    }
-    const result = await registerMedia(uploaded.fileId, altText);
-    return result.ok ? null : result.error;
-  } catch {
-    return "The upload failed. Check the connection and try again.";
-  }
-}
 
 /** Uploads one or more images or PDFs at once, showing how each one went. */
 export function MediaUploader() {
@@ -62,7 +35,8 @@ export function MediaUploader() {
     let done = 0;
     setStatus({ kind: "busy", done, total: files.length });
     const results = await mapWithConcurrency(files, PARALLEL_UPLOADS, async (file, id) => {
-      const error = await uploadFile(file, altText);
+      const result = await uploadMedia(file, altText);
+      const error = result.ok ? null : result.error;
       done += 1;
       setStatus({ kind: "busy", done, total: files.length });
       return { id, name: file.name, error };

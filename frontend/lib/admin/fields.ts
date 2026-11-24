@@ -14,7 +14,12 @@ export type Field =
   | (FieldBase & { kind: "datetime" })
   | (FieldBase & { kind: "checkbox" })
   | (FieldBase & { kind: "select"; options: readonly { value: string; label: string }[] })
-  | (FieldBase & { kind: "media"; mediaKind: "image" | "document" });
+  | (FieldBase & {
+      kind: "media";
+      mediaKind: "image" | "document";
+      /** Also offer uploading a new file, which joins the library and is chosen at once. */
+      upload?: boolean;
+    });
 
 /** An item from the API as a form's starting values; only the fields' keys are read. */
 export type FieldValues = Readonly<Record<string, unknown>>;

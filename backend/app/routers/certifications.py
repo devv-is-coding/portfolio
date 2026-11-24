@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Path, Response, status
 
 from app.core.database import SessionDep
 from app.core.errors import error_responses
+from app.core.imagekit import MediaUrlEndpointDep
 from app.core.pagination import Page, PageParamsDep, SearchQuery
 from app.dependencies import AuditContextDep, get_current_user
 from app.schemas.certification import CertificationCreate, CertificationRead, CertificationUpdate
@@ -24,27 +25,35 @@ CertificationId = Annotated[int, Path(ge=1)]
 
 @router.get("")
 async def list_certifications(
-    session: SessionDep, page: PageParamsDep, q: SearchQuery = None
+    session: SessionDep,
+    url_endpoint: MediaUrlEndpointDep,
+    page: PageParamsDep,
+    q: SearchQuery = None,
 ) -> Page[CertificationRead]:
-    """Certifications, newest first. Expired ones are listed with `is_expired: true`.
-    `q` searches the name and issuing organization."""
-    return await certifications_service.list_certifications(session, q=q, page=page)
+    """Certifications, newest first, with the certificate picture's URL when there is one.
+    Expired ones are listed with `is_expired: true`. `q` searches the name and issuing
+    organization."""
+    return await certifications_service.list_certifications(session, url_endpoint, q=q, page=page)
 
 
 @admin_router.post("", status_code=status.HTTP_201_CREATED)
 async def create_certification(
-    body: CertificationCreate, context: AuditContextDep, session: SessionDep
+    body: CertificationCreate,
+    context: AuditContextDep,
+    session: SessionDep,
+    url_endpoint: MediaUrlEndpointDep,
 ) -> CertificationRead:
-    """Add a certification; an expiry before the issue date is a 422."""
-    return await certifications_service.create_certification(session, context, body)
+    """Add a certification; an expiry before the issue date is a 422. The picture must be an
+    image from the media library."""
+    return await certifications_service.create_certification(session, url_endpoint, context, body)
 
 
 @admin_router.get("/{certification_id}", responses=error_responses(404))
 async def get_certification(
-    certification_id: CertificationId, session: SessionDep
+    certification_id: CertificationId, session: SessionDep, url_endpoint: MediaUrlEndpointDep
 ) -> CertificationRead:
-    """One certification, for editing."""
-    return await certifications_service.get_certification(session, certification_id)
+    """One certification with its picture, for editing."""
+    return await certifications_service.get_certification(session, url_endpoint, certification_id)
 
 
 @admin_router.patch("/{certification_id}", responses=error_responses(404))
@@ -53,10 +62,12 @@ async def update_certification(
     body: CertificationUpdate,
     context: AuditContextDep,
     session: SessionDep,
+    url_endpoint: MediaUrlEndpointDep,
 ) -> CertificationRead:
-    """Change only the fields sent; the dates are checked against the stored ones."""
+    """Change only the fields sent; the dates are checked against the stored ones and the
+    picture must be an image (`null` removes it)."""
     return await certifications_service.update_certification(
-        session, context, certification_id, body
+        session, url_endpoint, context, certification_id, body
     )
 
 

@@ -11,6 +11,8 @@ export type TimelineEntry = {
   /** Labels next to the period, e.g. "Current" or "Expired". */
   badge?: ReactNode;
   link?: { href: string; label: string };
+  /** More controls beside the link, e.g. a button that opens the certificate. */
+  actions?: ReactNode;
 };
 
 /** A vertical list of dated entries: jobs, schools, certificates. */
@@ -31,15 +33,20 @@ export function Timeline({ entries }: { entries: readonly TimelineEntry[] }) {
                 {entry.description}
               </Markdown>
             )}
-            {entry.link && (
-              <a
-                href={entry.link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 w-fit text-sm text-accent underline underline-offset-4"
-              >
-                {entry.link.label}
-              </a>
+            {(entry.link || entry.actions) && (
+              <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-3">
+                {entry.actions}
+                {entry.link && (
+                  <a
+                    href={entry.link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-fit text-sm text-accent underline underline-offset-4"
+                  >
+                    {entry.link.label}
+                  </a>
+                )}
+              </div>
             )}
           </div>
         </li>

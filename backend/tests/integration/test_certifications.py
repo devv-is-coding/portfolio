@@ -1,14 +1,25 @@
+from collections.abc import AsyncIterator
 from typing import Any
 
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.integration.factories import audit_entries, create_via_api
+from app.core.imagekit import get_media_url_endpoint
+from app.main import app
+from app.models import Media
+from tests.integration.factories import audit_entries, create_media, create_via_api
 
 pytestmark = pytest.mark.anyio
 
 ADMIN_URL = "/admin/certifications"
+ENDPOINT = "https://ik.imagekit.io/portfolio"
+
+
+@pytest.fixture
+async def client(api: AsyncClient) -> AsyncIterator[AsyncClient]:
+    app.dependency_overrides[get_media_url_endpoint] = lambda: ENDPOINT
+    yield api
 
 
 async def _create(client: AsyncClient, headers: dict[str, str], **fields: object) -> dict[str, Any]:
@@ -112,3 +123,71 @@ async def test_get_delete_and_404(
     assert fetched.json()["name"] == "AWS Developer"
     assert (deleted.status_code, missing.status_code) == (204, 404)
     assert len(await audit_entries(db_session, "certification.delete")) == 1
+
+
+async def test_the_certificate_picture_is_shown_in_the_public_list(
+    client: AsyncClient, admin_headers: dict[str, str], db_session: AsyncSession
+) -> None:
+    picture = await create_media(db_session, "cert1", "image/webp", "/certs/aws.webp")
+
+    cert = await _create(client, admin_headers, image_media_id=picture.id)
+    [listed] = (await client.get("/certifications")).json()["items"]
+
+    assert cert["image_media_id"] == picture.id
+    assert listed["image"] == {
+        "url": f"{ENDPOINT}/certs/aws.webp",
+        "mime_type": "image/webp",
+        "width": picture.width,
+        "height": picture.height,
+        "alt_text": picture.alt_text,
+    }
+
+
+async def test_the_picture_must_be_an_existing_image(
+    client: AsyncClient, admin_headers: dict[str, str], db_session: AsyncSession
+) -> None:
+    pdf = await create_media(db_session, "cert-pdf", "application/pdf")
+    cert = await _create(client, admin_headers)
+    body = {"name": "AWS Developer", "issuing_organization": "AWS"}
+
+    not_image = await client.post(
+        ADMIN_URL, json=body | {"image_media_id": pdf.id}, headers=admin_headers
+    )
+    missing = await client.patch(
+        f"{ADMIN_URL}/{cert['id']}", json={"image_media_id": 999_999_999}, headers=admin_headers
+    )
+
+    assert not_image.status_code == missing.status_code == 422
+    assert not_image.json()["error"]["details"][0]["field"] == "body.image_media_id"
+    assert [d["message"] for d in not_image.json()["error"]["details"]] == ["Must be an image"]
+    assert [d["message"] for d in missing.json()["error"]["details"]] == ["No media with this id"]
+
+
+async def test_patch_sets_and_removes_the_picture_and_audits_it(
+    client: AsyncClient, admin_headers: dict[str, str], db_session: AsyncSession
+) -> None:
+    picture = await create_media(db_session, "cert2", "image/png", "/certs/gcp.png")
+    cert = await _create(client, admin_headers)
+    url = f"{ADMIN_URL}/{cert['id']}"
+
+    added = await client.patch(url, json={"image_media_id": picture.id}, headers=admin_headers)
+    removed = await client.patch(url, json={"image_media_id": None}, headers=admin_headers)
+
+    assert added.json()["image"]["url"] == f"{ENDPOINT}/certs/gcp.png"
+    assert (removed.json()["image_media_id"], removed.json()["image"]) == (None, None)
+    first, second = await audit_entries(db_session, "certification.update")
+    assert first.details == {"image_media_id": {"old": None, "new": picture.id}}
+    assert second.details == {"image_media_id": {"old": picture.id, "new": None}}
+
+
+async def test_deleting_the_media_file_removes_the_picture(
+    client: AsyncClient, admin_headers: dict[str, str], db_session: AsyncSession
+) -> None:
+    picture = await create_media(db_session, "cert3")
+    cert = await _create(client, admin_headers, image_media_id=picture.id)
+
+    await db_session.delete(await db_session.get(Media, picture.id))
+    await db_session.commit()
+
+    fetched = (await client.get(f"{ADMIN_URL}/{cert['id']}", headers=admin_headers)).json()
+    assert (fetched["image_media_id"], fetched["image"]) == (None, None)
