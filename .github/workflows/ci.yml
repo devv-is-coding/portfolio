@@ -142,9 +142,9 @@ jobs:
           curl -fsS http://localhost:8000/health
           curl -fsS -o /dev/null http://localhost:3000
 
-      # Lighthouse (mobile profile) on the production images with a real API: performance
-      # >= 0.95, LCP < 2.5 s, CLS < 0.1, TBT < 200 ms (lab stand-in for INP), JavaScript
-      # <= 160 KB per page. Pages and limits: frontend/lighthouserc.js.
+      # Lighthouse (mobile profile, applied throttling) on the production images with a real
+      # API: performance >= 0.95, LCP < 2.5 s, CLS < 0.1, TBT < 200 ms (lab stand-in for INP),
+      # JavaScript <= 160 KB per page. Pages, limits and why not simulated: frontend/lighthouserc.js.
       - uses: actions/setup-node@v5
         with:
           node-version: 22
