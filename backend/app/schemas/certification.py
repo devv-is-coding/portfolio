@@ -5,11 +5,15 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from app.core.security import utc_now
 from app.schemas.fields import BlankToNone, NotNull, RequiredText, WebUrl
+from app.schemas.media import PublicMedia
 
 Name = Annotated[RequiredText, Field(max_length=200, examples=["AWS Certified Developer"])]
 Organization = Annotated[RequiredText, Field(max_length=200, examples=["Amazon Web Services"])]
 CredentialId = Annotated[str | None, Field(max_length=150), BlankToNone]
 ExpiresAt = Annotated[date | None, Field(description="Left out or null: doesn't expire.")]
+ImageMediaId = Annotated[
+    int | None, Field(ge=1, description="A picture of the certificate from the media library.")
+]
 
 
 class CertificationCreate(BaseModel):
@@ -34,6 +38,7 @@ class CertificationCreate(BaseModel):
     credential_url: WebUrl | None = None
     issued_at: date | None = None
     expires_at: ExpiresAt = None
+    image_media_id: ImageMediaId = None
 
 
 class CertificationUpdate(BaseModel):
@@ -47,11 +52,10 @@ class CertificationUpdate(BaseModel):
     credential_url: WebUrl | None = None
     issued_at: date | None = None
     expires_at: ExpiresAt = None
+    image_media_id: ImageMediaId = None
 
 
 class CertificationRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: int
     name: str
     issuing_organization: str
@@ -59,6 +63,8 @@ class CertificationRead(BaseModel):
     credential_url: str | None
     issued_at: date | None
     expires_at: date | None
+    image_media_id: int | None
+    image: PublicMedia | None
     created_at: datetime
     updated_at: datetime
 

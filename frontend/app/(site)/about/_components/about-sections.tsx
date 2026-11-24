@@ -1,3 +1,4 @@
+import { CertificateViewer } from "@/app/(site)/about/_components/certificate-viewer";
 import { Markdown } from "@/components/markdown";
 import { MediaImage } from "@/components/media-image";
 import { SectionHeading } from "@/components/section-heading";
@@ -152,6 +153,19 @@ export async function CertificationsSection() {
             link: certificate.credential_url
               ? { href: certificate.credential_url, label: "Show credential ↗" }
               : undefined,
+            actions: certificate.image ? (
+              <CertificateViewer title={certificate.name}>
+                <MediaImage
+                  src={certificate.image.url}
+                  alt={certificate.image.alt_text ?? `${certificate.name} certificate`}
+                  width={certificate.image.width}
+                  height={certificate.image.height}
+                  sizes="(min-width: 1200px) 1100px, 100vw"
+                  loading="lazy"
+                  className="mx-auto h-auto max-h-[78svh] w-auto max-w-full rounded-lg bg-ink-raised object-contain"
+                />
+              </CertificateViewer>
+            ) : undefined,
           }))}
         />
       </Container>

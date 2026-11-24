@@ -652,8 +652,9 @@ export interface paths {
         };
         /**
          * List Certifications
-         * @description Certifications, newest first. Expired ones are listed with `is_expired: true`.
-         *     `q` searches the name and issuing organization.
+         * @description Certifications, newest first, with the certificate picture's URL when there is one.
+         *     Expired ones are listed with `is_expired: true`. `q` searches the name and issuing
+         *     organization.
          */
         get: operations["list_certifications_certifications_get"];
         put?: never;
@@ -675,7 +676,8 @@ export interface paths {
         put?: never;
         /**
          * Create Certification
-         * @description Add a certification; an expiry before the issue date is a 422.
+         * @description Add a certification; an expiry before the issue date is a 422. The picture must be an
+         *     image from the media library.
          */
         post: operations["create_certification_admin_certifications_post"];
         delete?: never;
@@ -693,7 +695,7 @@ export interface paths {
         };
         /**
          * Get Certification
-         * @description One certification, for editing.
+         * @description One certification with its picture, for editing.
          */
         get: operations["get_certification_admin_certifications__certification_id__get"];
         put?: never;
@@ -707,7 +709,8 @@ export interface paths {
         head?: never;
         /**
          * Update Certification
-         * @description Change only the fields sent; the dates are checked against the stored ones.
+         * @description Change only the fields sent; the dates are checked against the stored ones and the
+         *     picture must be an image (`null` removes it).
          */
         patch: operations["update_certification_admin_certifications__certification_id__patch"];
         trace?: never;
@@ -1398,6 +1401,11 @@ export interface components {
              * @description Left out or null: doesn't expire.
              */
             expires_at?: string | null;
+            /**
+             * Image Media Id
+             * @description A picture of the certificate from the media library.
+             */
+            image_media_id?: number | null;
         };
         /** CertificationRead */
         CertificationRead: {
@@ -1415,6 +1423,9 @@ export interface components {
             issued_at: string | null;
             /** Expires At */
             expires_at: string | null;
+            /** Image Media Id */
+            image_media_id: number | null;
+            image: components["schemas"]["PublicMedia"] | null;
             /**
              * Created At
              * Format: date-time
@@ -1451,6 +1462,11 @@ export interface components {
              * @description Left out or null: doesn't expire.
              */
             expires_at?: string | null;
+            /**
+             * Image Media Id
+             * @description A picture of the certificate from the media library.
+             */
+            image_media_id?: number | null;
         };
         /**
          * ContactMessageCreate

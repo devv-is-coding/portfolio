@@ -105,7 +105,8 @@ async def _education(session: AsyncSession, numbers: range) -> None:
 
 async def _certifications(session: AsyncSession, numbers: range) -> None:
     session.add_all(
-        Certification(name=f"Budget {n}", issuing_organization="Budget") for n in numbers
+        Certification(name=f"Budget {n}", issuing_organization="Budget", image=_media(f"cert-{n}"))
+        for n in numbers
     )
     await session.flush()
 

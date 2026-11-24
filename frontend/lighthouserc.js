@@ -4,6 +4,11 @@
  * stand-in for INP, at most 160 KB of JavaScript). Five, not three: on shared CI runners one
  * slow run in three decided the median (home TBT 698 / 202 / 34 ms failed a merge).
  *
+ * Throttling is applied (`devtools`: the page really loads over a slow 4G connection with the
+ * CPU slowed 4x), not simulated. The simulation replays every request started before the LCP,
+ * so all of the page's JavaScript counted toward it: every page scored 2.2-2.9 s although the
+ * portrait or headline painted with the first paint, and the home page failed at random.
+ *
  * Locally it serves the last `npm run build` on port 3210 (the dev server owns 3000) against
  * the API in .env.local. CI sets LHCI_BASE_URL to the running production stack instead.
  */
@@ -20,7 +25,7 @@ module.exports = {
         : { startServerCommand: "npm run start -- --port 3210", startServerReadyPattern: "Ready" }),
       url: pages.map((page) => new URL(page, origin).href),
       numberOfRuns: 5,
-      settings: { chromeFlags: "--headless=new --no-sandbox" },
+      settings: { chromeFlags: "--headless=new --no-sandbox", throttlingMethod: "devtools" },
     },
     assert: {
       assertions: {

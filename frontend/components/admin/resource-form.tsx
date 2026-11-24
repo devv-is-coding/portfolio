@@ -2,12 +2,12 @@
 
 import { useActionState, useId } from "react";
 import { Alert } from "@/components/ui/alert";
+import { MediaField } from "@/components/admin/media-field";
 import { CheckboxField, SelectField, TextAreaField, TextField } from "@/components/ui/fields";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { type Field, type FieldValues, inputValue } from "@/lib/admin/fields";
 import { type FormAction, type FormState, IDLE } from "@/lib/admin/form-state";
-
-export type MediaOption = { id: number; label: string };
+import type { MediaChoice } from "@/lib/admin/media-options";
 
 type ResourceFormProps = {
   fields: readonly Field[];
@@ -15,7 +15,7 @@ type ResourceFormProps = {
   /** The item's current values (edit); empty for a new one. */
   values?: FieldValues;
   /** The media library, for media fields. */
-  media?: { image: readonly MediaOption[]; document: readonly MediaOption[] };
+  media?: { image: readonly MediaChoice[]; document: readonly MediaChoice[] };
   submitLabel?: string;
 };
 
@@ -79,6 +79,17 @@ export function ResourceForm({ fields, action, values = {}, media, submitLabel =
               </SelectField>
             );
           case "media":
+            if (field.upload) {
+              return (
+                <MediaField
+                  key={field.name}
+                  {...common}
+                  defaultValue={inputValue(field, value)}
+                  mediaKind={field.mediaKind}
+                  options={media?.[field.mediaKind] ?? []}
+                />
+              );
+            }
             return (
               <SelectField key={field.name} {...common} defaultValue={inputValue(field, value)}>
                 <option value="">None</option>
