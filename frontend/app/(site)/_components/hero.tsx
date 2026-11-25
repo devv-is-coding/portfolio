@@ -55,10 +55,11 @@ export function Hero() {
               Creating <span className="max-sm:block">solutions</span>
             </span>
           </h1>
+          {/* What he builds, with what, and what he's open to: a visitor who reads only this
+              knows whether to keep going. */}
           <p className="max-w-2xl leading-[1.7] text-muted sm:text-xl">
-            I engineer APIs, architect backend systems, and build web applications that solve
-            real-world problems. Focused on clean code, thoughtful architecture, and meaningful
-            solutions.
+            I build APIs and web apps with FastAPI and Next.js, and business websites on WordPress
+            and Shopify, from the Philippines. {SITE.availability}
           </p>
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/projects">See the work</ButtonLink>

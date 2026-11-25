@@ -1,10 +1,18 @@
 import { PostCard } from "@/components/post-card";
 import { ProjectCard } from "@/components/project-card";
 import { SectionHeading } from "@/components/section-heading";
-import { SkillGroups } from "@/components/skill-groups";
+import { SkillGroups, SkillTags } from "@/components/skill-groups";
+import { ScrollHere } from "@/components/scroll-here";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Container } from "@/components/ui/container";
-import { getPosts, getProjects, getSkills, readAtRequestTimeWithoutApi } from "@/lib/api/public";
+import {
+  getPosts,
+  getProjects,
+  getSkills,
+  getSkillSlugsWithProjects,
+  readAtRequestTimeWithoutApi,
+} from "@/lib/api/public";
+import { CORE_SKILL_COUNT } from "@/lib/skills";
 
 const SECTION = "border-t border-line py-20 sm:py-28";
 
@@ -45,17 +53,43 @@ export async function FeaturedProjects() {
   );
 }
 
-export async function SkillsOverview() {
+/**
+ * The skills. `core` (home page): the first few in display order as one row, with a link to
+ * the full list; otherwise (about page) every skill by category. Either way a skill links to
+ * the filtered projects only when it has some.
+ */
+export async function SkillsOverview({ core = false }: { core?: boolean }) {
   await readAtRequestTimeWithoutApi();
-  const skills = await getSkills();
+  const [skills, slugsWithProjects] = await Promise.all([getSkills(), getSkillSlugsWithProjects()]);
   if (skills.length === 0) {
     return null;
   }
+  const withProjects = new Set(slugsWithProjects);
+  const shown = core ? skills.slice(0, CORE_SKILL_COUNT) : skills;
+  const more = core && skills.length > shown.length;
   return (
-    <section className={SECTION}>
+    <section id={core ? undefined : "skills"} className={`${SECTION} scroll-mt-16`}>
       <Container className="flex flex-col gap-12">
-        <SectionHeading eyebrow="Toolbox" title="Skills" />
-        <SkillGroups skills={skills} />
+        <SectionHeading
+          eyebrow="Toolbox"
+          title="Skills"
+          action={
+            more ? (
+              <ButtonLink href="/about#skills" variant="outline">
+                All skills
+              </ButtonLink>
+            ) : undefined
+          }
+        />
+        {core ? (
+          <SkillTags skills={shown} withProjects={withProjects} />
+        ) : (
+          <>
+            <SkillGroups skills={shown} withProjects={withProjects} />
+            {/* The home page's "All skills" points here. */}
+            <ScrollHere id="skills" />
+          </>
+        )}
       </Container>
     </section>
   );

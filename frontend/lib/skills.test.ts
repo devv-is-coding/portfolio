@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Skill } from "@/lib/api/public";
-import { groupSkills } from "@/lib/skills";
+import { filterSkills, groupSkills } from "@/lib/skills";
 
 function skill(id: number, name: string, category: string | null): Skill {
   return {
@@ -35,5 +35,21 @@ describe("groupSkills", () => {
 
   it("returns no groups for no skills", () => {
     expect(groupSkills([])).toEqual([]);
+  });
+});
+
+describe("filterSkills", () => {
+  const skills = [skill(1, "FastAPI", "backend"), skill(2, "WordPress", "web"), skill(3, "Shopify", "web")];
+
+  it("keeps only the skills with projects, in display order", () => {
+    expect(filterSkills(skills, new Set(["shopify", "wordpress"])).map((s) => s.name)).toEqual(["WordPress", "Shopify"]);
+  });
+
+  it("keeps the skill filtered on right now, even without projects", () => {
+    expect(filterSkills(skills, new Set(["shopify"]), "fastapi").map((s) => s.name)).toEqual(["FastAPI", "Shopify"]);
+  });
+
+  it("offers nothing when no project has skills", () => {
+    expect(filterSkills(skills, new Set())).toEqual([]);
   });
 });

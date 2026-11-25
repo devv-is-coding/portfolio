@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useId, useState } from "react";
+import { NavLinks } from "@/components/nav-links";
 import { cn } from "@/lib/cn";
-import { NAV_ITEMS } from "@/lib/site";
 
 /** The menu below the `md` breakpoint: a full-screen panel, closed by a link, the button or Escape. */
 export function MobileNav() {
@@ -56,19 +55,12 @@ export function MobileNav() {
         data-lenis-prevent
         className="fixed inset-0 z-10 overflow-y-auto bg-ink px-5 pt-24 pb-10"
       >
-        <ul className="flex flex-col gap-2">
-          {NAV_ITEMS.map((item) => (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="block py-2 font-display text-headline font-extrabold uppercase hover:text-accent"
-              >
-                {item.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <NavLinks
+          className="flex flex-col gap-2"
+          linkClassName="block py-2 font-display text-headline font-extrabold uppercase underline-offset-[0.15em] hover:text-accent"
+          currentClassName="text-accent underline decoration-4"
+          onNavigate={() => setOpen(false)}
+        />
       </nav>
     </div>
   );
