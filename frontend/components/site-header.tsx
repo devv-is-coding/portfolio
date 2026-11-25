@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { MobileNav } from "@/components/mobile-nav";
+import { NavLinks } from "@/components/nav-links";
 import { Container } from "@/components/ui/container";
-import { NAV_ITEMS, SITE } from "@/lib/site";
+import { SITE } from "@/lib/site";
 
 export function SiteHeader() {
   return (
@@ -16,18 +17,13 @@ export function SiteHeader() {
           <span className="text-accent">.</span>
         </Link>
         <nav aria-label="Main" className="hidden md:block">
-          <ul className="flex items-center gap-8 font-mono text-xs uppercase tracking-[0.2em]">
-            {NAV_ITEMS.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="text-muted transition-colors duration-200 hover:text-accent"
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {/* The current section is lit and underlined in the accent: color plus a mark. */}
+          <NavLinks
+            className="flex items-center gap-8 font-mono text-xs uppercase tracking-[0.2em]"
+            linkClassName="underline-offset-[0.7em] transition-colors duration-200 hover:text-accent"
+            idleClassName="text-muted"
+            currentClassName="text-paper underline decoration-accent decoration-2"
+          />
         </nav>
         <MobileNav />
       </Container>

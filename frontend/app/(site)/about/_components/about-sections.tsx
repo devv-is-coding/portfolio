@@ -14,6 +14,7 @@ import {
   readAtRequestTimeWithoutApi,
 } from "@/lib/api/public";
 import { formatMonthYear, formatPeriod } from "@/lib/format";
+import { platformName } from "@/lib/social";
 
 const SECTION = "border-t border-line py-20 sm:py-28";
 
@@ -54,7 +55,7 @@ export async function ProfileIntro() {
                   rel="noopener noreferrer me"
                   className="font-mono text-xs uppercase tracking-[0.2em] text-muted transition-colors hover:text-accent"
                 >
-                  {link.platform} ↗
+                  {platformName(link.platform)} ↗
                 </a>
               </li>
             ))}

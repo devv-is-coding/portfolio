@@ -4,6 +4,7 @@ import { SectionHeading } from "@/components/section-heading";
 import { Container } from "@/components/ui/container";
 import { getProfile, readAtRequestTimeWithoutApi } from "@/lib/api/public";
 import { SITE } from "@/lib/site";
+import { platformName } from "@/lib/social";
 import { ContactForm } from "./_components/contact-form";
 
 export const metadata: Metadata = {
@@ -18,7 +19,8 @@ export default function ContactPage() {
       <div className="relative flex flex-col gap-10">
         <SectionHeading as="h1" eyebrow="Contact" title="Let's talk" />
         <p className="max-w-xl text-lg text-muted">
-          A project, a role or a question: write a few lines and I&apos;ll get back to you.
+          {SITE.availability} Tell me about the role, the project or your question, and I&apos;ll
+          get back to you.
         </p>
         <ContactForm />
       </div>
@@ -50,7 +52,7 @@ async function ContactDetails() {
         {profile.social_links.map((link) => (
           <li key={link.id}>
             <a href={link.url} target="_blank" rel="noopener noreferrer me" className="text-lg hover:text-accent">
-              {link.platform} ↗
+              {platformName(link.platform)} ↗
             </a>
           </li>
         ))}
