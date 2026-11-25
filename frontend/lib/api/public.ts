@@ -82,6 +82,28 @@ export async function getProject(slug: string): Promise<ProjectDetail | null> {
   );
 }
 
+/**
+ * The slugs of the skills at least one published project uses: only those lead somewhere as
+ * a filter (the rest would open "No projects here"). Cached under both tags, since editing a
+ * project's skills or a skill's slug changes the answer.
+ */
+export async function getSkillSlugsWithProjects(): Promise<string[]> {
+  "use cache";
+  cacheLife(PUBLIC_CACHE_LIFE);
+  cacheTag(CACHE_TAGS.projects, CACHE_TAGS.skills);
+  const slugs = new Set<string>();
+  for (let page = 1, pages = 1; page <= pages; page += 1) {
+    const list = await unwrap(apiClient().GET("/projects", { params: { query: { page, size: ALL } } }));
+    for (const project of list.items) {
+      for (const skill of project.skills) {
+        slugs.add(skill.slug);
+      }
+    }
+    pages = list.pages;
+  }
+  return [...slugs];
+}
+
 export async function getSkills(): Promise<Skill[]> {
   "use cache";
   cacheLife(PUBLIC_CACHE_LIFE);

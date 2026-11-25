@@ -7,9 +7,10 @@ import { ProjectListSkeleton } from "@/components/skeletons";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";
-import { getProjects, getSkills } from "@/lib/api/public";
+import { getProjects, getSkills, getSkillSlugsWithProjects } from "@/lib/api/public";
 import { firstParam, listHref, pageParam } from "@/lib/search-params";
 import { SITE } from "@/lib/site";
+import { filterSkills } from "@/lib/skills";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -35,10 +36,13 @@ async function ProjectList({ searchParams }: Pick<PageProps<"/projects">, "searc
   const params = await searchParams;
   const page = pageParam(params.page);
   const skill = firstParam(params.skill);
-  const [projects, skills] = await Promise.all([
+  const [projects, allSkills, slugsWithProjects] = await Promise.all([
     getProjects({ page, size: PAGE_SIZE, skill }),
     getSkills(),
+    getSkillSlugsWithProjects(),
   ]);
+  // Only skills that lead to projects: a filter for every skill opened "No projects here".
+  const skills = filterSkills(allSkills, new Set(slugsWithProjects), skill);
 
   // At least a screen tall, like the fallback: a short (empty) list never pulls the footer up.
   return (

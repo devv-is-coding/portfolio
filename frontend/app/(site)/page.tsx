@@ -21,7 +21,7 @@ export default function HomePage() {
       <SectionErrorBoundary>
         <Suspense fallback={<HomeSectionsSkeleton />}>
           <FeaturedProjects />
-          <SkillsOverview />
+          <SkillsOverview core />
           <LatestPosts />
         </Suspense>
       </SectionErrorBoundary>
