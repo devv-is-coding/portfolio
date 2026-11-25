@@ -58,8 +58,8 @@ export function Hero() {
           {/* What he builds, with what, and what he's open to: a visitor who reads only this
               knows whether to keep going. */}
           <p className="max-w-2xl leading-[1.7] text-muted sm:text-xl">
-            I build APIs and web apps with FastAPI and Next.js, and business websites on WordPress
-            and Shopify, from the Philippines. {SITE.availability}
+            I build web products end to end, from APIs and databases to the pages people use, from
+            the Philippines. {SITE.availability}
           </p>
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/projects">See the work</ButtonLink>
