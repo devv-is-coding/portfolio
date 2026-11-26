@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -23,6 +23,11 @@ Title = Annotated[RequiredText, Field(max_length=200)]
 ProjectSlug = Annotated[Slug, Field(max_length=SLUG_MAX_LENGTH)]
 ShortDescription = Annotated[str | None, Field(max_length=500), BlankToNone]
 Description = Annotated[str | None, Field(max_length=DESCRIPTION_MAX_LENGTH), BlankToNone]
+StartedOn = Annotated[date | None, Field(description="When the work started (month shown).")]
+EndedOn = Annotated[date | None, Field(description="When it ended; left out or null: still going.")]
+Role = Annotated[str | None, Field(max_length=200, examples=["Full-stack developer"]), BlankToNone]
+Problem = Annotated[str | None, Field(max_length=500), BlankToNone]
+Outcome = Annotated[str | None, Field(max_length=500), BlankToNone]
 
 
 class ProjectCreate(BaseModel):
@@ -39,6 +44,11 @@ class ProjectCreate(BaseModel):
                     "status": "published",
                     "is_featured": True,
                     "display_order": 1,
+                    "started_on": "2025-03-01",
+                    "ended_on": "2025-06-30",
+                    "role": "Full-stack developer, solo",
+                    "problem": "The shop sold through social media messages only.",
+                    "outcome": "Orders and payments in one place; checkout in under a minute.",
                 }
             ]
         },
@@ -57,6 +67,11 @@ class ProjectCreate(BaseModel):
     published_at: UtcDateTime | None = Field(
         default=None, description="Set to now when publishing without one."
     )
+    started_on: StartedOn = None
+    ended_on: EndedOn = None
+    role: Role = None
+    problem: Problem = None
+    outcome: Outcome = None
 
 
 class ProjectUpdate(BaseModel):
@@ -75,6 +90,11 @@ class ProjectUpdate(BaseModel):
     is_featured: Annotated[bool | None, NotNull] = None
     display_order: Annotated[DisplayOrder | None, NotNull] = None
     published_at: UtcDateTime | None = None
+    started_on: StartedOn = None
+    ended_on: EndedOn = None
+    role: Role = None
+    problem: Problem = None
+    outcome: Outcome = None
 
 
 class ProjectImageCreate(BaseModel):
@@ -130,11 +150,16 @@ class ProjectSummary(BaseModel):
     is_featured: bool
     display_order: int
     published_at: datetime | None
+    started_on: date | None
+    ended_on: date | None
     skills: list[SkillSummary]
 
 
 class ProjectDetail(ProjectSummary):
     description: str | None
+    role: str | None
+    problem: str | None
+    outcome: str | None
     images: list[ProjectImageRead]
     updated_at: datetime
 

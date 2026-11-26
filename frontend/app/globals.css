@@ -63,6 +63,12 @@
     color: var(--color-paper);
   }
 
+  /* No single word stranded on a paragraph's last line. */
+  p,
+  dd {
+    text-wrap: pretty;
+  }
+
   ::selection {
     background-color: var(--color-accent);
     color: var(--color-accent-ink);

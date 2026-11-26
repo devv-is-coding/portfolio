@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MediaImage } from "@/components/media-image";
 import { Tag } from "@/components/ui/tag";
 import type { ProjectSummary } from "@/lib/api/public";
+import { formatWorkPeriod } from "@/lib/format";
 
 const MAX_SKILLS = 4;
 
@@ -15,6 +16,7 @@ type ProjectCardProps = {
 
 export function ProjectCard({ project, sizes, headingLevel: Heading = "h3" }: ProjectCardProps) {
   const { thumbnail } = project;
+  const period = formatWorkPeriod(project.started_on, project.ended_on);
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-ink-raised transition-[border-color,box-shadow] duration-500 hover:border-accent hover:shadow-[0_30px_80px_-40px] hover:shadow-accent/50">
       {/* The picture uncovers as the card scrolls into view (lib/motion "image"). */}
@@ -35,12 +37,16 @@ export function ProjectCard({ project, sizes, headingLevel: Heading = "h3" }: Pr
         )}
       </div>
       <div className="flex flex-1 flex-col gap-4 p-6">
-        <Heading className="font-display text-2xl font-extrabold">
-          <Link href={`/projects/${project.slug}`} className="after:absolute after:inset-0">
-            {project.title}
-          </Link>
-        </Heading>
-        {project.short_description && <p className="text-muted">{project.short_description}</p>}
+        <div className="flex flex-col gap-1.5">
+          <Heading className="font-display text-2xl font-extrabold">
+            <Link href={`/projects/${project.slug}`} className="after:absolute after:inset-0">
+              {project.title}
+            </Link>
+          </Heading>
+          {period && <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">{period}</p>}
+        </div>
+        {/* Three lines at most, so cards in a row stay even; the project page has the rest. */}
+        {project.short_description && <p className="line-clamp-3 text-muted">{project.short_description}</p>}
         {project.skills.length > 0 && (
           <ul className="mt-auto flex flex-wrap gap-2" aria-label="Skills">
             {project.skills.slice(0, MAX_SKILLS).map((skill) => (
