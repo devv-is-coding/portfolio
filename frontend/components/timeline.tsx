@@ -29,7 +29,7 @@ export function Timeline({ entries }: { entries: readonly TimelineEntry[] }) {
             <h3 className="font-display text-2xl font-extrabold">{entry.title}</h3>
             <p className="text-muted">{entry.subtitle}</p>
             {entry.description && (
-              <Markdown minHeading={4} className="mt-2 max-w-2xl">
+              <Markdown minHeading={4} className="mt-2 max-w-prose">
                 {entry.description}
               </Markdown>
             )}

@@ -369,3 +369,119 @@ async def test_gallery_rejects_documents_and_images_of_other_projects(
 
     assert document.status_code == 422
     assert (other_project.status_code, no_project.status_code) == (404, 404)
+
+
+# --- work period and summary -----------------------------------------------------------
+
+SUMMARY = {
+    "role": "Full-stack developer, solo",
+    "problem": "Orders came in through chat messages.",
+    "outcome": "One checkout; orders in one list.",
+}
+
+
+async def test_work_period_and_summary_are_shown_publicly(
+    client: AsyncClient, admin_headers: dict[str, str]
+) -> None:
+    await _create(
+        client,
+        admin_headers,
+        title="Timing",
+        status="published",
+        started_on="2025-03-01",
+        ended_on="2025-06-30",
+        **SUMMARY,
+    )
+
+    [listed] = (await client.get("/projects")).json()["items"]
+    detail = (await client.get("/projects/timing")).json()
+
+    assert (listed["started_on"], listed["ended_on"]) == ("2025-03-01", "2025-06-30")
+    assert "role" not in listed
+    assert {key: detail[key] for key in SUMMARY} == SUMMARY
+    assert (detail["started_on"], detail["ended_on"]) == ("2025-03-01", "2025-06-30")
+
+
+async def test_an_end_before_the_start_is_refused(
+    client: AsyncClient, admin_headers: dict[str, str]
+) -> None:
+    refused = await client.post(
+        "/admin/projects",
+        json={"title": "Timing", "started_on": "2025-06-01", "ended_on": "2025-01-01"},
+        headers=admin_headers,
+    )
+    project = await _create(client, admin_headers, title="Timing", started_on="2025-03-01")
+    url = f"/admin/projects/{project['id']}"
+
+    end_too_early = await client.patch(url, json={"ended_on": "2025-02-01"}, headers=admin_headers)
+    ended = await client.patch(url, json={"ended_on": "2025-12-31"}, headers=admin_headers)
+    start_after_end = await client.patch(
+        url, json={"started_on": "2026-01-01"}, headers=admin_headers
+    )
+    moved = await client.patch(
+        url, json={"started_on": "2026-01-01", "ended_on": None}, headers=admin_headers
+    )
+
+    assert refused.status_code == 422
+    assert refused.json()["error"]["details"][0]["field"] == "body.ended_on"
+    assert end_too_early.json()["error"]["details"][0] == {
+        "field": "body.ended_on",
+        "message": "Must not be before the start date",
+        "type": "date_order",
+    }
+    assert ended.status_code == 200
+    # A new start is checked against the stored end, and refused without changing anything.
+    assert start_after_end.status_code == 422
+    assert start_after_end.json()["error"]["details"][0]["field"] == "body.started_on"
+    # Moving the start while clearing the end in the same request is fine.
+    assert (moved.status_code, moved.json()["started_on"], moved.json()["ended_on"]) == (
+        200,
+        "2026-01-01",
+        None,
+    )
+
+
+async def test_patch_sets_and_clears_the_period_and_summary(
+    client: AsyncClient, admin_headers: dict[str, str], db_session: AsyncSession
+) -> None:
+    project = await _create(client, admin_headers, title="Timing")
+    url = f"/admin/projects/{project['id']}"
+
+    filled = await client.patch(
+        url, json={"started_on": "2025-03-01", "role": "Lead developer"}, headers=admin_headers
+    )
+    cleared = await client.patch(
+        url, json={"started_on": None, "role": "  "}, headers=admin_headers
+    )
+
+    assert (filled.json()["started_on"], filled.json()["role"]) == ("2025-03-01", "Lead developer")
+    assert (cleared.json()["started_on"], cleared.json()["role"]) == (None, None)
+    first, second = await audit_entries(db_session, "project.update")
+    assert first.details == {
+        "started_on": {"old": None, "new": "2025-03-01"},
+        "role": {"old": None, "new": "Lead developer"},
+    }
+    assert second.details == {
+        "started_on": {"old": "2025-03-01", "new": None},
+        "role": {"old": "Lead developer", "new": None},
+    }
+
+
+@pytest.mark.parametrize(
+    ("fields", "field"),
+    [
+        ({"role": "x" * 201}, "body.role"),
+        ({"problem": "x" * 501}, "body.problem"),
+        ({"outcome": "x" * 501}, "body.outcome"),
+        ({"started_on": "2025-13-01"}, "body.started_on"),
+    ],
+)
+async def test_summary_and_period_are_validated(
+    client: AsyncClient, admin_headers: dict[str, str], fields: dict[str, object], field: str
+) -> None:
+    response = await client.post(
+        "/admin/projects", json={"title": "Timing"} | fields, headers=admin_headers
+    )
+
+    assert response.status_code == 422
+    assert [detail["field"] for detail in response.json()["error"]["details"]] == [field]

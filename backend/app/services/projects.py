@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import NotFoundError
 from app.core.pagination import Page, PageParams, Sort
 from app.core.slugs import slug_or_explicit
+from app.core.validators import ensure_date_order
 from app.models import Project, ProjectImage
 from app.models.enums import MediaKind, PublicationStatus
 from app.repositories.project_images import ProjectImageRepository
@@ -30,6 +31,8 @@ from app.services.publishing import publication_values, resolve_published_at
 
 ENTITY_TYPE = "project"
 IMAGE_ENTITY_TYPE = "project_image"
+# Kept as dates: the JSON dump used for the rest of the body turns them into strings.
+PERIOD_FIELDS = {"started_on", "ended_on"}
 
 
 class ProjectNotFoundError(NotFoundError):
@@ -55,6 +58,8 @@ def _summary_fields(project: Project, url_endpoint: str | None) -> dict[str, obj
         "is_featured": project.is_featured,
         "display_order": project.display_order,
         "published_at": project.published_at,
+        "started_on": project.started_on,
+        "ended_on": project.ended_on,
         "skills": [SkillSummary.model_validate(skill) for skill in project.skills],
     }
 
@@ -74,6 +79,9 @@ def _image_read(image: ProjectImage, url_endpoint: str | None) -> ProjectImageRe
 def _detail_fields(project: Project, url_endpoint: str | None) -> dict[str, object]:
     return _summary_fields(project, url_endpoint) | {
         "description": project.description,
+        "role": project.role,
+        "problem": project.problem,
+        "outcome": project.outcome,
         "images": [_image_read(image, url_endpoint) for image in project.images],
         "updated_at": project.updated_at,
     }
@@ -151,9 +159,14 @@ async def create(
 ) -> ProjectAdminRead:
     if body.thumbnail_media_id is not None:
         await require_media(session, body.thumbnail_media_id, MediaKind.IMAGE, "thumbnail_media_id")
-    values = body.model_dump(mode="json", exclude={"slug", "status", "published_at"})
+    ensure_date_order(body.started_on, body.ended_on, field="ended_on")
+    values = body.model_dump(
+        mode="json", exclude={"slug", "status", "published_at", *PERIOD_FIELDS}
+    )
     project = Project(
         **values,
+        started_on=body.started_on,
+        ended_on=body.ended_on,
         slug=slug_or_explicit(body.slug, body.title, SLUG_MAX_LENGTH),
         status=body.status,
         published_at=resolve_published_at(
@@ -180,8 +193,18 @@ async def update(
     if body.thumbnail_media_id is not None:
         await require_media(session, body.thumbnail_media_id, MediaKind.IMAGE, "thumbnail_media_id")
     project = await _load(session, project_id)
-    # URLs as strings (JSON mode); status and published_at keep their types.
-    values = body.model_dump(mode="json", exclude_unset=True, exclude={"status", "published_at"})
+    # Checked against the stored dates before anything changes.
+    sent = body.model_fields_set
+    ensure_date_order(
+        body.started_on if "started_on" in sent else project.started_on,
+        body.ended_on if "ended_on" in sent else project.ended_on,
+        field="ended_on" if "ended_on" in sent else "started_on",
+    )
+    # URLs as strings (JSON mode); status, published_at and the period keep their types.
+    values = body.model_dump(
+        mode="json", exclude_unset=True, exclude={"status", "published_at", *PERIOD_FIELDS}
+    )
+    values |= body.model_dump(include=PERIOD_FIELDS, exclude_unset=True)
     values |= publication_values(project, body.status, body.published_at, body.model_fields_set)
     if await crud.update(session, context, project, values, entity_type=ENTITY_TYPE):
         project = await _load(session, project_id)

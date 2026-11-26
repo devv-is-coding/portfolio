@@ -8,6 +8,7 @@ import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";
 import { getProjects, getSkills, getSkillSlugsWithProjects } from "@/lib/api/public";
+import { projectGridClass } from "@/lib/project-grid";
 import { firstParam, listHref, pageParam } from "@/lib/search-params";
 import { SITE } from "@/lib/site";
 import { filterSkills } from "@/lib/skills";
@@ -66,7 +67,7 @@ async function ProjectList({ searchParams }: Pick<PageProps<"/projects">, "searc
         </nav>
       )}
       {projects.items.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className={projectGridClass(projects.total)}>
           {projects.items.map((project) => (
             <ProjectCard
               key={project.id}

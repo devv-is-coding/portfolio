@@ -12,6 +12,7 @@ import {
   getSkillSlugsWithProjects,
   readAtRequestTimeWithoutApi,
 } from "@/lib/api/public";
+import { projectGridClass } from "@/lib/project-grid";
 import { CORE_SKILL_COUNT } from "@/lib/skills";
 
 const SECTION = "border-t border-line py-20 sm:py-28";
@@ -38,7 +39,7 @@ export async function FeaturedProjects() {
             </ButtonLink>
           }
         />
-        <div data-motion-track className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div data-motion-track className={projectGridClass(projects.length)}>
           {projects.map((project) => (
             <ProjectCard
               key={project.id}

@@ -45,8 +45,12 @@ describe("intro gate", () => {
     expect(runGate({ path: "/projects", storage }).intro).toBeUndefined();
   });
 
-  it("plays on any public page a visitor lands on", () => {
-    expect(runGate({ path: "/blog/some-post" }).intro).toBe(INTRO_PLAYING);
+  it("doesn't play when the session starts on another page, and doesn't come later", () => {
+    const { intro, storage } = runGate({ path: "/blog/some-post" });
+
+    expect(intro).toBeUndefined();
+    expect(storage?.get(INTRO_SEEN_KEY)).toBe("1");
+    expect(runGate({ path: "/", storage }).intro).toBeUndefined();
   });
 
   it("never plays in the admin, and doesn't use up the visit there", () => {

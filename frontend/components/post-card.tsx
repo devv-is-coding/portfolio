@@ -21,7 +21,7 @@ export function PostCard({ post, headingLevel: Heading = "h3" }: PostCardProps) 
           {post.title}
         </Link>
       </Heading>
-      {post.excerpt && <p className="max-w-2xl text-muted">{post.excerpt}</p>}
+      {post.excerpt && <p className="max-w-prose text-muted">{post.excerpt}</p>}
     </article>
   );
 }

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, false, text
+from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Index, String, false, text
 from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -34,6 +34,10 @@ class Project(IdMixin, TimestampMixin, Base):
             " OR published_at IS NOT NULL",
             name="published_at_required",
         ),
+        CheckConstraint(
+            "started_on IS NULL OR ended_on IS NULL OR ended_on >= started_on",
+            name="ended_after_started",
+        ),
         TABLE_OPTIONS,
     )
 
@@ -52,6 +56,13 @@ class Project(IdMixin, TimestampMixin, Base):
     is_featured: Mapped[bool] = mapped_column(default=False, server_default=false())
     display_order: Mapped[int] = mapped_column(default=0, server_default=text("0"))
     published_at: Mapped[datetime | None] = mapped_column(DateTime)
+    # When the work happened, shown instead of the publish date; no end: still going.
+    started_on: Mapped[date | None] = mapped_column(Date)
+    ended_on: Mapped[date | None] = mapped_column(Date)
+    # The project page's summary, a sentence or two each.
+    role: Mapped[str | None] = mapped_column(String(200))
+    problem: Mapped[str | None] = mapped_column(String(500))
+    outcome: Mapped[str | None] = mapped_column(String(500))
 
     thumbnail: Mapped[Media | None] = relationship(lazy="raise")
     images: Mapped[list[ProjectImage]] = relationship(

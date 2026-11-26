@@ -2212,10 +2212,20 @@ export interface components {
             display_order: number;
             /** Published At */
             published_at: string | null;
+            /** Started On */
+            started_on: string | null;
+            /** Ended On */
+            ended_on: string | null;
             /** Skills */
             skills: components["schemas"]["SkillSummary"][];
             /** Description */
             description: string | null;
+            /** Role */
+            role: string | null;
+            /** Problem */
+            problem: string | null;
+            /** Outcome */
+            outcome: string | null;
             /** Images */
             images: components["schemas"]["ProjectImageRead"][];
             /**
@@ -2237,10 +2247,15 @@ export interface components {
          * @example {
          *       "description": "## What it does\n\nCatalog, cart and checkout.",
          *       "display_order": 1,
+         *       "ended_on": "2025-06-30",
          *       "is_featured": true,
          *       "live_url": "https://shop.example.com",
+         *       "outcome": "Orders and payments in one place; checkout in under a minute.",
+         *       "problem": "The shop sold through social media messages only.",
          *       "repository_url": "https://github.com/ada/shop",
+         *       "role": "Full-stack developer, solo",
          *       "short_description": "A small shop with Stripe payments.",
+         *       "started_on": "2025-03-01",
          *       "status": "published",
          *       "title": "Online shop"
          *     }
@@ -2287,6 +2302,25 @@ export interface components {
              * @description Set to now when publishing without one.
              */
             published_at?: string | null;
+            /**
+             * Started On
+             * @description When the work started (month shown).
+             */
+            started_on?: string | null;
+            /**
+             * Ended On
+             * @description When it ended; left out or null: still going.
+             */
+            ended_on?: string | null;
+            /**
+             * Role
+             * @example Full-stack developer
+             */
+            role?: string | null;
+            /** Problem */
+            problem?: string | null;
+            /** Outcome */
+            outcome?: string | null;
         };
         /** ProjectDetail */
         ProjectDetail: {
@@ -2309,10 +2343,20 @@ export interface components {
             display_order: number;
             /** Published At */
             published_at: string | null;
+            /** Started On */
+            started_on: string | null;
+            /** Ended On */
+            ended_on: string | null;
             /** Skills */
             skills: components["schemas"]["SkillSummary"][];
             /** Description */
             description: string | null;
+            /** Role */
+            role: string | null;
+            /** Problem */
+            problem: string | null;
+            /** Outcome */
+            outcome: string | null;
             /** Images */
             images: components["schemas"]["ProjectImageRead"][];
             /**
@@ -2390,6 +2434,10 @@ export interface components {
             display_order: number;
             /** Published At */
             published_at: string | null;
+            /** Started On */
+            started_on: string | null;
+            /** Ended On */
+            ended_on: string | null;
             /** Skills */
             skills: components["schemas"]["SkillSummary"][];
         };
@@ -2419,6 +2467,25 @@ export interface components {
             display_order?: number | null;
             /** Published At */
             published_at?: string | null;
+            /**
+             * Started On
+             * @description When the work started (month shown).
+             */
+            started_on?: string | null;
+            /**
+             * Ended On
+             * @description When it ended; left out or null: still going.
+             */
+            ended_on?: string | null;
+            /**
+             * Role
+             * @example Full-stack developer
+             */
+            role?: string | null;
+            /** Problem */
+            problem?: string | null;
+            /** Outcome */
+            outcome?: string | null;
         };
         /**
          * PublicMedia

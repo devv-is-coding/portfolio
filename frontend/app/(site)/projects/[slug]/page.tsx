@@ -9,8 +9,8 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Tag } from "@/components/ui/tag";
-import { getProject } from "@/lib/api/public";
-import { formatMonthYear } from "@/lib/format";
+import { getProject, type ProjectDetail } from "@/lib/api/public";
+import { formatWorkPeriod } from "@/lib/format";
 import { listHref } from "@/lib/search-params";
 
 export async function generateMetadata({ params }: PageProps<"/projects/[slug]">): Promise<Metadata> {
@@ -49,7 +49,7 @@ async function ProjectDetails({ params }: Pick<PageProps<"/projects/[slug]">, "p
           ← All projects
         </Link>
         <header className="flex flex-col gap-6">
-          <Eyebrow>{project.published_at ? formatMonthYear(project.published_at) : "Project"}</Eyebrow>
+          <Eyebrow>{formatWorkPeriod(project.started_on, project.ended_on) ?? "Project"}</Eyebrow>
           <h1 className="font-display text-headline font-extrabold uppercase">{project.title}</h1>
           {project.short_description && <p className="max-w-2xl text-xl text-muted">{project.short_description}</p>}
           <div className="flex flex-wrap gap-3">
@@ -74,6 +74,7 @@ async function ProjectDetails({ params }: Pick<PageProps<"/projects/[slug]">, "p
             </ul>
           )}
         </header>
+        <ProjectSummaryBlock project={project} />
         {thumbnail && (
           <MediaImage
             src={thumbnail.url}
@@ -106,5 +107,30 @@ async function ProjectDetails({ params }: Pick<PageProps<"/projects/[slug]">, "p
         )}
       </Container>
     </article>
+  );
+}
+
+// Column classes by how many of the three are filled, written out so Tailwind finds them.
+const SUMMARY_COLUMNS = ["", "md:grid-cols-1", "md:grid-cols-2", "md:grid-cols-3"] as const;
+
+/** Role, problem and result, a sentence or two each: the project at a glance. Empty ones are left out. */
+function ProjectSummaryBlock({ project }: { project: ProjectDetail }) {
+  const items = [
+    { label: "My role", text: project.role },
+    { label: "The problem", text: project.problem },
+    { label: "The result", text: project.outcome },
+  ].filter((item): item is { label: string; text: string } => Boolean(item.text));
+  if (items.length === 0) {
+    return null;
+  }
+  return (
+    <dl className={`grid gap-8 ${SUMMARY_COLUMNS[items.length]}`}>
+      {items.map((item) => (
+        <div key={item.label} className="flex flex-col gap-3 border-t border-line pt-5">
+          <dt className="font-mono text-xs uppercase tracking-[0.2em] text-muted">{item.label}</dt>
+          <dd className="max-w-prose text-lg">{item.text}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

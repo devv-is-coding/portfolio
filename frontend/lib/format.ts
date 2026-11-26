@@ -25,3 +25,14 @@ export function formatPeriod(start: string | null, end: string | null, ongoingLa
   const to = end ? formatMonthYear(end) : ongoingLabel;
   return start ? `${formatMonthYear(start)} – ${to}` : to;
 }
+
+/** When a project's work happened: like formatPeriod, one month once, null without dates. */
+export function formatWorkPeriod(start: string | null, end: string | null): string | null {
+  if (!start && !end) {
+    return null;
+  }
+  if (start && end && formatMonthYear(start) === formatMonthYear(end)) {
+    return formatMonthYear(start);
+  }
+  return formatPeriod(start, end);
+}
