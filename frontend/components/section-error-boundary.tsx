@@ -4,7 +4,11 @@ import { Component, type ReactNode } from "react";
 import { OutageMessage } from "@/components/outage-message";
 import { Container } from "@/components/ui/container";
 
-type Props = { children: ReactNode };
+type Props = {
+  children: ReactNode;
+  /** Shown instead of the outage notice, e.g. nothing for a purely optional part. */
+  fallback?: ReactNode;
+};
 type State = { failed: boolean };
 
 /**
@@ -23,6 +27,9 @@ export class SectionErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.failed) {
       return this.props.children;
+    }
+    if (this.props.fallback !== undefined) {
+      return this.props.fallback;
     }
     return (
       <Container className="flex flex-col items-start gap-4 border-t border-line py-16">

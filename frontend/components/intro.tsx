@@ -5,11 +5,9 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { INTRO_LEAVING, INTRO_PLAYING } from "@/lib/intro";
 import { SITE } from "@/lib/site";
 
-// The greeting's words are all in after ~1.2 s (globals.css); a moment to read them, then go.
-const GREETING_MS = 1400;
-// While the API and its database wake up the greeting may stay, but never longer than this:
-// the site never waits for them (cached pages need neither).
-const MAX_HOLD_MS = 3000;
+// The greeting's words are all in after ~0.8 s (globals.css); then it goes. It never waits for
+// the backend: cached pages need neither the API nor its database.
+const GREETING_MS = 900;
 // The status route gives the API 10 s (lib/api/status.ts); after that the request is dropped.
 const WAKE_UP_TIMEOUT_MS = 12_000;
 const SKIP_EVENTS = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
@@ -26,10 +24,10 @@ const WORDS = [
 ];
 
 /**
- * The welcome screen on a visitor's first page of the session (lib/intro.ts decides before the
- * first paint). It wakes the API and the free-tier database with one status request, leaves
- * after the greeting, a little later at most while that request is still out, and at once on
- * a click, key, scroll or touch. Decorative: hidden from screen readers, never in the way.
+ * The welcome screen when a session starts on the home page (lib/intro.ts decides before the
+ * first paint). It sends one status request so the API and the free-tier database wake up
+ * while the visitor looks around, leaves after the greeting, and at once on a click, key,
+ * scroll or touch. Decorative: hidden from screen readers, never in the way.
  */
 export function Intro() {
   const overlay = useRef<HTMLDivElement>(null);
@@ -41,8 +39,6 @@ export function Intro() {
       return;
     }
     let active = true;
-    let greeted = false;
-    let warm = false;
 
     const stopSkipping = () => {
       for (const type of SKIP_EVENTS) {
@@ -55,27 +51,14 @@ export function Intro() {
         stopSkipping();
       }
     }
-    const leaveWhenReady = () => {
-      if (greeted && warm) {
-        leave();
-      }
-    };
 
     // One request, whatever it answers: the site never relies on it, it only gives the
-    // backend a head start while the visitor reads.
-    // The body is read so the request closes (an unread one stays open in Chrome).
+    // backend a head start. The body is read so the request closes (an unread one stays open
+    // in Chrome).
     wakeUp ??= fetch("/api/status", { cache: "no-store", signal: AbortSignal.timeout(WAKE_UP_TIMEOUT_MS) })
       .then((response) => response.text())
       .catch(() => {});
-    void wakeUp.then(() => {
-      warm = true;
-      leaveWhenReady();
-    });
-    const greetingTimer = setTimeout(() => {
-      greeted = true;
-      leaveWhenReady();
-    }, GREETING_MS);
-    const holdTimer = setTimeout(leave, MAX_HOLD_MS);
+    const greetingTimer = setTimeout(leave, GREETING_MS);
     for (const type of SKIP_EVENTS) {
       window.addEventListener(type, leave, { passive: true });
     }
@@ -91,7 +74,6 @@ export function Intro() {
     return () => {
       active = false;
       clearTimeout(greetingTimer);
-      clearTimeout(holdTimer);
       stopSkipping();
       element.removeEventListener("animationend", finish);
     };

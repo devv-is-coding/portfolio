@@ -1,13 +1,14 @@
 import { getImageProps } from "next/image";
+import { Suspense } from "react";
+import { HeroLinks } from "@/app/(site)/_components/hero-links";
 import { ColorBends } from "@/components/color-bends";
+import { SectionErrorBoundary } from "@/components/section-error-boundary";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Marquee } from "@/components/ui/marquee";
 import { SITE } from "@/lib/site";
 import portrait from "@/public/images/portrait.png";
 
-const MARQUEE_WORDS = ["Plan", "Design", "Develop", "Test", "Deploy", "Repeat"] as const;
 // The accent with a darker band for depth, read from the design tokens: no color outside the palette.
 const BAND_COLORS = ["--color-accent", "--color-line"] as const;
 
@@ -27,8 +28,8 @@ const { props: portraitProps } = getImageProps({
 /** The home page's first screen: headline, calls to action and the portrait. */
 export function Hero() {
   return (
-    // One screen below the header (h-16 + its 1px border), so the marquee is the first screen's
-    // bottom edge; taller only when the content can't fit (min-h-fit: very short screens).
+    // One screen below the header (h-16 + its 1px border), so the links bar is the first
+    // screen's bottom edge; taller only when the content can't fit (min-h-fit: very short screens).
     <section className="relative isolate flex h-[calc(100svh-4rem-1px)] min-h-fit flex-col overflow-x-clip">
       {/* Behind the content (isolate + -z-10), dimmed and softened so it never competes with the headline. */}
       <div aria-hidden="true" className="absolute inset-0 -z-10 opacity-25 blur-lg">
@@ -68,13 +69,13 @@ export function Hero() {
             </ButtonLink>
           </div>
         </div>
-        {/* The photo's bottom edge sits on the marquee, so its crop at the waist never shows.
+        {/* The photo's bottom edge sits on the links bar, so its crop at the waist never shows.
             Below lg it is as tall as the row left for it (never above its own 574 px): h-0 +
             min-h-full fills the row without making it taller. From lg its width follows the screen
             height (64svh - 120px) so it fills the hero top to bottom and everything fits one
             screen; on xl up to 460 px (1.24x the file, slightly soft but never distorted). */}
         <div className="flex h-0 min-h-full items-end justify-center lg:block lg:h-auto lg:min-h-0 lg:self-end">
-          {/* While the hero scrolls away the portrait sinks slower than the page, behind the marquee. */}
+          {/* While the hero scrolls away the portrait sinks slower than the page, behind the bar. */}
           <div
             data-motion="parallax"
             data-motion-y="14"
@@ -90,7 +91,18 @@ export function Hero() {
           </div>
         </div>
       </Container>
-      <Marquee items={MARQUEE_WORDS} />
+      {/* The floor the portrait stands on: quick links from the profile. A fixed height, so the
+          links streaming in never move anything; if the API fails the bar just stays empty and
+          the hero, which needs no data, still shows. On narrow phones the links scroll sideways. */}
+      <div className="relative z-10 border-y border-line bg-ink-raised">
+        <Container className="flex h-14 items-center overflow-x-auto [scrollbar-width:none]">
+          <SectionErrorBoundary fallback={null}>
+            <Suspense fallback={null}>
+              <HeroLinks />
+            </Suspense>
+          </SectionErrorBoundary>
+        </Container>
+      </div>
     </section>
   );
 }
