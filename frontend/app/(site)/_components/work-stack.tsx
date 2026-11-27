@@ -13,8 +13,8 @@ const MAX_FEATURED = 6;
 const MAX_NEWEST = 3;
 const MAX_SKILLS = 4;
 
-// The cards take turns: marigold, cream, the raised surface. Text on the light ones is ink, and
-// so is their focus ring (on-accent): the marigold ring vanished on them.
+// The cards take turns: gold, cream, the raised surface. Text on the light ones is ink, and
+// so is their focus ring (on-accent): the gold ring vanished on them.
 const TONES = [
   { card: "on-accent bg-accent text-accent-ink", soft: "text-accent-ink/75" },
   { card: "on-accent bg-cream text-ink", soft: "text-cream-muted" },
@@ -100,7 +100,7 @@ function WorkCard({ project, index }: { project: ProjectSummary; index: number }
           data-reveal
           style={{ "--reveal": 1 } as CSSProperties}
           // A picture with rounded corners and a shadow, no border: a frame read as a card in a card.
-          className="self-center overflow-hidden rounded-panel shadow-[0_30px_60px_-30px_rgb(18_17_15/0.5)]"
+          className="self-center overflow-hidden rounded-panel shadow-[0_30px_60px_-30px_rgb(14_14_16/0.5)]"
         >
           {thumbnail ? (
             <MediaImage

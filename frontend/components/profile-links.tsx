@@ -5,7 +5,7 @@ type QuickLink = { label: string; href: string; external: boolean };
 
 /**
  * The footer's profile details: the social links in their admin order, then email and the
- * résumé, and the place the profile gives. Set in ink on the footer's marigold. Nothing
+ * résumé, and the place the profile gives. Set in ink on the footer's gold. Nothing
  * without a profile.
  */
 export async function ProfileLinks() {

@@ -9,7 +9,7 @@ import { groupSkills, HOME_SKILL_GROUPS } from "@/lib/skills";
 /**
  * The skills as one huge row per category, in the admin's order: the first few categories,
  * then a link to the full list on the about page. A skill links to the projects that use it,
- * and only when there are some. Hovering a row floods it with marigold. Left out without skills.
+ * and only when there are some. Hovering a row floods it with gold. Left out without skills.
  */
 export async function SkillRows() {
   await readAtRequestTimeWithoutApi();

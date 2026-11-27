@@ -1,6 +1,6 @@
 import { cn } from "@/lib/cn";
 
-// The poster's pills: a marigold primary that steps 14% toward the text colour on hover, an
+// The poster's pills: a gold primary that steps 14% toward the text colour on hover, an
 // outlined secondary that fills with the raised surface. Exactly one filled button marks the
 // main action in any view.
 const VARIANTS = {

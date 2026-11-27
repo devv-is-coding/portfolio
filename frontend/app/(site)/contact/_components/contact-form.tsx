@@ -26,7 +26,7 @@ function SentConfirmation({ onSendAnother }: { onSendAnother: () => void }) {
     panel.current?.focus();
   }, []);
   return (
-    // A marigold panel in the poster's colours, like the close at the end of the page.
+    // A gold panel in the poster's colours, like the close at the end of the page.
     <div
       ref={panel}
       tabIndex={-1}

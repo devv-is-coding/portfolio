@@ -13,7 +13,7 @@ type PostRowProps = {
 
 /**
  * A post as a huge-title row (date and category, title, a short excerpt) that floods with
- * marigold on hover (`.flood-row`, globals.css); the whole row links to the post. The list
+ * gold on hover (`.flood-row`, globals.css); the whole row links to the post. The list
  * around it needs `overflow-x-clip` (the flood runs to the screen's edges) and a top border.
  */
 export function PostRow({ post, index, headingLevel: Heading = "h3" }: PostRowProps) {

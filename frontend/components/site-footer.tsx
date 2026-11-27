@@ -9,7 +9,7 @@ import { SITE } from "@/lib/site";
 // The main action, word for word as the hero's button (TODO.md Redesign).
 const MAIN_ACTION = "Get in touch";
 
-/** The close: the page ends on marigold as the welcome began, with the main action set huge. */
+/** The close: the page ends on gold as the welcome began, with the main action set huge. */
 // Its divider is part of it, so on /contact (no close) the footer starts without a stray line.
 const close = (
   <div className="flex flex-col gap-6 border-b-[1.5px] border-accent-ink pt-16 pb-16 sm:pt-24">

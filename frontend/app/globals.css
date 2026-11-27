@@ -3,26 +3,26 @@
 /*
  * Design tokens. The default Tailwind palette is removed, so every color in the app comes from
  * this list (bg-ink, text-paper, border-line, bg-accent, ...). The look is the poster (TODO.md,
- * Redesign): the client's own colours ("Marigold"), one font family (Instrument Sans: bold and
- * narrow for headlines, normal width for text), pill-shaped controls.
+ * Redesign): colours taken from the client's portrait ("Gold and gown"), one font family
+ * (Instrument Sans: bold and narrow for headlines, normal width for text), pill-shaped controls.
  */
 @theme {
   --color-*: initial;
-  /* "Marigold": warm black, warm off-white text, and the amber of the portrait's sweater
-     for accents only (about 75 / 20 / 5). */
-  --color-ink: #12110f; /* page background: warm black */
-  --color-ink-raised: #1f1d1a; /* cards, menus, surfaces */
-  --color-line: #35312b; /* borders, dividers */
-  --color-paper: #f5f1e8; /* headings and text: warm off-white (16.7:1 on ink) */
-  --color-muted: #aba49b; /* secondary text (7.7:1 on ink, 6.8:1 on surfaces) */
-  --color-accent: #f2b43a; /* marigold: accents and highlights only (10.2:1 on ink) */
-  --color-accent-ink: #12110f; /* text on accent */
-  --color-signal: #ff6b5b; /* errors and warnings only (6.0:1 on surfaces) */
-  /* The inverse ground (the brand deal's --p-inv-*): one cream band on the dark page. Text on it
-     is ink; its muted text #5e5c57 is 5.9:1 on cream. */
-  --color-cream: #f5f1e8;
-  --color-cream-raised: #e3dfd6;
-  --color-cream-muted: #5e5c57;
+  /* "Gold and gown", from the graduation portrait: the gown's black, the curtain's grey, the
+     shirt's white, and the hood's gold for accents only (about 75 / 20 / 5). */
+  --color-ink: #0e0e10; /* page background: the gown's black */
+  --color-ink-raised: #1a1a1e; /* cards, menus, surfaces */
+  --color-line: #2e2e34; /* borders, dividers */
+  --color-paper: #f3f2ee; /* headings and text: the shirt's white (17.2:1 on ink) */
+  --color-muted: #a8a7ae; /* secondary text: the curtain's grey (8.1:1 on ink, 7.3:1 on surfaces) */
+  --color-accent: #f2c53d; /* the hood's gold: accents and highlights only (11.8:1 on ink) */
+  --color-accent-ink: #0e0e10; /* text on accent */
+  --color-signal: #ff6b5b; /* errors and warnings only (6.2:1 on surfaces) */
+  /* The inverse ground (the brand deal's --p-inv-*): one light band on the dark page. Text on it
+     is ink; its muted text #5b5a61 is 6.1:1 on cream. */
+  --color-cream: #f3f2ee;
+  --color-cream-raised: #e2e1dc;
+  --color-cream-muted: #5b5a61;
 
   /* Buttons, tags and small controls are pills; panels and cards keep soft corners. */
   --radius-btn: 9999px;
@@ -122,7 +122,7 @@
     outline-offset: 3px;
   }
 
-  /* On a marigold ground (the footer, the "Message sent" panel) the marigold focus ring and
+  /* On a gold ground (the footer, the "Message sent" panel) the gold focus ring and
      selection would vanish: ink there instead. */
   .on-accent :focus-visible,
   .on-accent:focus-visible {
@@ -151,7 +151,7 @@
 
 /*
  * The welcome screen (components/intro.tsx, lib/intro.ts). Shown only while <html> carries
- * data-intro, which the gate script sets before the first paint. A marigold screen counts to
+ * data-intro, which the gate script sets before the first paint. A gold screen counts to
  * 100 over 2.5 s (GREETING_MS in intro.tsx: the backend's wake-up request gets a head start),
  * then shrinks into the hero's cream block, turning cream on the way, while the hero enters.
  */
@@ -395,7 +395,7 @@ html[data-intro-played] .hero-fade {
   content-visibility: auto;
   contain-intrinsic-size: auto 60rem;
 }
-/* A row that floods with marigold from its floor on hover, edge to edge of the screen (the home
+/* A row that floods with gold from its floor on hover, edge to edge of the screen (the home
    page's skill and post rows); fine pointers only (a tap shouldn't paint the row). Its words
    turn ink: the title steps in (.flood-title), the quieter text stays a little lighter
    (.flood-soft), a skill tag turns ink and fills under the pointer. One set of rules here
@@ -462,7 +462,7 @@ html[data-intro-played] .hero-fade {
   }
 }
 
-/* Unlit words stay readable: at 50% a marigold link in the text is ~3.4:1 on ink and plain
+/* Unlit words stay readable: at 50% a gold link in the text is ~3.7:1 on ink and plain
    words more, above the 3:1 large text needs (20% was 1.76:1, 40% left the link at 2.57:1). */
 @keyframes lit {
   from {
