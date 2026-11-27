@@ -43,7 +43,9 @@ export function Hero() {
     // overflow-x-clip: the portrait (110% of the block's height, its own width) never pushes the page sideways.
     <section className="hero flex flex-col overflow-x-clip md:h-[calc(100svh-4rem-1px)] md:min-h-fit">
       <Container className="grid flex-1 gap-10 py-8 md:grid-cols-2 md:gap-10 md:pb-6 lg:gap-14">
-        <div className="flex flex-col justify-between gap-8">
+        {/* One group, centred in the column: on a tall screen the line and the buttons stay
+            with the headline instead of dropping to the column's foot. */}
+        <div className="flex flex-col justify-center gap-8 lg:gap-10">
           {/* The headline's size follows this column's width (--text-display, globals.css). */}
           <div className="flex flex-col gap-5">
             <Eyebrow className="hero-fade">Full-stack developer</Eyebrow>
