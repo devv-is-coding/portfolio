@@ -1,6 +1,9 @@
-import { getExperiences, getProjects, getSkills, readAtRequestTimeWithoutApi } from "@/lib/api/public";
+import { getCertifications, getExperiences, getProjects, readAtRequestTimeWithoutApi } from "@/lib/api/public";
 import { cn } from "@/lib/cn";
 import { heroFacts } from "@/lib/hero-facts";
+
+// The API's largest page: enough for every project's live link in one request.
+const ALL_PROJECTS = 100;
 
 // Columns from md up follow the number of cells, so two facts never sit in a row of four.
 const COLUMNS = ["", "md:grid-cols-1", "md:grid-cols-2", "md:grid-cols-3", "md:grid-cols-4"] as const;
@@ -11,12 +14,17 @@ const COLUMNS = ["", "md:grid-cols-1", "md:grid-cols-2", "md:grid-cols-3", "md:g
  */
 export async function HeroFacts() {
   await readAtRequestTimeWithoutApi();
-  const [projects, skills, experiences] = await Promise.all([
-    getProjects({ size: 1 }),
-    getSkills(),
+  const [projects, certifications, experiences] = await Promise.all([
+    getProjects({ size: ALL_PROJECTS }),
+    getCertifications(),
     getExperiences(),
   ]);
-  const facts = heroFacts({ projectCount: projects.total, skillCount: skills.length, experiences });
+  const facts = heroFacts({
+    projectCount: projects.total,
+    liveProjectCount: projects.items.filter((project) => project.live_url).length,
+    certificationCount: certifications.length,
+    experiences,
+  });
   if (facts.length === 0) {
     return null;
   }

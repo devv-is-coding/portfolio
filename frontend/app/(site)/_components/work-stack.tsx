@@ -52,6 +52,35 @@ export async function WorkStack() {
   );
 }
 
+/**
+ * A project without a screenshot shows what it was built with instead (the title again read
+ * as a placeholder): every tool and where it can be seen, as a spec sheet on a panel a step
+ * darker than the card (the period is already under the title). Each row only with its data;
+ * nothing at all without either.
+ */
+function ProjectFacts({ project }: { project: ProjectSummary }) {
+  const places = [project.live_url && "Live site", project.repository_url && "Source code"].filter(Boolean);
+  const rows = [
+    { label: "Built with", value: project.skills.map((skill) => skill.name).join(", "), large: true },
+    { label: "Links", value: places.join(" · "), large: false },
+  ].filter((row) => row.value);
+  if (rows.length === 0) {
+    return null;
+  }
+  return (
+    <dl className="flex aspect-[16/10] flex-col justify-center gap-6 bg-current/8 p-6 sm:p-10">
+      {rows.map((row) => (
+        <div key={row.label} className="flex flex-col gap-1.5 border-t border-current/25 pt-3">
+          <dt className="text-sm font-semibold opacity-75">{row.label}</dt>
+          <dd className={row.large ? "font-display text-[clamp(1.75rem,3vw,2.75rem)] leading-[0.95]" : "font-semibold"}>
+            {row.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 function WorkCard({ project, index }: { project: ProjectSummary; index: number }) {
   const tone = TONES[index % TONES.length];
   const period = formatWorkPeriod(project.started_on, project.ended_on);
@@ -112,10 +141,7 @@ function WorkCard({ project, index }: { project: ProjectSummary; index: number }
               className="aspect-[16/10] w-full object-cover object-top transition-transform duration-700 ease-(--ease-enter) pointer-fine:group-hover:scale-[1.035]"
             />
           ) : (
-            // No screenshot yet: the title, set large on the card's colour.
-            <div aria-hidden="true" className="flex aspect-[16/10] items-center justify-center p-8 text-center">
-              <span className="font-display text-[clamp(2.5rem,5vw,5rem)] leading-[0.9] opacity-80">{project.title}</span>
-            </div>
+            <ProjectFacts project={project} />
           )}
         </div>
       </article>

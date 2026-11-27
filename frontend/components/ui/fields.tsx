@@ -1,8 +1,10 @@
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
+// The field's edge is line-strong (3:1 or more against the page and the field's fill: a form
+// control's boundary must be findable), brighter on hover.
 const BASE =
-  "w-full border border-line text-paper transition-colors placeholder:text-muted/60 hover:border-paper/30 aria-invalid:border-signal";
+  "w-full border border-line-strong text-paper transition-colors placeholder:text-muted/60 hover:border-muted aria-invalid:border-signal";
 const CONTROL = `${BASE} rounded-xl bg-ink px-4 py-3`;
 // The public contact form's larger fields (the admin keeps the compact ones). A separate class
 // list, not added on top: `cn` joins classes without resolving conflicts.

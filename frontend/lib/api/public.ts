@@ -83,25 +83,26 @@ export async function getProject(slug: string): Promise<ProjectDetail | null> {
 }
 
 /**
- * The slugs of the skills at least one published project uses: only those lead somewhere as
- * a filter (the rest would open "No projects here"). Cached under both tags, since editing a
- * project's skills or a skill's slug changes the answer.
+ * How many published projects use each skill, by slug; a skill no project uses is absent.
+ * Only skills with projects lead somewhere as a link or filter (the rest would open "No
+ * projects here"), and the counts pick the filters worth offering. Cached under both tags,
+ * since editing a project's skills or a skill's slug changes the answer.
  */
-export async function getSkillSlugsWithProjects(): Promise<string[]> {
+export async function getSkillProjectCounts(): Promise<Record<string, number>> {
   "use cache";
   cacheLife(PUBLIC_CACHE_LIFE);
   cacheTag(CACHE_TAGS.projects, CACHE_TAGS.skills);
-  const slugs = new Set<string>();
+  const counts: Record<string, number> = {};
   for (let page = 1, pages = 1; page <= pages; page += 1) {
     const list = await unwrap(apiClient().GET("/projects", { params: { query: { page, size: ALL } } }));
     for (const project of list.items) {
       for (const skill of project.skills) {
-        slugs.add(skill.slug);
+        counts[skill.slug] = (counts[skill.slug] ?? 0) + 1;
       }
     }
     pages = list.pages;
   }
-  return [...slugs];
+  return counts;
 }
 
 export async function getSkills(): Promise<Skill[]> {

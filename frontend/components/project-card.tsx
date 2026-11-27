@@ -33,9 +33,16 @@ export function ProjectCard({ project, sizes, headingLevel: Heading = "h3", prio
             className="size-full object-cover object-top transition-transform duration-700 ease-(--ease-enter) pointer-fine:group-hover:scale-[1.035]"
           />
         ) : (
-          // No screenshot yet: the title, set large on the card's surface.
-          <div aria-hidden="true" className="flex size-full items-center justify-center p-6 text-center">
-            <span className="font-display text-[clamp(2rem,4vw,3rem)] leading-[0.9] text-muted">{project.title}</span>
+          // No screenshot yet: what it was built with, set large (the title again read as a
+          // placeholder). Decorative: the skills list below says the same to screen readers.
+          <div aria-hidden="true" className="flex size-full flex-col justify-end gap-2 p-6">
+            {project.skills.length > 0 && <span className="text-sm font-semibold text-muted">Built with</span>}
+            <span className="font-display text-[clamp(1.75rem,3vw,2.5rem)] leading-[0.95] text-paper">
+              {project.skills
+                .slice(0, MAX_SKILLS)
+                .map((skill) => skill.name)
+                .join(" · ")}
+            </span>
           </div>
         )}
       </div>

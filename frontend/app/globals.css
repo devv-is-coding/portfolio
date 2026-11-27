@@ -13,6 +13,7 @@
   --color-ink: #0e0e10; /* page background: the gown's black */
   --color-ink-raised: #1a1a1e; /* cards, menus, surfaces */
   --color-line: #2e2e34; /* borders, dividers */
+  --color-line-strong: #6e6d74; /* form field edges: 3.8:1 on ink, 3.4:1 on surfaces */
   --color-paper: #f3f2ee; /* headings and text: the shirt's white (17.2:1 on ink) */
   --color-muted: #a8a7ae; /* secondary text: the curtain's grey (8.1:1 on ink, 7.3:1 on surfaces) */
   --color-accent: #f2c53d; /* the hood's gold: accents and highlights only (11.8:1 on ink) */
@@ -98,8 +99,9 @@
     color: var(--color-paper);
   }
 
-  /* No single word stranded on a paragraph's last line. */
+  /* No single word stranded on the last line of a paragraph or a list item. */
   p,
+  li,
   dd {
     text-wrap: pretty;
   }
@@ -152,8 +154,9 @@
 /*
  * The welcome screen (components/intro.tsx, lib/intro.ts). Shown only while <html> carries
  * data-intro, which the gate script sets before the first paint. A gold screen counts to
- * 100 over 2.5 s (GREETING_MS in intro.tsx: the backend's wake-up request gets a head start),
- * then shrinks into the hero's cream block, turning cream on the way, while the hero enters.
+ * 100 over 2.5 s while the backend's wake-up request runs (holding at 92% while the server
+ * hasn't answered: data-intro-waiting, set by intro.tsx), leaves when the bar's fill ends, and
+ * shrinks into the hero's cream block, turning cream on the way, while the hero enters.
  */
 .intro {
   display: none;
@@ -206,10 +209,18 @@ html[data-intro="playing"]:not([data-intro-timed]) .intro {
   background-color: color-mix(in oklab, var(--color-accent-ink) 18%, var(--color-accent));
 }
 
-/* Fills over the greeting's time on screen. */
+/* Fills over the greeting's time on screen; its end is the cue to leave (intro.tsx). */
 .intro-progress {
   transform-origin: left;
   animation: intro-progress 2.5s linear both;
+}
+
+/* Waiting for the server: the count and the bar hold where they are. The strips' selector is as
+   specific as their `.intro-digit:nth-child(n) .intro-strip` rules plus one, or their animation
+   shorthand (which resets the play state) wins and the count runs on while the bar holds. */
+html[data-intro-waiting] .intro-digit .intro-strip,
+html[data-intro-waiting] .intro-progress {
+  animation-play-state: paused;
 }
 
 /* The exit: the content fades, the screen moves and scales onto the hero's block (--intro-to,
@@ -298,7 +309,8 @@ html[data-intro="leaving"] .intro-content {
  * Every element is partly on screen from the first frame (a line starts 45% down its mask, the
  * portrait 12% low), so the LCP is never held back by the animation. Held while the welcome
  * screen plays and started as it leaves; after a welcome the block skips its own entrance (the
- * screen shrinking into it was the entrance) and the rest waits for the shrink.
+ * screen shrinking into it was the entrance) and the rest plays during the shrink, so the hero
+ * is complete about when the panel lands (0.9 s).
  */
 .hero-mask {
   overflow: hidden;
@@ -333,15 +345,15 @@ html[data-intro-played] .hero-block {
 }
 
 html[data-intro-played] .hero-line {
-  animation-delay: calc(0.45s + var(--line, 0) * 80ms);
+  animation-delay: calc(0.1s + var(--line, 0) * 60ms);
 }
 
 html[data-intro-played] .hero-portrait {
-  animation-delay: 0.55s;
+  animation-delay: 0s;
 }
 
 html[data-intro-played] .hero-fade {
-  animation-delay: 0.8s;
+  animation-delay: 0.3s;
 }
 
 @keyframes hero-line {
@@ -398,7 +410,7 @@ html[data-intro-played] .hero-fade {
 /* A row that floods with gold from its floor on hover, edge to edge of the screen (the home
    page's skill and post rows); fine pointers only (a tap shouldn't paint the row). Its words
    turn ink: the title steps in (.flood-title), the quieter text stays a little lighter
-   (.flood-soft), a skill tag turns ink and fills under the pointer. One set of rules here
+   (.flood-soft). One set of rules here
    instead of hover classes on every element (they were repeated in the page's data). */
 .flood-row::before {
   content: "";
@@ -431,16 +443,6 @@ html[data-intro-played] .hero-fade {
 
   .flood-row:hover .flood-soft {
     color: color-mix(in oklab, var(--color-accent-ink) 72%, transparent);
-  }
-
-  .flood-row:hover .skill-tags > li > * {
-    border-color: color-mix(in oklab, var(--color-accent-ink) 30%, transparent);
-    color: var(--color-accent-ink);
-  }
-
-  .flood-row:hover .skill-tags > li > a:hover {
-    background-color: var(--color-accent-ink);
-    color: var(--color-accent);
   }
 }
 

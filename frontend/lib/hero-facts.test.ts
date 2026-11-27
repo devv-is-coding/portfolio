@@ -5,28 +5,37 @@ const intern = { company: "MidStack", position: "Intern", start_date: "2025-07-1
 const junior = { company: "MidStack", position: "Junior Developer", start_date: "2026-06-01", is_current: true };
 
 describe("heroFacts", () => {
-  it("counts projects and skills, then the first and the current role", () => {
-    expect(heroFacts({ projectCount: 3, skillCount: 31, experiences: [junior, intern] })).toEqual([
-      { value: "3", label: "projects in this portfolio" },
-      { value: "31", label: "tools and languages" },
-      { value: "2025", label: "first role, at MidStack" },
+  it("shows the projects with how many are live, the current role and the certifications", () => {
+    expect(
+      heroFacts({ projectCount: 4, liveProjectCount: 3, certificationCount: 2, experiences: [intern, junior] }),
+    ).toEqual([
+      { value: "4", label: "projects, 3 live online" },
       { value: "Now", label: "Junior Developer at MidStack" },
+      { value: "2", label: "certifications" },
     ]);
   });
 
-  it("uses the singular for one", () => {
-    const facts = heroFacts({ projectCount: 1, skillCount: 1, experiences: [] });
+  it("names one company once: no separate first-role cell", () => {
+    const facts = heroFacts({ projectCount: 0, liveProjectCount: 0, certificationCount: 0, experiences: [intern, junior] });
 
-    expect(facts.map((fact) => fact.label)).toEqual(["project in this portfolio", "tool or language"]);
+    expect(facts).toEqual([{ value: "Now", label: "Junior Developer at MidStack" }]);
+  });
+
+  it("says when every project is live, and when none is", () => {
+    const all = heroFacts({ projectCount: 2, liveProjectCount: 2, certificationCount: 0, experiences: [] });
+    const none = heroFacts({ projectCount: 1, liveProjectCount: 0, certificationCount: 1, experiences: [] });
+
+    expect(all.map((fact) => fact.label)).toEqual(["projects, all live online"]);
+    expect(none.map((fact) => fact.label)).toEqual(["project in this portfolio", "certification"]);
+  });
+
+  it("shows the latest role with its year when none is current", () => {
+    const facts = heroFacts({ projectCount: 0, liveProjectCount: 0, certificationCount: 0, experiences: [intern] });
+
+    expect(facts).toEqual([{ value: "2025", label: "Intern at MidStack" }]);
   });
 
   it("leaves out every cell the API has no data for", () => {
-    expect(heroFacts({ projectCount: 0, skillCount: 0, experiences: [] })).toEqual([]);
-  });
-
-  it("shows no current role when none is marked current", () => {
-    const facts = heroFacts({ projectCount: 0, skillCount: 0, experiences: [intern] });
-
-    expect(facts).toEqual([{ value: "2025", label: "first role, at MidStack" }]);
+    expect(heroFacts({ projectCount: 0, liveProjectCount: 0, certificationCount: 0, experiences: [] })).toEqual([]);
   });
 });

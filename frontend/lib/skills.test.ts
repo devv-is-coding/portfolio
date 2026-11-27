@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Skill } from "@/lib/api/public";
-import { filterSkills, groupSkills } from "@/lib/skills";
+import { filterSkills, groupSkills, slugsWithProjects } from "@/lib/skills";
 
 function skill(id: number, name: string, category: string | null): Skill {
   return {
@@ -41,15 +41,21 @@ describe("groupSkills", () => {
 describe("filterSkills", () => {
   const skills = [skill(1, "FastAPI", "backend"), skill(2, "WordPress", "web"), skill(3, "Shopify", "web")];
 
-  it("keeps only the skills with projects, in display order", () => {
-    expect(filterSkills(skills, new Set(["shopify", "wordpress"])).map((s) => s.name)).toEqual(["WordPress", "Shopify"]);
+  it("keeps every skill with projects, in display order", () => {
+    expect(filterSkills(skills, { shopify: 2, wordpress: 1 }).map((s) => s.name)).toEqual(["WordPress", "Shopify"]);
   });
 
   it("keeps the skill filtered on right now, even without projects", () => {
-    expect(filterSkills(skills, new Set(["shopify"]), "fastapi").map((s) => s.name)).toEqual(["FastAPI", "Shopify"]);
+    expect(filterSkills(skills, { shopify: 1 }, "fastapi").map((s) => s.name)).toEqual(["FastAPI", "Shopify"]);
   });
 
   it("offers nothing when no project has skills", () => {
-    expect(filterSkills(skills, new Set())).toEqual([]);
+    expect(filterSkills(skills, {})).toEqual([]);
+  });
+});
+
+describe("slugsWithProjects", () => {
+  it("lists the skills with at least one project", () => {
+    expect([...slugsWithProjects({ fastapi: 2, shopify: 0 })]).toEqual(["fastapi"]);
   });
 });

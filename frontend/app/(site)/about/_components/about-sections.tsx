@@ -42,6 +42,7 @@ export async function ProfileIntro() {
           {resume && (
             <ButtonLink href={resume.url} variant="secondary" target="_blank" rel="noopener noreferrer">
               Résumé (PDF)
+              <span aria-hidden="true">↗</span>
             </ButtonLink>
           )}
         </div>

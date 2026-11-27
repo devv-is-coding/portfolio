@@ -12,7 +12,7 @@ import { firstParam, listHref, pageParam } from "@/lib/search-params";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Blog",
+  title: "Writing",
   description: `Notes and articles by ${SITE.name}.`,
   alternates: { canonical: "/blog" },
 };
