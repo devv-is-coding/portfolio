@@ -42,10 +42,14 @@ export async function WorkStack() {
           count={projects.length}
           action={<TextLink href="/projects">See all projects</TextLink>}
         />
-        <ol className="flex flex-col gap-6 md:gap-8">
+        {/* work-stack (globals.css) sizes the deck from the number of cards (--n). */}
+        <ol style={{ "--n": projects.length } as CSSProperties} className="work-stack flex flex-col gap-6 md:gap-8">
           {projects.map((project, index) => (
             <WorkCard key={project.id} project={project} index={index} />
           ))}
+          {/* Room for the finished deck to stay put a while before the page moves on: a sticky
+              card only stays stuck while its list goes on below it. */}
+          <li aria-hidden="true" className="hidden h-[30svh] md:block" />
         </ol>
       </Container>
     </section>
@@ -68,7 +72,7 @@ function ProjectFacts({ project }: { project: ProjectSummary }) {
     return null;
   }
   return (
-    <dl className="flex aspect-[16/10] flex-col justify-center gap-6 bg-current/8 p-6 sm:p-10">
+    <dl className="flex aspect-[16/10] flex-col justify-center gap-6 bg-current/8 p-6 sm:p-10 md:max-h-[calc(var(--card-h)-4rem)]">
       {rows.map((row) => (
         <div key={row.label} className="flex flex-col gap-1.5 border-t border-current/25 pt-3">
           <dt className="text-sm font-semibold opacity-75">{row.label}</dt>
@@ -86,11 +90,12 @@ function WorkCard({ project, index }: { project: ProjectSummary; index: number }
   const period = formatWorkPeriod(project.started_on, project.ended_on);
   const { thumbnail } = project;
   return (
-    // Sticks 1.25rem lower than the card before it, so the stack shows each card's top edge.
-    <li style={{ "--i": index } as CSSProperties} className="md:sticky md:top-[calc(5rem+var(--i)*1.25rem)]">
+    // Sticks one peek lower than the card before it, so the deck keeps every earlier card's
+    // top showing as a strip (globals.css: --peek, --card-h).
+    <li style={{ "--i": index } as CSSProperties} className="md:sticky md:top-[calc(5rem+var(--i)*var(--peek))]">
       <article
         className={cn(
-          "group relative grid gap-8 rounded-card p-6 sm:p-8 md:min-h-[min(72svh,40rem)] md:grid-cols-[5fr_7fr] md:p-10",
+          "group relative grid gap-8 rounded-card p-6 sm:p-8 md:min-h-(--card-h) md:grid-cols-[5fr_7fr] md:px-10 md:pt-12 md:pb-10",
           tone.card,
         )}
       >
@@ -138,7 +143,7 @@ function WorkCard({ project, index }: { project: ProjectSummary; index: number }
               width={thumbnail.width}
               height={thumbnail.height}
               sizes="(min-width: 1280px) 42rem, (min-width: 768px) 56vw, 100vw"
-              className="aspect-[16/10] w-full object-cover object-top transition-transform duration-700 ease-(--ease-enter) pointer-fine:group-hover:scale-[1.035]"
+              className="aspect-[16/10] w-full object-cover object-top transition-transform duration-700 ease-(--ease-enter) pointer-fine:group-hover:scale-[1.035] md:max-h-[calc(var(--card-h)-4rem)]"
             />
           ) : (
             <ProjectFacts project={project} />

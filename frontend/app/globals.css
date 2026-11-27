@@ -407,6 +407,26 @@ html[data-intro-played] .hero-fade {
   content-visibility: auto;
   contain-intrinsic-size: auto 60rem;
 }
+
+/* The home page's work deck (work-stack.tsx), from md up: each card sticks one peek lower than
+   the one before, so every earlier card stays showing as a coloured strip above the current
+   one (the peek equals the card's top padding: a clean strip, no text cut in half). Each card
+   is as tall as the screen allows once the whole deck is in place (the last card's top sits at
+   5rem + (n - 1) peeks, with 1.5rem to spare below it), never shorter than 24rem. */
+.work-stack {
+  --peek: 3rem;
+  --card-h: max(24rem, calc(100svh - 6.5rem - (var(--n, 1) - 1) * var(--peek)));
+}
+
+/* A sticky card is let go when the list's end reaches its bottom. Padding each card's item by
+   the peeks still to come below it gives every item the same bottom once the deck is in place,
+   so the whole deck leaves together, strips intact, instead of folding into one card. */
+@media (width >= 48rem) {
+  .work-stack > li {
+    padding-bottom: calc((var(--n, 1) - 1 - var(--i, 0)) * var(--peek));
+  }
+}
+
 /* A row that floods with gold from its floor on hover, edge to edge of the screen (the home
    page's skill and post rows); fine pointers only (a tap shouldn't paint the row). Its words
    turn ink: the title steps in (.flood-title), the quieter text stays a little lighter
