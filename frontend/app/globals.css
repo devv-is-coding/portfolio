@@ -408,23 +408,31 @@ html[data-intro-played] .hero-fade {
   contain-intrinsic-size: auto 60rem;
 }
 
-/* The home page's work deck (work-stack.tsx), from md up: each card sticks one peek lower than
-   the one before, so every earlier card stays showing as a coloured strip above the current
-   one (the peek equals the card's top padding: a clean strip, no text cut in half). Each card
-   is as tall as the screen allows once the whole deck is in place (the last card's top sits at
-   5rem + (n - 1) peeks, with 1.5rem to spare below it), never shorter than 24rem. */
+/* The home page's work deck (work-stack.tsx), on every screen: each card sticks one peek lower
+   than the one before, under the header (--deck-top), so every earlier card stays showing as a
+   coloured strip above the current one (the peek equals the card's top padding: a clean
+   strip, no text cut in half). Each card is at least as tall as the screen allows once the
+   whole deck is in place (the last card's top sits at --deck-top + (n - 1) peeks, with 1.5rem
+   to spare below it), never shorter than 22rem. Phones: a thinner strip, just under the
+   header; from md up 3rem strips. */
 .work-stack {
-  --peek: 3rem;
-  --card-h: max(24rem, calc(100svh - 6.5rem - (var(--n, 1) - 1) * var(--peek)));
+  --deck-top: 4.5rem;
+  --peek: 2.5rem;
+  --card-h: max(22rem, calc(100svh - var(--deck-top) - 1.5rem - (var(--n, 1) - 1) * var(--peek)));
+}
+
+@media (width >= 48rem) {
+  .work-stack {
+    --deck-top: 5rem;
+    --peek: 3rem;
+  }
 }
 
 /* A sticky card is let go when the list's end reaches its bottom. Padding each card's item by
    the peeks still to come below it gives every item the same bottom once the deck is in place,
    so the whole deck leaves together, strips intact, instead of folding into one card. */
-@media (width >= 48rem) {
-  .work-stack > li {
-    padding-bottom: calc((var(--n, 1) - 1 - var(--i, 0)) * var(--peek));
-  }
+.work-stack > li {
+  padding-bottom: calc((var(--n, 1) - 1 - var(--i, 0)) * var(--peek));
 }
 
 /* A row that floods with gold from its floor on hover, edge to edge of the screen (the home
