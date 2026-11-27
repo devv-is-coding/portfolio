@@ -22,9 +22,9 @@ const TONES = [
 ] as const;
 
 /**
- * The featured projects as big cards that stack as the page scrolls: each sticks under the
- * header a little lower than the one before, and the next slides over it (CSS sticky, no
- * script). On phones a plain list. Left out when there are no published projects.
+ * The featured projects as big cards that stack into a deck as the page scrolls, on every
+ * screen: each sticks under the header a strip lower than the one before, and the next slides
+ * over it (CSS sticky, no script). Left out when there are no published projects.
  */
 export async function WorkStack() {
   await readAtRequestTimeWithoutApi();
@@ -49,7 +49,7 @@ export async function WorkStack() {
           ))}
           {/* Room for the finished deck to stay put a while before the page moves on: a sticky
               card only stays stuck while its list goes on below it. */}
-          <li aria-hidden="true" className="hidden h-[30svh] md:block" />
+          <li aria-hidden="true" className="h-[30svh]" />
         </ol>
       </Container>
     </section>
@@ -92,10 +92,11 @@ function WorkCard({ project, index }: { project: ProjectSummary; index: number }
   return (
     // Sticks one peek lower than the card before it, so the deck keeps every earlier card's
     // top showing as a strip (globals.css: --peek, --card-h).
-    <li style={{ "--i": index } as CSSProperties} className="md:sticky md:top-[calc(5rem+var(--i)*var(--peek))]">
+    // The top padding equals the peek (2.5rem, 3rem from md), so a strip never cuts text.
+    <li style={{ "--i": index } as CSSProperties} className="sticky top-[calc(var(--deck-top)+var(--i)*var(--peek))]">
       <article
         className={cn(
-          "group relative grid gap-8 rounded-card p-6 sm:p-8 md:min-h-(--card-h) md:grid-cols-[5fr_7fr] md:px-10 md:pt-12 md:pb-10",
+          "group relative grid min-h-(--card-h) gap-6 rounded-card px-6 pt-10 pb-6 sm:px-8 sm:pb-8 md:grid-cols-[5fr_7fr] md:gap-8 md:px-10 md:pt-12 md:pb-10",
           tone.card,
         )}
       >
