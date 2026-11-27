@@ -14,6 +14,8 @@ export const SITE = {
   // two never drift apart.
   availability:
     "Open to full-stack and backend roles and to freelance projects, remote or on-site, anywhere.",
+  // The same, short, for the header's status and the hero's badge.
+  status: "Open to roles and freelance",
 } as const;
 
 export const NAV_ITEMS = [

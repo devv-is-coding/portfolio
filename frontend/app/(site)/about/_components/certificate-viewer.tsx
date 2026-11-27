@@ -18,7 +18,7 @@ export function CertificateViewer({ title, children }: CertificateViewerProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   return (
     <>
-      <Button variant="outline" size="sm" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>
+      <Button variant="secondary" size="sm" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>
         View certificate
       </Button>
       <dialog
@@ -29,15 +29,15 @@ export function CertificateViewer({ title, children }: CertificateViewerProps) {
             event.currentTarget.close();
           }
         }}
-        className="m-auto max-h-[94svh] w-[min(72rem,calc(100vw-1.5rem))] overflow-y-auto rounded-2xl border border-line bg-ink p-0 text-paper backdrop:bg-ink/90 backdrop:backdrop-blur-sm"
+        className="m-auto max-h-[94svh] w-[min(72rem,calc(100vw-1.5rem))] overflow-y-auto rounded-card border border-line bg-ink p-0 text-paper backdrop:bg-ink/90 backdrop:backdrop-blur-sm"
       >
         <div className="flex flex-col gap-4 p-4 sm:p-6">
           <div className="flex items-start justify-between gap-4">
-            <h2 className="font-display text-xl font-extrabold sm:text-2xl">{title}</h2>
+            <h2 className="font-display text-xl sm:text-2xl">{title}</h2>
             <button
               type="button"
               onClick={() => dialog.current?.close()}
-              className="shrink-0 rounded-full border border-line px-4 py-1.5 text-sm hover:border-paper"
+              className="shrink-0 rounded-btn border border-line px-4 py-1.5 text-sm hover:border-paper pointer-coarse:min-h-11"
             >
               Close
             </button>

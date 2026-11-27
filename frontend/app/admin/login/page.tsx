@@ -13,7 +13,7 @@ export default function LoginPage() {
       <div className="flex w-full max-w-sm flex-col gap-8">
         <div className="flex flex-col gap-4">
           <Eyebrow>Admin</Eyebrow>
-          <h1 className="font-display text-headline font-extrabold uppercase">Sign in</h1>
+          <h1 className="font-display text-headline">Sign in</h1>
         </div>
         {/* The form reads ?next= from the URL, which only exists at request time. */}
         <Suspense>

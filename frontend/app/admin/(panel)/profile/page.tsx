@@ -22,13 +22,13 @@ export default async function ProfileAdminPage() {
       <ResourceForm fields={PROFILE_FIELDS} action={saveProfile} values={profile ?? {}} media={media} submitLabel="Save profile" />
 
       <section className="mt-16 flex flex-col gap-6 border-t border-line pt-10" aria-labelledby="links-heading">
-        <h2 id="links-heading" className="font-display text-2xl font-extrabold">
+        <h2 id="links-heading" className="font-display text-2xl">
           Social links
         </h2>
         {profile ? (
           <>
             {profile.social_links.map((link) => (
-              <div key={link.id} className="flex flex-col gap-4 rounded-2xl border border-line p-5">
+              <div key={link.id} className="flex flex-col gap-4 rounded-card border border-line p-5">
                 <ResourceForm fields={SOCIAL_LINK_FIELDS} action={saveSocialLink.bind(null, link.id)} values={link} submitLabel="Save link" />
                 <DeleteButton action={deleteSocialLink.bind(null, link.id)} what={`the ${link.platform} link`} label="Remove" />
               </div>

@@ -2,8 +2,9 @@ import type { Skill } from "@/lib/api/public";
 
 export type SkillGroup = { category: string; skills: Skill[] };
 
-// How many skills the home page shows: the first ones in display order, which the admin sets.
-export const CORE_SKILL_COUNT = 6;
+// How many skill categories the home page shows: the first ones in display order (the admin
+// sets it); the about page lists them all.
+export const HOME_SKILL_GROUPS = 6;
 
 /**
  * The skills to offer as project filters: those with projects, plus the one filtered on right

@@ -1,10 +1,10 @@
 @import "tailwindcss";
-/* Smooth scrolling's own rules (lib/motion/controller.ts); they only apply once it runs. */
-@import "lenis/dist/lenis.css";
 
 /*
- * Design tokens. The default Tailwind palette is removed, so every color in the
- * app comes from this list (bg-ink, text-paper, border-line, bg-accent, ...).
+ * Design tokens. The default Tailwind palette is removed, so every color in the app comes from
+ * this list (bg-ink, text-paper, border-line, bg-accent, ...). The look is the poster (TODO.md,
+ * Redesign): the client's own colours ("Marigold"), one font family (Instrument Sans: bold and
+ * narrow for headlines, normal width for text), pill-shaped controls.
  */
 @theme {
   --color-*: initial;
@@ -18,38 +18,80 @@
   --color-accent: #f2b43a; /* marigold: accents and highlights only (10.2:1 on ink) */
   --color-accent-ink: #12110f; /* text on accent */
   --color-signal: #ff6b5b; /* errors and warnings only (6.0:1 on surfaces) */
+  /* The inverse ground (the brand deal's --p-inv-*): one cream band on the dark page. Text on it
+     is ink; its muted text #5e5c57 is 5.9:1 on cream. */
+  --color-cream: #f5f1e8;
+  --color-cream-raised: #e3dfd6;
+  --color-cream-muted: #5e5c57;
 
-  /* Fluid display sizes: phone -> wide desktop. */
-  /* The hero headline, sized to its column (an @container): its longest line ("Creating
-     solutions", 10.32em) fits on one line from sm up; phones stack one word per line. */
-  --text-display: clamp(2.75rem, 9.2cqi, 6rem);
+  /* Buttons, tags and small controls are pills; panels and cards keep soft corners. */
+  --radius-btn: 9999px;
+  --radius-panel: 12px;
+  --radius-card: 20px;
+
+  /* Headline sizes for the bold narrow cut (`font-display`): set tight, as a poster. */
+  /* The hero headline: 21% of its column's width, so its longest line ("solutions.") fills it,
+     and capped by the screen's height so four lines fit one screen. The column's width comes
+     from the screen width and the page's padding and gap (the wider screens' values are in
+     the base layer below) instead of a container query, which cost an extra layout pass. */
+  --text-display: min(calc((100vw - 2.5rem) * 0.21), 11svh);
   --text-display--line-height: 0.88;
   --text-display--letter-spacing: -0.035em;
-  --text-headline: clamp(2.25rem, 6vw, 4.75rem);
-  --text-headline--line-height: 0.95;
+  /* A home section's poster headline ("Selected work", "Skills"). */
+  --text-poster: clamp(3.5rem, 9vw, 8.5rem);
+  --text-poster--line-height: 0.86;
+  --text-poster--letter-spacing: -0.035em;
+  --text-headline: clamp(2.5rem, 3.2vw + 1.5rem, 4.75rem);
+  --text-headline--line-height: 0.92;
   --text-headline--letter-spacing: -0.03em;
+  /* Labels, dates and meta: 13px at 500, sentence case (never tracked capitals). */
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.4;
 
-  /* System fonts for body text and labels: web fonts there cost LCP (Geist 30 KB, Geist Mono 23 KB). */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, monospace;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-rise: rise 0.9s var(--ease-out-expo) both;
-
-  /* Transform only (no opacity), so the hero headline paints at once: LCP isn't delayed. */
-  @keyframes rise {
-    from {
-      transform: translateY(0.35em);
-    }
-  }
+  /* The skill's two curves: every UI step, and an entrance settling. No overshoot. */
+  --ease-ui: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
 }
 
 /* Fonts come from next/font (app/layout.tsx), which sets these variables on <html>. */
 @theme inline {
-  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Headlines: the same family at 700, narrowed to 75% on the font's width axis. One utility, so
+   every heading changes together. */
+@utility font-display {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-stretch: 75%;
 }
 
 @layer base {
+  /* The hero headline's size (see --text-display) where the column is wider: phones from 40rem
+     (2rem padding each side), then two columns from md (gap 2.5rem) and lg (gap 3.5rem) inside
+     the 80rem container. */
+  @media (width >= 40rem) {
+    :root {
+      --text-display: min(calc((100vw - 4rem) * 0.21), 11svh);
+    }
+  }
+
+  @media (width >= 48rem) {
+    :root {
+      --text-display: min(calc((min(100vw, 80rem) - 6.5rem) * 0.105), 11svh);
+    }
+  }
+
+  @media (width >= 64rem) {
+    :root {
+      --text-display: min(calc((min(100vw, 80rem) - 7.5rem) * 0.105), 11svh);
+    }
+  }
+
   html {
     color-scheme: dark;
     background-color: var(--color-ink);
@@ -62,6 +104,14 @@
     text-wrap: pretty;
   }
 
+  /* Headings wrap into lines of about even length (a long post title no longer ends on one
+     short word). */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
   ::selection {
     background-color: var(--color-accent);
     color: var(--color-accent-ink);
@@ -71,15 +121,22 @@
     outline: 2px solid var(--color-accent);
     outline-offset: 3px;
   }
+
+  /* On a marigold ground (the footer, the "Message sent" panel) the marigold focus ring and
+     selection would vanish: ink there instead. */
+  .on-accent :focus-visible,
+  .on-accent:focus-visible {
+    outline-color: var(--color-accent-ink);
+  }
+
+  .on-accent ::selection {
+    background-color: var(--color-accent-ink);
+    color: var(--color-accent);
+  }
 }
 
-/*
- * Motion (lib/motion/). Everything here is visible as it is until that code runs; it only
- * moves elements still below the screen, so nothing ever disappears in front of the visitor.
- */
-
-/* A word in its clipping box (components/ui/split-words.tsx). The padding keeps tall glyphs
-   (accents, the display font's caps) inside the box; the negative margin keeps the line height. */
+/* A word in its clipping box (the welcome screen's top line). The padding keeps tall glyphs
+   inside the box; the negative margin keeps the line height. */
 .motion-word {
   display: inline-block;
   overflow: hidden;
@@ -92,35 +149,11 @@
   display: inline-block;
 }
 
-/* The pinned sideways strip of projects (scrollSideways): one row of wide cards. Unlayered,
-   so it wins over the grid utilities it replaces. */
-[data-sideways] [data-motion-track] {
-  display: flex;
-  width: max-content;
-}
-
-/* Most of a card in view on phones, about two on tablets, two and a half on computers. */
-[data-sideways] [data-motion-track] > * {
-  width: 80vw;
-}
-
-@media (min-width: 768px) {
-  [data-sideways] [data-motion-track] > * {
-    width: 55vw;
-  }
-}
-
-@media (min-width: 1024px) {
-  [data-sideways] [data-motion-track] > * {
-    width: min(40vw, 36rem);
-  }
-}
-
 /*
  * The welcome screen (components/intro.tsx, lib/intro.ts). Shown only while <html> carries
- * data-intro, which the gate script in <head> sets before the first paint. The words rise in,
- * then the panel lifts away while the hero's own entrance plays. Short on purpose: about
- * 0.9 s on screen (GREETING_MS in intro.tsx), so it greets without making anyone wait.
+ * data-intro, which the gate script sets before the first paint. A marigold screen counts to
+ * 100 over 2.5 s (GREETING_MS in intro.tsx: the backend's wake-up request gets a head start),
+ * then shrinks into the hero's cream block, turning cream on the way, while the hero enters.
  */
 .intro {
   display: none;
@@ -130,40 +163,80 @@ html[data-intro] .intro {
   display: grid;
 }
 
-/* If the page's JavaScript never runs, the panel still leaves on its own. */
-html[data-intro="playing"] .intro {
-  animation: intro-fallback 0.6s ease-in 2s forwards;
-}
-
-html[data-intro="playing"] .animate-rise {
-  animation-play-state: paused;
-}
-
-.intro .intro-label {
-  animation: intro-fade 0.5s var(--ease-out-expo) 0.05s both;
+/* If the page's JavaScript never runs, the screen still leaves on its own (once the script runs,
+   it times the exit itself and marks <html> data-intro-timed). */
+html[data-intro="playing"]:not([data-intro-timed]) .intro {
+  animation: intro-fallback 0.6s ease-in 3s forwards;
 }
 
 .intro .motion-word-inner {
-  animation: intro-word 0.6s var(--ease-out-expo) both;
-  animation-delay: calc(0.08s + var(--intro-word, 0) * 0.06s);
+  animation: intro-word 0.7s var(--ease-out-expo) both;
+}
+
+/* The counter: each digit a strip of glyphs in a one-glyph window, slid by steps. Painted once,
+   then only moved (transform), so no new text paints while it counts. Hundreds turn at the end,
+   tens once every 0.25 s, ones ten times as fast; all end on "100". */
+.intro-digit {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+}
+
+/* One line per digit (the strings carry line breaks), each line exactly 1em, so a step of 1em
+   shows the next digit. */
+.intro-strip {
+  display: block;
+  white-space: pre;
+  line-height: 1;
+}
+
+.intro-digit:nth-child(1) .intro-strip {
+  animation: intro-count-1 2.5s steps(1, end) forwards;
+}
+
+.intro-digit:nth-child(2) .intro-strip {
+  animation: intro-count-10 2.5s steps(10, end) forwards;
+}
+
+.intro-digit:nth-child(3) .intro-strip {
+  animation: intro-count-10 0.25s steps(10, end) 10 forwards;
+}
+
+.intro-track {
+  background-color: color-mix(in oklab, var(--color-accent-ink) 18%, var(--color-accent));
 }
 
 /* Fills over the greeting's time on screen. */
-.intro .intro-progress {
+.intro-progress {
   transform-origin: left;
-  animation: intro-progress 0.9s linear both;
+  animation: intro-progress 2.5s linear both;
 }
 
+/* The exit: the content fades, the screen moves and scales onto the hero's block (--intro-to,
+   set by intro.tsx from the block's box) while a cream layer fades in over it, then it fades
+   out over the real block, whose rounded corners take over. Transform and opacity only: the
+   compositor runs it (a clip-path and colour animation repainted the screen every frame and
+   cost Lighthouse's home page ~60 ms of blocking time). Without the block it lifts away. */
 html[data-intro="leaving"] .intro {
-  animation: intro-out 0.7s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+  transform-origin: 0 0;
+  will-change: transform, opacity;
+  animation: intro-out 0.9s var(--ease-in-out-quart) forwards;
+}
+
+.intro::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-cream);
+  opacity: 0;
+}
+
+html[data-intro="leaving"] .intro::after {
+  animation: intro-cream 0.7s ease-in forwards;
 }
 
 html[data-intro="leaving"] .intro-content {
-  animation: intro-content-out 0.35s cubic-bezier(0.7, 0, 0.84, 0) forwards;
-}
-
-html[data-intro="leaving"] .intro-progress {
-  animation: intro-fade 0.3s ease-in reverse forwards;
+  animation: intro-content-out 0.3s ease-in forwards;
 }
 
 @keyframes intro-word {
@@ -172,9 +245,15 @@ html[data-intro="leaving"] .intro-progress {
   }
 }
 
-@keyframes intro-fade {
-  from {
-    opacity: 0;
+@keyframes intro-count-1 {
+  to {
+    transform: translateY(-1em);
+  }
+}
+
+@keyframes intro-count-10 {
+  to {
+    transform: translateY(-10em);
   }
 }
 
@@ -187,15 +266,22 @@ html[data-intro="leaving"] .intro-progress {
 @keyframes intro-content-out {
   to {
     opacity: 0;
-    transform: translateY(-3rem);
   }
 }
 
-/* Transform only, so the lift runs on the compositor (an animated curved edge repainted the
-   whole screen every frame). */
 @keyframes intro-out {
+  85% {
+    opacity: 1;
+  }
   to {
-    transform: translateY(-100%);
+    opacity: 0;
+    transform: var(--intro-to, translateY(-100%));
+  }
+}
+
+@keyframes intro-cream {
+  to {
+    opacity: 1;
   }
 }
 
@@ -206,24 +292,198 @@ html[data-intro="leaving"] .intro-progress {
   }
 }
 
-/* The reading progress line under the header, driven by the scroll itself (no JavaScript);
-   left out where scroll-driven animations aren't supported. */
-.scroll-progress {
-  display: none;
+/*
+ * The hero's entrance (app/(site)/_components/hero.tsx): the headline's lines rise in their
+ * masks, the cream block grows from its floor, the portrait rises into it, the rest fades up.
+ * Every element is partly on screen from the first frame (a line starts 45% down its mask, the
+ * portrait 12% low), so the LCP is never held back by the animation. Held while the welcome
+ * screen plays and started as it leaves; after a welcome the block skips its own entrance (the
+ * screen shrinking into it was the entrance) and the rest waits for the shrink.
+ */
+.hero-mask {
+  overflow: hidden;
+  padding-block: 0.06em;
+  margin-block: -0.06em;
 }
 
-@supports (animation-timeline: scroll()) {
-  .scroll-progress {
-    display: block;
-    transform-origin: left;
-    animation: scroll-progress linear both;
-    animation-timeline: scroll(root);
+.hero-line {
+  animation: hero-line 0.9s var(--ease-out-expo) both;
+  animation-delay: calc(var(--line, 0) * 80ms);
+}
+
+.hero-block {
+  transform-origin: bottom;
+  animation: hero-block 1s var(--ease-out-expo) both;
+}
+
+.hero-portrait {
+  animation: hero-portrait 1.1s var(--ease-out-expo) 0.15s both;
+}
+
+.hero-fade {
+  animation: hero-fade 0.8s var(--ease-out-expo) 0.4s both;
+}
+
+html[data-intro="playing"] :is(.hero-line, .hero-block, .hero-portrait, .hero-fade) {
+  animation-play-state: paused;
+}
+
+html[data-intro-played] .hero-block {
+  animation: none;
+}
+
+html[data-intro-played] .hero-line {
+  animation-delay: calc(0.45s + var(--line, 0) * 80ms);
+}
+
+html[data-intro-played] .hero-portrait {
+  animation-delay: 0.55s;
+}
+
+html[data-intro-played] .hero-fade {
+  animation-delay: 0.8s;
+}
+
+@keyframes hero-line {
+  from {
+    transform: translateY(45%);
   }
 }
 
-@keyframes scroll-progress {
+@keyframes hero-block {
   from {
-    transform: scaleX(0);
+    transform: scaleY(0.7);
+  }
+}
+
+@keyframes hero-portrait {
+  from {
+    transform: translateY(12%);
+  }
+}
+
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+/* Scroll entrances: a `data-reveal` element still below the screen waits faded and a little
+   low, and rises in when it scrolls into view (`data-shown`, set by the motion observer). Only
+   once the observer runs (`data-motion` on <html>) and never with reduced motion, so without
+   JavaScript everything simply shows. `--reveal` staggers neighbours. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-motion] [data-reveal] {
+    transition:
+      opacity 0.9s var(--ease-out-expo),
+      transform 0.9s var(--ease-out-expo);
+    transition-delay: calc(var(--reveal, 0) * 90ms);
+  }
+
+  html[data-motion] [data-reveal]:not([data-shown]) {
+    opacity: 0;
+    transform: translateY(2.5rem);
+  }
+}
+
+/* A home section below the hero: laid out and painted only as it nears the screen, so page load
+   doesn't pay for the work stack and the skill rows (Lighthouse: style and layout were the
+   home page's largest cost). `auto` remembers the real height once shown, so the scrollbar
+   settles after the first pass. */
+.below-fold {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 60rem;
+}
+/* A row that floods with marigold from its floor on hover, edge to edge of the screen (the home
+   page's skill and post rows); fine pointers only (a tap shouldn't paint the row). Its words
+   turn ink: the title steps in (.flood-title), the quieter text stays a little lighter
+   (.flood-soft), a skill tag turns ink and fills under the pointer. One set of rules here
+   instead of hover classes on every element (they were repeated in the page's data). */
+.flood-row::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline: calc(50% - 50vw);
+  z-index: -1;
+  background-color: var(--color-accent);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.5s var(--ease-enter);
+}
+
+.flood-title {
+  transition: transform 0.5s var(--ease-enter);
+}
+
+@media (pointer: fine) {
+  .flood-row:hover {
+    color: var(--color-accent-ink);
+  }
+
+  .flood-row:hover::before {
+    transform: scaleY(1);
+  }
+
+  .flood-row:hover .flood-title {
+    transform: translateX(0.75rem);
+  }
+
+  .flood-row:hover .flood-soft {
+    color: color-mix(in oklab, var(--color-accent-ink) 72%, transparent);
+  }
+
+  .flood-row:hover .skill-tags > li > * {
+    border-color: color-mix(in oklab, var(--color-accent-ink) 30%, transparent);
+    color: var(--color-accent-ink);
+  }
+
+  .flood-row:hover .skill-tags > li > a:hover {
+    background-color: var(--color-accent-ink);
+    color: var(--color-accent);
+  }
+}
+
+/* The home page's biography (LitMarkdown): its words light up one after another as the text
+   scrolls through the screen. Each word's slice of the text's view timeline comes from its
+   place in the text (--i of --n); opacity only, so the compositor runs it. Only where scroll-
+   driven animations exist and motion is welcome: elsewhere the words are simply lit. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .lit-text {
+      view-timeline-name: --lit;
+    }
+
+    .lit-word {
+      animation: lit linear both;
+      animation-timeline: --lit;
+      animation-range: cover calc(18% + var(--i) / var(--n) * 30%) cover calc(24% + var(--i) / var(--n) * 30%);
+    }
+  }
+}
+
+/* Unlit words stay readable: at 50% a marigold link in the text is ~3.4:1 on ink and plain
+   words more, above the 3:1 large text needs (20% was 1.76:1, 40% left the link at 2.57:1). */
+@keyframes lit {
+  from {
+    opacity: 0.5;
+  }
+}
+
+/* The header's status dot sends out a ring every 2 s. */
+.status-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: inherit;
+  animation: ping 2s var(--ease-out-expo) infinite;
+}
+
+@keyframes ping {
+  to {
+    transform: scale(3);
+    opacity: 0;
   }
 }
 
@@ -274,13 +534,18 @@ html[data-intro="leaving"] .intro-progress {
   }
 }
 
+/* Reduced motion: movement goes, feedback stays. Keyframe animations here all move (entrances,
+   the welcome's counter, the status dot's ring), so they end at once; transitions keep colour,
+   background, border, outline and opacity changes (hover, focus) and drop transform and the
+   rest, so nothing slides, lifts or floods in. The welcome screen and the scroll entrances are
+   switched off for these visitors by their own code. */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
   ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-property: color, background-color, border-color, outline-color, opacity !important;
     scroll-behavior: auto !important;
   }
 

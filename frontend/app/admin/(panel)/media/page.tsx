@@ -41,7 +41,7 @@ export default async function MediaPage({ searchParams }: PageProps<"/admin/medi
       <MediaUploader />
       <section className="mt-12 flex flex-col gap-4" aria-labelledby="files-heading">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 id="files-heading" className="font-display text-2xl font-extrabold">
+          <h2 id="files-heading" className="font-display text-2xl">
             Files
           </h2>
           {list.total > 0 && <p className="text-sm text-muted">{list.total} in the library · hover to preview, click to open</p>}
@@ -49,7 +49,7 @@ export default async function MediaPage({ searchParams }: PageProps<"/admin/medi
         {items.length === 0 ? (
           <EmptyState title="No files yet">Upload an image or a PDF above.</EmptyState>
         ) : (
-          <ul className="divide-y divide-line rounded-2xl border border-line">
+          <ul className="divide-y divide-line rounded-card border border-line">
             {items.map((item) => {
               const name = item.alt_text ?? "No alt text";
               const details = [
@@ -99,7 +99,7 @@ export default async function MediaPage({ searchParams }: PageProps<"/admin/medi
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex h-48 items-center justify-center rounded-lg bg-ink-raised font-display text-4xl font-extrabold text-muted hover:text-accent"
+                        className="flex h-48 items-center justify-center rounded-lg bg-ink-raised font-display text-4xl text-muted hover:text-accent"
                       >
                         Open PDF ↗
                       </a>

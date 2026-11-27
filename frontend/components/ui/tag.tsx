@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-const BASE = "inline-flex items-center rounded-full border px-3 py-1 font-mono text-xs uppercase tracking-wider";
+const BASE = "inline-flex items-center rounded-btn border px-3 py-1 text-label font-medium";
 
 type TagProps = {
   children: ReactNode;
@@ -18,6 +18,8 @@ export function Tag({ children, href, active = false, className }: TagProps) {
     BASE,
     active ? "border-accent bg-accent text-accent-ink" : "border-line text-muted",
     href && !active && "transition-colors hover:border-accent hover:text-accent",
+    // A tag that links is a tap target: 44 px tall on touch screens (28 px with a mouse).
+    href && "pointer-coarse:min-h-11 pointer-coarse:px-4",
     className,
   );
   // A plain link, not next/link: pages show dozens of tags, and each next/link is a client

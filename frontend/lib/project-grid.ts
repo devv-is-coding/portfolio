@@ -5,10 +5,10 @@
  */
 export function projectGridClass(count: number): string {
   if (count <= 1) {
-    return "grid gap-6 md:max-w-xl";
+    return "grid gap-x-6 gap-y-14 md:max-w-xl";
   }
   if (count === 2) {
-    return "grid gap-6 md:grid-cols-2";
+    return "grid gap-x-6 gap-y-14 md:grid-cols-2";
   }
-  return "grid gap-6 md:grid-cols-2 lg:grid-cols-3";
+  return "grid gap-x-6 gap-y-14 md:grid-cols-2 lg:grid-cols-3";
 }

@@ -40,7 +40,7 @@ function HeadingSkeleton() {
 /** Like components/project-card.tsx: picture, title, summary, skills. */
 function ProjectCardSkeleton() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-ink-raised">
+    <div className="flex flex-col overflow-hidden rounded-card border border-line bg-ink-raised">
       <Bone className="aspect-[16/10] rounded-none bg-ink" />
       <div className="flex flex-col gap-4 p-6">
         <Bone className="h-7 w-2/3" />
@@ -49,16 +49,16 @@ function ProjectCardSkeleton() {
           <Bone className="h-4 w-4/5" />
         </div>
         <div className="flex gap-2">
-          <Bone className="h-6 w-16 rounded-full" />
-          <Bone className="h-6 w-20 rounded-full" />
-          <Bone className="h-6 w-14 rounded-full" />
+          <Bone className="h-6 w-16 rounded-btn" />
+          <Bone className="h-6 w-20 rounded-btn" />
+          <Bone className="h-6 w-14 rounded-btn" />
         </div>
       </div>
     </div>
   );
 }
 
-/** Like components/post-card.tsx: date and category, title, excerpt. */
+/** Like components/post-row.tsx: date and category, title, excerpt. */
 function PostRowSkeleton() {
   return (
     <div className="flex flex-col gap-3 border-t border-line py-8">
@@ -90,7 +90,7 @@ function FilterTagsSkeleton() {
   return (
     <div className="flex flex-wrap gap-2">
       {["w-12", "w-16", "w-20", "w-14", "w-18"].map((width) => (
-        <Bone key={width} className={cn("h-7 rounded-full", width)} />
+        <Bone key={width} className={cn("h-7 rounded-btn", width)} />
       ))}
     </div>
   );
@@ -124,17 +124,13 @@ export function PostListSkeleton() {
   );
 }
 
-/** The home page below the hero: its first section (featured projects), a screen tall. */
+/** The home page below the hero: its first section (the work stack's headline and first card), a screen tall. */
 export function HomeSectionsSkeleton() {
   return (
     <Loading label="Loading" className="min-h-svh border-t border-line py-20 sm:py-28">
       <Container className="flex flex-col gap-12">
-        <HeadingSkeleton />
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 3 }, (_, index) => (
-            <ProjectCardSkeleton key={index} />
-          ))}
-        </div>
+        <Bone className="h-[clamp(3rem,7.5vw,7.25rem)] w-[min(36rem,80%)]" />
+        <Bone className="h-[26rem] rounded-card md:h-[min(72svh,40rem)]" />
       </Container>
     </Loading>
   );
@@ -154,8 +150,8 @@ export function AboutSkeleton() {
           <Bone className="h-5 w-3/4" />
         </div>
         <div className="flex gap-3">
-          <Bone className="h-12 w-32 rounded-full" />
-          <Bone className="h-12 w-36 rounded-full" />
+          <Bone className="h-12 w-32 rounded-btn" />
+          <Bone className="h-12 w-36 rounded-btn" />
         </div>
       </Container>
       <div className="border-t border-line py-20 sm:py-28">
@@ -186,7 +182,7 @@ export function ArticleSkeleton({ narrow = false }: { narrow?: boolean }) {
             <Bone className="h-6 w-2/3" />
           </div>
         </div>
-        <Bone className="aspect-[16/9] w-full rounded-2xl" />
+        <Bone className="aspect-[16/9] w-full rounded-card" />
         <div className="flex max-w-3xl flex-col gap-3">
           <Bone className="h-5 w-full" />
           <Bone className="h-5 w-full" />

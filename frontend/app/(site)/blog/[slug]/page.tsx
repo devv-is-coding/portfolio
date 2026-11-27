@@ -46,12 +46,12 @@ async function PostArticle({ params }: Pick<PageProps<"/blog/[slug]">, "params">
 
   return (
     <article>
-      <Container className="flex max-w-3xl flex-col gap-10 py-16 sm:py-24">
-        <Link href="/blog" className="w-fit font-mono text-xs uppercase tracking-[0.2em] text-muted hover:text-accent">
+      <Container className="flex flex-col gap-12 py-16 sm:py-24">
+        <Link href="/blog" className="inline-flex w-fit items-center text-sm font-semibold text-muted hover:text-accent pointer-coarse:min-h-11">
           ← All posts
         </Link>
-        <header className="flex flex-col gap-6">
-          <p className="flex flex-wrap gap-x-3 font-mono text-xs uppercase tracking-[0.2em] text-muted">
+        <header className="flex max-w-5xl flex-col gap-8">
+          <p className="flex flex-wrap gap-x-4 text-sm font-semibold text-muted">
             {post.published_at && <time dateTime={post.published_at}>{formatDate(post.published_at)}</time>}
             {post.category && (
               <Link href={listHref("/blog", { category: post.category.slug })} className="text-accent hover:underline">
@@ -59,31 +59,36 @@ async function PostArticle({ params }: Pick<PageProps<"/blog/[slug]">, "params">
               </Link>
             )}
           </p>
-          <h1 className="font-display text-headline font-extrabold uppercase">{post.title}</h1>
-          {post.excerpt && <p className="text-xl text-muted">{post.excerpt}</p>}
+          <h1 className="font-display text-[clamp(2.75rem,6.5vw,6rem)] leading-[0.9] tracking-[-0.035em]">{post.title}</h1>
+          {post.excerpt && <p className="max-w-2xl text-xl leading-relaxed text-muted">{post.excerpt}</p>}
         </header>
         {cover && (
-          <MediaImage
-            src={cover.url}
-            alt={cover.alt_text ?? ""}
-            width={cover.width}
-            height={cover.height}
-            sizes="(min-width: 768px) 768px, 100vw"
-            fetchPriority="high"
-            loading="eager"
-            className="h-auto w-full rounded-2xl border border-line"
-          />
+          <div className="overflow-hidden rounded-card border border-line">
+            <MediaImage
+              src={cover.url}
+              alt={cover.alt_text ?? ""}
+              width={cover.width}
+              height={cover.height}
+              sizes="(min-width: 1280px) 1216px, 100vw"
+              fetchPriority="high"
+              loading="eager"
+              className="block h-auto w-full"
+            />
+          </div>
         )}
-        <Markdown className="text-lg">{post.content}</Markdown>
-        {post.tags.length > 0 && (
-          <ul className="flex flex-wrap gap-2 border-t border-line pt-8" aria-label="Tags">
-            {post.tags.map((tag) => (
-              <li key={tag.id}>
-                <Tag href={listHref("/blog", { tag: tag.slug })}>{tag.name}</Tag>
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* A reading measure: the text column stays narrow under the wide title. */}
+        <div className="flex max-w-3xl flex-col gap-10">
+          <Markdown className="text-lg">{post.content}</Markdown>
+          {post.tags.length > 0 && (
+            <ul className="flex flex-wrap gap-2 border-t border-line pt-8" aria-label="Tags">
+              {post.tags.map((tag) => (
+                <li key={tag.id}>
+                  <Tag href={listHref("/blog", { tag: tag.slug })}>{tag.name}</Tag>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </Container>
     </article>
   );

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Pagination } from "@/components/pagination";
-import { PostCard } from "@/components/post-card";
-import { SectionHeading } from "@/components/section-heading";
+import { PosterHeading } from "@/components/poster-heading";
+import { PostRow } from "@/components/post-row";
 import { PostListSkeleton } from "@/components/skeletons";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -21,13 +21,16 @@ const PAGE_SIZE = 10;
 
 export default function BlogPage({ searchParams }: PageProps<"/blog">) {
   return (
-    <Container className="flex flex-col gap-12 py-16 sm:py-24">
-      <SectionHeading as="h1" eyebrow="Writing" title="Blog" />
-      {/* The fallback fills the screen, so the footer never jumps when the list streams in. */}
-      <Suspense fallback={<PostListSkeleton />}>
-        <PostList searchParams={searchParams} />
-      </Suspense>
-    </Container>
+    // overflow-x-clip: a row's hover flood runs to the screen's edges, never past them.
+    <div className="overflow-x-clip">
+      <Container className="flex flex-col gap-12 py-16 sm:py-24">
+        <PosterHeading as="h1" title="Writing" />
+        {/* The fallback fills the screen, so the footer never jumps when the list streams in. */}
+        <Suspense fallback={<PostListSkeleton />}>
+          <PostList searchParams={searchParams} />
+        </Suspense>
+      </Container>
+    </div>
   );
 }
 
@@ -71,11 +74,11 @@ async function PostList({ searchParams }: Pick<PageProps<"/blog">, "searchParams
         </p>
       )}
       {posts.items.length > 0 ? (
-        <div>
-          {posts.items.map((post) => (
-            <PostCard key={post.id} post={post} headingLevel="h2" />
+        <ul className="border-t border-line">
+          {posts.items.map((post, index) => (
+            <PostRow key={post.id} post={post} index={index} headingLevel="h2" />
           ))}
-        </div>
+        </ul>
       ) : (
         <EmptyState title={filtered || page > 1 ? "No posts here" : "No posts yet"}>
           {filtered || page > 1 ? "Try another filter or the first page." : "The first post is being written."}

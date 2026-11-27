@@ -1,21 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque } from "next/font/google";
+import { Instrument_Sans } from "next/font/google";
 import { Intro } from "@/components/intro";
 import { INTRO_GATE_SCRIPT } from "@/lib/intro";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 
-// Display font for headlines, only in the one weight they use (800). The variable font
-// (every weight, 41 KB) and its extra axes (opsz, wdth: 131 KB) pushed LCP past 2.5 s
-// on Lighthouse's mobile profile.
-const display = Bricolage_Grotesque({
-  variable: "--font-bricolage",
+// One family for the whole site (TODO.md Redesign, the poster): Instrument Sans as one variable
+// file with its width axis, so text runs at normal width and headlines at 700 narrowed to 75%
+// (the `font-display` utility in globals.css) without a second font.
+const instrumentSans = Instrument_Sans({
+  variable: "--font-instrument-sans",
   subsets: ["latin"],
-  weight: "800",
+  axes: ["wdth"],
 });
-
-// Body text uses the system font (globals.css): measured, the Geist web font (30 KB) kept
-// LCP above its 2.5 s budget on Lighthouse's phone profile; without it every page passes.
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -38,7 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     // React hydrates; it applies to <html>'s own attributes only, not to anything inside it.
     <html
       lang="en"
-      className={`${display.variable} h-full antialiased`}
+      className={`${instrumentSans.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-ink font-sans text-paper">
@@ -49,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: INTRO_GATE_SCRIPT }} />
         <a
           href="#main"
-          className="sr-only z-50 rounded-full bg-accent px-4 py-2 font-semibold text-accent-ink focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+          className="sr-only z-50 rounded-btn bg-accent px-4 py-2 font-medium text-accent-ink focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
         >
           Skip to content
         </a>

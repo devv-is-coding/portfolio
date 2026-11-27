@@ -2,7 +2,6 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { TextAreaField, TextField } from "@/components/ui/fields";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { type ContactState, sendMessage } from "../_lib/actions";
@@ -27,22 +26,25 @@ function SentConfirmation({ onSendAnother }: { onSendAnother: () => void }) {
     panel.current?.focus();
   }, []);
   return (
+    // A marigold panel in the poster's colours, like the close at the end of the page.
     <div
       ref={panel}
       tabIndex={-1}
       role="status"
-      className="flex flex-col items-start gap-4 rounded-2xl border border-accent/50 bg-accent/10 p-6 outline-none sm:p-8"
+      className="on-accent flex flex-col items-start gap-5 rounded-card bg-accent p-8 text-accent-ink outline-none sm:p-10"
     >
-      <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-full bg-accent text-2xl font-extrabold text-accent-ink">
+      <span aria-hidden="true" className="flex size-14 items-center justify-center rounded-full bg-accent-ink text-2xl text-accent">
         ✓
       </span>
-      <h2 className="font-display text-2xl font-extrabold">Message sent</h2>
-      <p className="text-muted">
-        Thanks for reaching out. Your message arrived safely; I read every one and reply to the email you gave as soon as I can.
-      </p>
-      <Button type="button" variant="outline" size="sm" onClick={onSendAnother}>
+      <h2 className="font-display text-[clamp(2.5rem,5vw,4rem)] leading-[0.9] tracking-[-0.03em]">Message sent</h2>
+      <p className="max-w-md text-lg">I read every message myself and reply to the email you gave.</p>
+      <button
+        type="button"
+        onClick={onSendAnother}
+        className="rounded-btn border-[1.5px] border-accent-ink px-6 py-3 font-semibold transition-colors hover:bg-accent-ink hover:text-accent"
+      >
         Send another message
-      </Button>
+      </button>
     </div>
   );
 }
@@ -61,11 +63,11 @@ function MessageForm({ onSendAnother }: { onSendAnother: () => void }) {
     <form action={action} className="flex flex-col gap-6">
       {failed && <Alert>{failed.error}</Alert>}
       <div className="grid gap-6 sm:grid-cols-2">
-        <TextField label="Name" name="name" autoComplete="name" required maxLength={MAX.name} defaultValue={failed?.values.name} error={errors.name} />
-        <TextField label="Email" name="email" type="email" autoComplete="email" required maxLength={MAX.email} defaultValue={failed?.values.email} error={errors.email} />
+        <TextField large label="Name" name="name" autoComplete="name" required maxLength={MAX.name} defaultValue={failed?.values.name} error={errors.name} />
+        <TextField large label="Email" name="email" type="email" autoComplete="email" required maxLength={MAX.email} defaultValue={failed?.values.email} error={errors.email} />
       </div>
-      <TextField label="Subject" name="subject" maxLength={MAX.subject} hint="Optional" defaultValue={failed?.values.subject} error={errors.subject} />
-      <TextAreaField label="Message" name="message" required maxLength={MAX.message} defaultValue={failed?.values.message} error={errors.message} />
+      <TextField large label="Subject" name="subject" maxLength={MAX.subject} hint="Optional" defaultValue={failed?.values.subject} error={errors.subject} />
+      <TextAreaField large label="Message" name="message" required maxLength={MAX.message} defaultValue={failed?.values.message} error={errors.message} />
       {/* Spam trap: hidden from people and screen readers, filled in by bots. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
         <label htmlFor="field-website">Leave this empty</label>

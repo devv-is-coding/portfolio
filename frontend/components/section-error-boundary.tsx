@@ -37,7 +37,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="rounded-full border border-paper/25 px-4 py-2 text-sm font-semibold hover:border-accent hover:text-accent"
+          className="rounded-btn border border-paper/25 px-4 py-2 text-sm font-medium hover:border-accent hover:text-accent"
         >
           Try again
         </button>

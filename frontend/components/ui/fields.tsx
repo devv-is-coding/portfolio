@@ -1,8 +1,12 @@
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-const CONTROL =
-  "w-full rounded-xl border border-line bg-ink px-4 py-3 text-paper transition-colors placeholder:text-muted/60 hover:border-paper/30 aria-invalid:border-signal";
+const BASE =
+  "w-full border border-line text-paper transition-colors placeholder:text-muted/60 hover:border-paper/30 aria-invalid:border-signal";
+const CONTROL = `${BASE} rounded-xl bg-ink px-4 py-3`;
+// The public contact form's larger fields (the admin keeps the compact ones). A separate class
+// list, not added on top: `cn` joins classes without resolving conflicts.
+const LARGE_CONTROL = `${BASE} rounded-panel bg-ink-raised px-5 py-4 text-lg focus:border-accent`;
 
 type FieldFrameProps = {
   id: string;
@@ -38,6 +42,8 @@ function FieldFrame({ id, label, error, hint, className, children }: FieldFrameP
 
 // `id` defaults to `field-<name>`; pages with several forms pass their own, unique ones.
 type OwnProps = { label: string; name: string; error?: string; hint?: string; id?: string };
+// The bigger fields of the public contact form.
+type SizeProps = { large?: boolean };
 
 function controlProps(name: string, error?: string, hint?: string, ownId?: string) {
   const id = ownId ?? `field-${name}`;
@@ -49,20 +55,20 @@ function controlProps(name: string, error?: string, hint?: string, ownId?: strin
   };
 }
 
-export function TextField({ label, name, error, hint, id, className, ...props }: ComponentProps<"input"> & OwnProps) {
+export function TextField({ label, name, error, hint, id, large = false, className, ...props }: ComponentProps<"input"> & OwnProps & SizeProps) {
   const control = controlProps(name, error, hint, id);
   return (
     <FieldFrame id={control.id} label={label} error={error} hint={hint} className={className}>
-      <input className={CONTROL} {...control} {...props} />
+      <input className={large ? LARGE_CONTROL : CONTROL} {...control} {...props} />
     </FieldFrame>
   );
 }
 
-export function TextAreaField({ label, name, error, hint, id, className, ...props }: ComponentProps<"textarea"> & OwnProps) {
+export function TextAreaField({ label, name, error, hint, id, large = false, className, ...props }: ComponentProps<"textarea"> & OwnProps & SizeProps) {
   const control = controlProps(name, error, hint, id);
   return (
     <FieldFrame id={control.id} label={label} error={error} hint={hint} className={className}>
-      <textarea className={cn(CONTROL, "min-h-40")} {...control} {...props} />
+      <textarea className={cn(large ? LARGE_CONTROL : CONTROL, "min-h-40")} {...control} {...props} />
     </FieldFrame>
   );
 }
