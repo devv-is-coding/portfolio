@@ -46,7 +46,7 @@ export default async function EditProjectPage({ params }: PageProps<"/admin/proj
       <ResourceForm fields={PROJECT_FIELDS} action={saveProject.bind(null, id)} values={project} media={media} />
 
       <section className={SECTION} aria-labelledby="skills-heading">
-        <h2 id="skills-heading" className="font-display text-2xl font-extrabold">Skills</h2>
+        <h2 id="skills-heading" className="font-display text-2xl">Skills</h2>
         <ChecklistForm
           legend="Skills used in this project"
           options={skills.map((skill) => ({ id: skill.id, label: skill.name }))}
@@ -58,12 +58,12 @@ export default async function EditProjectPage({ params }: PageProps<"/admin/proj
       </section>
 
       <section className={SECTION} aria-labelledby="gallery-heading">
-        <h2 id="gallery-heading" className="font-display text-2xl font-extrabold">Gallery</h2>
+        <h2 id="gallery-heading" className="font-display text-2xl">Gallery</h2>
         {project.images.length > 0 && (
           // Three to a row on wide screens, so a long gallery takes a few rows, not a long scroll.
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {project.images.map((item) => (
-              <li key={item.id} className="flex flex-col gap-4 rounded-2xl border border-line p-4">
+              <li key={item.id} className="flex flex-col gap-4 rounded-card border border-line p-4">
                 <MediaImage
                   src={item.image.url}
                   alt={item.image.alt_text ?? ""}

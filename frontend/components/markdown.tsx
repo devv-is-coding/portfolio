@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import ReactMarkdown, { type Components } from "react-markdown";
+import { Children, type ComponentProps, type CSSProperties, type ReactNode } from "react";
+import ReactMarkdown, { type Components, type ExtraProps } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { MediaImage } from "@/components/media-image";
 import { cn } from "@/lib/cn";
@@ -50,8 +50,8 @@ const COMPONENTS: Components = {
 type Level = 2 | 3 | 4 | 5 | 6;
 
 const HEADING_STYLES: Record<Level, string> = {
-  2: "mt-12 font-display text-3xl font-extrabold uppercase",
-  3: "mt-10 font-display text-2xl font-extrabold",
+  2: "mt-12 font-display text-3xl",
+  3: "mt-10 font-display text-2xl",
   4: "mt-8 text-lg font-semibold",
   5: "mt-6 font-semibold",
   6: "mt-6 font-semibold text-muted",
@@ -84,6 +84,62 @@ export function Markdown({ children, minHeading = 2, className }: MarkdownProps)
   return (
     <div className={cn("[&>*:first-child]:mt-0", className)}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ ...COMPONENTS, ...BY_MIN_LEVEL[minHeading] }}>
+        {children}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+/** A word (or a link, or emphasis) that lights at `at`, its place in the Markdown source. */
+function litPiece(part: ReactNode, at: number) {
+  return (
+    <span key={at} className="lit-word" style={{ "--i": at } as CSSProperties}>
+      {part}
+    </span>
+  );
+}
+
+/**
+ * A paragraph with each word wrapped (LitMarkdown). Words are placed by their character offset
+ * in the source, so the numbering needs no counter kept across renders. Falls back to the plain
+ * paragraph if the rendered parts don't line up with the source nodes.
+ */
+function LitParagraph({ node, children }: ComponentProps<"p"> & ExtraProps) {
+  const rendered = Children.toArray(children);
+  const sources = node?.children ?? [];
+  if (sources.length !== rendered.length) {
+    return <p className="mt-6 first:mt-0">{children}</p>;
+  }
+  const pieces: ReactNode[] = [];
+  sources.forEach((source, index) => {
+    const part = rendered[index];
+    const start = source.position?.start.offset ?? 0;
+    if (source.type === "text" && typeof part === "string") {
+      let offset = start;
+      for (const word of part.split(/(\s+)/)) {
+        pieces.push(word.trim() ? litPiece(word, offset) : word);
+        offset += word.length;
+      }
+    } else {
+      pieces.push(litPiece(part, start));
+    }
+  });
+  return <p className="mt-6 first:mt-0">{pieces}</p>;
+}
+
+const LIT_COMPONENTS: Components = { ...COMPONENTS, ...BY_MIN_LEVEL[4], p: LitParagraph };
+
+/**
+ * Short Markdown (the home page's biography) whose words light up one after another as it
+ * scrolls through the screen: each word is its own span placed by its offset in the source
+ * (`--i`, out of `--n` on the wrapper), which globals.css (`.lit-text`) turns into a slice of
+ * the wrapper's view timeline. A link or emphasis lights as one piece. Without scroll-driven
+ * animations or with reduced motion the text is simply all lit.
+ */
+export function LitMarkdown({ children, className }: { children: string; className?: string }) {
+  return (
+    <div className={cn("lit-text", className)} style={{ "--n": Math.max(1, children.length) } as CSSProperties}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={LIT_COMPONENTS}>
         {children}
       </ReactMarkdown>
     </div>

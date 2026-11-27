@@ -47,15 +47,15 @@ export function MediaDialog({ row, preview, title, children }: MediaDialogProps)
             event.currentTarget.close();
           }
         }}
-        className="m-auto max-h-[92svh] overflow-y-auto w-[min(64rem,calc(100vw-2rem))] rounded-2xl border border-line bg-ink p-0 text-paper backdrop:bg-ink/85 backdrop:backdrop-blur-sm"
+        className="m-auto max-h-[92svh] overflow-y-auto w-[min(64rem,calc(100vw-2rem))] rounded-card border border-line bg-ink p-0 text-paper backdrop:bg-ink/85 backdrop:backdrop-blur-sm"
       >
         <div className="flex flex-col gap-6 p-5 sm:p-6">
           <div className="flex items-start justify-between gap-4">
-            <h2 className="font-display text-xl font-extrabold break-all">{title}</h2>
+            <h2 className="font-display text-xl break-all">{title}</h2>
             <button
               type="button"
               onClick={() => dialog.current?.close()}
-              className="shrink-0 rounded-full border border-line px-3 py-1 text-sm hover:border-paper"
+              className="shrink-0 rounded-btn border border-line px-3 py-1 text-sm hover:border-paper"
             >
               Close
             </button>

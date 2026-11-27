@@ -15,14 +15,14 @@ export function PageHeader({ eyebrow, title, action, back }: PageHeaderProps) {
   return (
     <header className="mb-8 flex flex-col gap-4">
       {back && (
-        <Link href={back.href} className="w-fit font-mono text-xs uppercase tracking-[0.2em] text-muted hover:text-accent">
+        <Link href={back.href} className="w-fit text-label font-medium text-muted hover:text-accent">
           ← {back.label}
         </Link>
       )}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-3">
           <Eyebrow>{eyebrow}</Eyebrow>
-          <h1 className="font-display text-4xl font-extrabold uppercase">{title}</h1>
+          <h1 className="font-display text-4xl">{title}</h1>
         </div>
         {action}
       </div>
@@ -46,9 +46,9 @@ export function DataTable<T extends { id: number }>({ items, columns, href, empt
     return <EmptyState title={empty} />;
   }
   return (
-    <div className="overflow-x-auto rounded-2xl border border-line">
+    <div className="overflow-x-auto rounded-card border border-line">
       <table className="w-full text-left text-sm">
-        <thead className="bg-ink-raised font-mono text-xs uppercase tracking-[0.15em] text-muted">
+        <thead className="bg-ink-raised text-label font-medium text-muted">
           <tr>
             {columns.map((column) => (
               <th key={column.label} scope="col" className="px-4 py-3 font-normal">

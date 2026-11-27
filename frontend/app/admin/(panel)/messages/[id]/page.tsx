@@ -44,8 +44,8 @@ export default async function MessagePage({ params }: PageProps<"/admin/messages
         )}
       </dl>
       {/* Plain text from a visitor: rendered as text (React escapes it), keeping line breaks. */}
-      <p className="mb-8 max-w-3xl rounded-2xl border border-line bg-ink-raised p-6 whitespace-pre-wrap">{message.message}</p>
-      <ButtonLink href={reply} variant="outline" size="sm" className="mb-10">
+      <p className="mb-8 max-w-3xl rounded-card border border-line bg-ink-raised p-6 whitespace-pre-wrap">{message.message}</p>
+      <ButtonLink href={reply} variant="secondary" size="sm" className="mb-10">
         Reply by email
       </ButtonLink>
       <ResourceForm fields={MESSAGE_FIELDS} action={saveMessageStatus.bind(null, id)} values={message} submitLabel="Save status" />

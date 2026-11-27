@@ -15,17 +15,17 @@ export function Pagination({ page, pages, href }: PaginationProps) {
   return (
     <nav aria-label="Pagination" className="flex items-center justify-between gap-4">
       {page > 1 ? (
-        <ButtonLink href={href(page - 1)} variant="outline" size="sm" rel="prev">
+        <ButtonLink href={href(page - 1)} variant="secondary" size="sm" rel="prev">
           ← Previous
         </ButtonLink>
       ) : (
         <span />
       )}
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">
+      <p className="text-label font-medium text-muted">
         Page {page} of {pages}
       </p>
       {page < pages ? (
-        <ButtonLink href={href(page + 1)} variant="outline" size="sm" rel="next">
+        <ButtonLink href={href(page + 1)} variant="secondary" size="sm" rel="next">
           Next →
         </ButtonLink>
       ) : (

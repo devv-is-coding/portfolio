@@ -52,7 +52,7 @@ export function MediaUploader() {
   const busy = status.kind === "busy";
   return (
     <form
-      className="flex max-w-3xl flex-col gap-5 rounded-2xl border border-line p-5"
+      className="flex max-w-3xl flex-col gap-5 rounded-card border border-line p-5"
       onSubmit={(event) => {
         event.preventDefault();
         void upload(event.currentTarget);

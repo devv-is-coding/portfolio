@@ -28,20 +28,21 @@ export async function ProfileIntro() {
   const { avatar, resume } = profile;
   return (
     <div className="grid gap-12 lg:grid-cols-[1fr_20rem]">
-      <div className="flex flex-col gap-6">
-        <p className="font-display text-3xl font-extrabold sm:text-4xl">
+      <div className="flex flex-col gap-8">
+        <p className="font-display text-[clamp(2.5rem,5vw,4.5rem)] leading-[0.92] tracking-[-0.03em]">
           {profile.full_name}
           {profile.headline && <span className="block text-accent">{profile.headline}</span>}
         </p>
-        {profile.location && <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">{profile.location}</p>}
-        {profile.biography && <Markdown className="max-w-2xl text-lg">{profile.biography}</Markdown>}
+        {profile.location && <p className="text-sm font-semibold text-muted">{profile.location}</p>}
+        {profile.biography && <Markdown className="max-w-2xl text-xl">{profile.biography}</Markdown>}
         <div className="flex flex-wrap gap-3">
           {profile.email && (
             <ButtonLink href={`mailto:${profile.email}`}>Email me</ButtonLink>
           )}
           {resume && (
-            <ButtonLink href={resume.url} variant="outline" target="_blank" rel="noopener noreferrer">
+            <ButtonLink href={resume.url} variant="secondary" target="_blank" rel="noopener noreferrer">
               Résumé (PDF)
+              <span aria-hidden="true">↗</span>
             </ButtonLink>
           )}
         </div>
@@ -53,7 +54,7 @@ export async function ProfileIntro() {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer me"
-                  className="font-mono text-xs uppercase tracking-[0.2em] text-muted transition-colors hover:text-accent"
+                  className="inline-flex items-center font-semibold transition-colors hover:text-accent pointer-coarse:min-h-11"
                 >
                   {platformName(link.platform)} ↗
                 </a>
@@ -64,7 +65,7 @@ export async function ProfileIntro() {
       </div>
       {avatar && (
         // Uncovers as it scrolls into view (lib/motion "image").
-        <div data-motion="image" className="h-fit overflow-hidden rounded-2xl border border-line">
+        <div className="h-fit overflow-hidden rounded-card border border-line">
           <MediaImage
             src={avatar.url}
             alt={avatar.alt_text ?? `Portrait of ${profile.full_name}`}
@@ -88,7 +89,7 @@ export async function ExperienceSection() {
   return (
     <section className={SECTION}>
       <Container className="flex flex-col gap-10">
-        <SectionHeading eyebrow="Career" title="Experience" />
+        <SectionHeading title="Experience" />
         <Timeline
           entries={experiences.map((job) => ({
             id: job.id,
@@ -113,7 +114,7 @@ export async function EducationSection() {
   return (
     <section className={SECTION}>
       <Container className="flex flex-col gap-10">
-        <SectionHeading eyebrow="Study" title="Education" />
+        <SectionHeading title="Education" />
         <Timeline
           entries={education.map((school) => ({
             id: school.id,
@@ -137,7 +138,7 @@ export async function CertificationsSection() {
   return (
     <section className={SECTION}>
       <Container className="flex flex-col gap-10">
-        <SectionHeading eyebrow="Proof" title="Certifications" />
+        <SectionHeading title="Certifications" />
         <Timeline
           entries={certifications.map((certificate) => ({
             id: certificate.id,

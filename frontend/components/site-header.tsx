@@ -11,24 +11,28 @@ export function SiteHeader() {
       {/* Frosted glass over the page, on its own layer: a backdrop filter on the header itself
           would make it the box the full-screen mobile menu (position: fixed) is sized to. */}
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-ink/80 backdrop-blur-lg" />
-      <Container className="flex h-16 items-center justify-between">
-        <Link href="/" className="relative z-20 font-display text-2xl font-extrabold tracking-tight">
+      {/* Three columns from md up, so the menu pill stays centred whatever the sides hold. */}
+      <Container className="flex h-16 items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr]">
+        {/* 44 px tall on touch screens: the text alone is a 32 px target. */}
+        <Link href="/" className="relative z-20 inline-flex items-center justify-self-start font-display text-2xl pointer-coarse:min-h-11">
           {SITE.name}
           <span className="text-accent">.</span>
         </Link>
         <nav aria-label="Main" className="hidden md:block">
-          {/* The current section is lit and underlined in the accent: color plus a mark. */}
+          {/* The current section is filled in the text colour: a shape as well as a colour. */}
           <NavLinks
-            className="flex items-center gap-8 font-mono text-xs uppercase tracking-[0.2em]"
-            linkClassName="underline-offset-[0.7em] transition-colors duration-200 hover:text-accent"
-            idleClassName="text-muted"
-            currentClassName="text-paper underline decoration-accent decoration-2"
+            className="flex items-center gap-1 rounded-btn border border-line bg-ink-raised p-1 text-sm font-medium"
+            linkClassName="block rounded-btn px-4 py-1.5 transition-colors duration-200"
+            idleClassName="text-muted hover:bg-paper/10 hover:text-paper"
+            currentClassName="bg-paper text-ink"
           />
         </nav>
+        <p className="hidden items-center gap-2.5 justify-self-end text-sm font-medium lg:flex">
+          <span aria-hidden="true" className="status-dot relative size-2 rounded-full bg-accent" />
+          {SITE.status}
+        </p>
         <MobileNav />
       </Container>
-      {/* How far down the page the visitor is: a line filled by the scroll itself (globals.css). */}
-      <div aria-hidden="true" className="scroll-progress absolute inset-x-0 -bottom-px h-px bg-accent" />
     </header>
   );
 }

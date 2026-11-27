@@ -29,7 +29,7 @@ export function MobileNav() {
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((isOpen) => !isOpen)}
-        className="relative z-20 flex size-11 items-center justify-center rounded-full border border-paper/25"
+        className="relative z-20 flex size-11 items-center justify-center rounded-btn border border-paper/25"
       >
         <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
         <span aria-hidden="true" className="flex w-5 flex-col gap-1.5">
@@ -51,13 +51,11 @@ export function MobileNav() {
         id={panelId}
         aria-label="Main"
         hidden={!open}
-        // Scrolls on its own: smooth scrolling must leave it alone (lib/motion).
-        data-lenis-prevent
         className="fixed inset-0 z-10 overflow-y-auto bg-ink px-5 pt-24 pb-10"
       >
         <NavLinks
           className="flex flex-col gap-2"
-          linkClassName="block py-2 font-display text-headline font-extrabold uppercase underline-offset-[0.15em] hover:text-accent"
+          linkClassName="block py-2 font-display text-headline underline-offset-[0.15em] hover:text-accent"
           currentClassName="text-accent underline decoration-4"
           onNavigate={() => setOpen(false)}
         />

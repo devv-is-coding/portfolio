@@ -1,45 +1,106 @@
 "use client";
 
-import { type CSSProperties, useEffect, useRef } from "react";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { INTRO_LEAVING, INTRO_PLAYING } from "@/lib/intro";
+import { useEffect, useRef } from "react";
+import { INTRO_LEAVING, INTRO_PLAYING, INTRO_WAKE } from "@/lib/intro";
 import { SITE } from "@/lib/site";
 
-// The greeting's words are all in after ~0.8 s (globals.css); then it goes. It never waits for
-// the backend: cached pages need neither the API nor its database.
-const GREETING_MS = 900;
+// The count runs 2.5 s (user, 2026-11-26: the API and the free database get a head start on a
+// cold start). It is honest about the wake-up: if the server hasn't answered by 92% (HOLD_MS
+// into the bar's fill), the count and the bar hold there until it does, then finish; the
+// screen leaves when the bar's fill ends (globals.css), so never before 2.5 s.
+const HOLD_MS = 2300;
+const COUNT_MS = 2500;
+// A server that stays silent never keeps the visitor longer than this into the count.
+const MAX_WAIT_MS = 6000;
+// The hero's cream block (components hero.tsx): the screen shrinks into it as it leaves.
+const TARGET_SELECTOR = "[data-intro-target]";
+// The counter's digit strips (globals.css slides them): hundreds blank-1, tens blank-9 then 0,
+// ones 0-9 then 0. A leading zero shows as a figure space (a digit's width, nothing drawn), so the
+// count reads 5, 51, 100, never 051. One text line per digit in a single element each
+// (white-space: pre): 3 elements to lay out at the counter's huge size instead of 33.
+const BLANK = " ";
+const DIGIT_STRIPS = [
+  `${BLANK}\n1`,
+  `${BLANK}\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0`,
+  "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n0",
+] as const;
 // The status route gives the API 10 s (lib/api/status.ts); after that the request is dropped.
 const WAKE_UP_TIMEOUT_MS = 12_000;
 const SKIP_EVENTS = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
+// On <html> while the count waits for the server: globals.css pauses the count and the bar.
+const WAITING = "introWaiting";
 
 // The wake-up request goes out once per page load, even when React runs the effect twice
 // (development's Strict Mode does).
 let wakeUp: Promise<unknown> | null = null;
 
-const FIRST_NAME = SITE.name.split(" ")[0];
-const WORDS = [
-  { text: "Hi,", accent: false },
-  { text: "I'm", accent: false },
-  { text: `${FIRST_NAME}.`, accent: true },
-];
+/**
+ * Calls `callback` once the bar's fill has run `ms`, on the fill's own clock: the count and the
+ * bar start with the page's first style (before any script), so timing from the script or the
+ * first paint held the count too late. Without the animation, `ms` from now. Returns a cancel
+ * function.
+ */
+function atBarTime(bar: Animation | undefined, ms: number, callback: () => void): () => void {
+  const elapsed = Number(bar?.currentTime ?? 0);
+  const timer = setTimeout(callback, Math.max(0, ms - elapsed));
+  return () => clearTimeout(timer);
+}
+
+/**
+ * Points the exit at the hero's block: `--intro-to` is the transform that moves and scales the
+ * full-screen panel onto the block's box (globals.css animates it: transform and opacity only,
+ * so the compositor does the work). Without the block (or off screen) the CSS default lifts
+ * the screen away instead.
+ */
+function aimAtTarget(element: HTMLElement) {
+  const target = document.querySelector(TARGET_SELECTOR)?.getBoundingClientRect();
+  if (!target || target.bottom <= 0 || target.top >= window.innerHeight) {
+    return;
+  }
+  const scaleX = target.width / window.innerWidth;
+  const scaleY = target.height / window.innerHeight;
+  element.style.setProperty(
+    "--intro-to",
+    `translate(${Math.round(target.left)}px, ${Math.round(target.top)}px) scale(${scaleX.toFixed(4)}, ${scaleY.toFixed(4)})`,
+  );
+}
+
+/** One status request, whatever it answers: the site never relies on it, it only gives the
+ * backend a head start. The body is read so the request closes (an unread one stays open in
+ * Chrome). Returns the request, settled once the server has answered or given up. */
+function wakeUpBackend(): Promise<unknown> {
+  wakeUp ??= fetch("/api/status", { cache: "no-store", signal: AbortSignal.timeout(WAKE_UP_TIMEOUT_MS) })
+    .then((response) => response.text())
+    .catch(() => {});
+  return wakeUp;
+}
 
 /**
  * The welcome screen when a session starts on the home page (lib/intro.ts decides before the
- * first paint). It sends one status request so the API and the free-tier database wake up
- * while the visitor looks around, leaves after the greeting, and at once on a click, key,
- * scroll or touch. Decorative: hidden from screen readers, never in the way.
+ * first paint), and the wake-up request on a session's first page, whichever it is. The
+ * greeting counts to 100 over 2.5 s, holding at 92% while the server hasn't answered, and
+ * leaves when the bar is full (at once on a click, key, scroll or touch), shrinking into the
+ * hero's cream block. Decorative: hidden from screen readers, never in the way.
  */
 export function Intro() {
   const overlay = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const root = document.documentElement;
-    const element = overlay.current;
-    if (root.dataset.intro !== INTRO_PLAYING || !element) {
+    let answered = !root.dataset[INTRO_WAKE];
+    const request = answered ? null : wakeUpBackend();
+    const current = overlay.current;
+    if (root.dataset.intro !== INTRO_PLAYING || !current) {
       return;
     }
+    // Narrowed once here: the hoisted leave() below can't see the check above.
+    const element: HTMLDivElement = current;
     let active = true;
 
+    const resume = () => {
+      answered = true;
+      delete root.dataset[WAITING];
+    };
     const stopSkipping = () => {
       for (const type of SKIP_EVENTS) {
         window.removeEventListener(type, leave);
@@ -47,18 +108,33 @@ export function Intro() {
     };
     function leave() {
       if (active && root.dataset.intro === INTRO_PLAYING) {
+        resume();
+        aimAtTarget(element);
         root.dataset.intro = INTRO_LEAVING;
         stopSkipping();
       }
     }
 
-    // One request, whatever it answers: the site never relies on it, it only gives the
-    // backend a head start. The body is read so the request closes (an unread one stays open
-    // in Chrome).
-    wakeUp ??= fetch("/api/status", { cache: "no-store", signal: AbortSignal.timeout(WAKE_UP_TIMEOUT_MS) })
-      .then((response) => response.text())
-      .catch(() => {});
-    const greetingTimer = setTimeout(leave, GREETING_MS);
+    // The script times the exit from here on: the CSS fallback for pages without JavaScript
+    // (globals.css) stands down.
+    root.dataset.introTimed = "1";
+    void request?.then(() => {
+      if (active) {
+        resume();
+      }
+    });
+    // The bar's fill (globals.css): its clock times the hold, and its end is the cue to leave
+    // (at 2.5 s, or later after a hold). `finished` settles even when the fill ended before
+    // this script ran, so a slow script never leaves the screen up.
+    const bar = element.querySelector(".intro-progress")?.getAnimations()[0];
+    const cancelHold = atBarTime(bar, HOLD_MS, () => {
+      if (!answered) {
+        root.dataset[WAITING] = "1";
+      }
+    });
+    const cancelMaxWait = atBarTime(bar, MAX_WAIT_MS, resume);
+    const cancelFallback = bar ? null : atBarTime(bar, COUNT_MS, leave);
+    void bar?.finished.then(leave, leave);
     for (const type of SKIP_EVENTS) {
       window.addEventListener(type, leave, { passive: true });
     }
@@ -73,34 +149,50 @@ export function Intro() {
 
     return () => {
       active = false;
-      clearTimeout(greetingTimer);
+      cancelHold();
+      cancelMaxWait();
+      cancelFallback?.();
       stopSkipping();
+      delete root.dataset[WAITING];
       element.removeEventListener("animationend", finish);
     };
   }, []);
 
   return (
-    <div ref={overlay} aria-hidden="true" className="intro fixed inset-0 z-60 place-items-center bg-ink px-5">
-      <div className="intro-content flex flex-col items-center gap-6 text-center">
-        <Eyebrow className="intro-label">Welcome</Eyebrow>
-        {/* One line from sm up; on phones the name gets its own line, so it can stay big. */}
-        <p className="font-display text-[17vw] leading-[0.9] font-extrabold tracking-[-0.035em] uppercase sm:text-[clamp(3.5rem,13vw,8.5rem)]">
-          {WORDS.map((word, index) => (
-            <span key={word.text} className={word.accent ? "max-sm:block" : undefined}>
-              {index > 0 && " "}
-              <span className="motion-word">
-                <span
-                  className={word.accent ? "motion-word-inner text-accent" : "motion-word-inner"}
-                  style={{ "--intro-word": index } as CSSProperties}
-                >
-                  {word.text}
-                </span>
-              </span>
-            </span>
-          ))}
-        </p>
+    <div
+      ref={overlay}
+      aria-hidden="true"
+      className="intro fixed inset-0 z-60 grid-rows-[auto_1fr_auto] bg-accent px-5 py-6 text-accent-ink sm:px-8 sm:py-8"
+    >
+      {/* In the headline cut (bold, narrow) like the counter, so the whole screen reads as one poster. */}
+      {/* Phones: one under the other, so neither wraps. */}
+      <div className="intro-content flex flex-col gap-2 font-display text-[clamp(1.5rem,2.6vw,2.5rem)] leading-none tracking-[-0.02em] sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <span className="motion-word">
+          <span className="motion-word-inner">{SITE.name}</span>
+        </span>
+        <span className="motion-word sm:text-right">
+          <span className="motion-word-inner [animation-delay:90ms]">Full-stack developer · Portfolio</span>
+        </span>
       </div>
-      <div className="intro-progress absolute inset-x-0 bottom-0 h-px bg-accent" />
+      {/* The counter: digit strips painted once and slid by CSS (globals.css), never rewritten
+          by a script, so no new text paints as it counts (it would become the page's largest
+          paint near the end and push LCP past 2.5 s). */}
+      {/* At the bar's right end, where the fill is heading; the blank leading digits fall on
+          the left, so the number and its % stay together. */}
+      <p className="intro-content intro-count flex items-end self-end justify-self-end font-display text-[clamp(7rem,30vw,22rem)] leading-none tracking-[-0.04em] tabular-nums">
+        {DIGIT_STRIPS.map((strip, column) => (
+          <span key={column} className="intro-digit">
+            <span className="intro-strip">{strip}</span>
+          </span>
+        ))}
+        <span className="ml-[0.04em] pb-[0.08em] text-[0.32em] leading-none">%</span>
+      </p>
+      <div className="intro-content">
+        <div className="intro-track mt-5 h-[3px]">
+          <div className="intro-progress h-full bg-accent-ink" />
+        </div>
+        <p className="mt-3 text-sm font-medium">Tap or press any key to skip</p>
+      </div>
     </div>
   );
 }

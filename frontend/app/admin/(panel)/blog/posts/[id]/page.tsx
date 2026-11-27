@@ -32,7 +32,7 @@ export default async function EditPostPage({ params }: PageProps<"/admin/blog/po
       />
       <ResourceForm fields={postFields(categories)} action={savePost.bind(null, id)} values={post} media={media} />
       <section className="mt-16 flex flex-col gap-6 border-t border-line pt-10" aria-labelledby="tags-heading">
-        <h2 id="tags-heading" className="font-display text-2xl font-extrabold">
+        <h2 id="tags-heading" className="font-display text-2xl">
           Tags
         </h2>
         <ChecklistForm

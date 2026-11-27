@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Pagination } from "@/components/pagination";
 import { ProjectCard } from "@/components/project-card";
-import { SectionHeading } from "@/components/section-heading";
+import { PosterHeading } from "@/components/poster-heading";
 import { ProjectListSkeleton } from "@/components/skeletons";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tag } from "@/components/ui/tag";
-import { getProjects, getSkills, getSkillSlugsWithProjects } from "@/lib/api/public";
+import { getProjects, getSkillProjectCounts, getSkills } from "@/lib/api/public";
 import { projectGridClass } from "@/lib/project-grid";
 import { firstParam, listHref, pageParam } from "@/lib/search-params";
 import { SITE } from "@/lib/site";
@@ -20,11 +20,13 @@ export const metadata: Metadata = {
 };
 
 const PAGE_SIZE = 12;
+// Cards in the grid's first row on wide screens (projectGridClass: up to three columns).
+const FIRST_ROW = 3;
 
 export default function ProjectsPage({ searchParams }: PageProps<"/projects">) {
   return (
     <Container className="flex flex-col gap-12 py-16 sm:py-24">
-      <SectionHeading as="h1" eyebrow="Work" title="Projects" />
+      <PosterHeading as="h1" title="Projects" />
       {/* The fallback fills the screen, so the footer never jumps when the list streams in. */}
       <Suspense fallback={<ProjectListSkeleton />}>
         <ProjectList searchParams={searchParams} />
@@ -37,13 +39,13 @@ async function ProjectList({ searchParams }: Pick<PageProps<"/projects">, "searc
   const params = await searchParams;
   const page = pageParam(params.page);
   const skill = firstParam(params.skill);
-  const [projects, allSkills, slugsWithProjects] = await Promise.all([
+  const [projects, allSkills, projectCounts] = await Promise.all([
     getProjects({ page, size: PAGE_SIZE, skill }),
     getSkills(),
-    getSkillSlugsWithProjects(),
+    getSkillProjectCounts(),
   ]);
   // Only skills that lead to projects: a filter for every skill opened "No projects here".
-  const skills = filterSkills(allSkills, new Set(slugsWithProjects), skill);
+  const skills = filterSkills(allSkills, projectCounts, skill);
 
   // At least a screen tall, like the fallback: a short (empty) list never pulls the footer up.
   return (
@@ -68,12 +70,14 @@ async function ProjectList({ searchParams }: Pick<PageProps<"/projects">, "searc
       )}
       {projects.items.length > 0 ? (
         <div className={projectGridClass(projects.total)}>
-          {projects.items.map((project) => (
+          {projects.items.map((project, index) => (
             <ProjectCard
               key={project.id}
               project={project}
               headingLevel="h2"
               sizes="(min-width: 1024px) 400px, (min-width: 768px) 50vw, 100vw"
+              // The first row is on screen at once, and its picture is the page's LCP.
+              priority={index < FIRST_ROW}
             />
           ))}
         </div>

@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { type CSSProperties, Suspense } from "react";
 import { Markdown } from "@/components/markdown";
 import { MediaImage } from "@/components/media-image";
 import { ArticleSkeleton } from "@/components/skeletons";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Container } from "@/components/ui/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { Tag } from "@/components/ui/tag";
 import { getProject, type ProjectDetail } from "@/lib/api/public";
 import { formatWorkPeriod } from "@/lib/format";
@@ -42,57 +41,73 @@ async function ProjectDetails({ params }: Pick<PageProps<"/projects/[slug]">, "p
   }
   const { thumbnail } = project;
 
+  const period = formatWorkPeriod(project.started_on, project.ended_on);
+
   return (
     <article>
-      <Container className="flex flex-col gap-10 py-16 sm:py-24">
-        <Link href="/projects" className="w-fit font-mono text-xs uppercase tracking-[0.2em] text-muted hover:text-accent">
+      <Container className="flex flex-col gap-12 py-16 sm:py-24">
+        <Link href="/projects" className="inline-flex w-fit items-center text-sm font-semibold text-muted hover:text-accent pointer-coarse:min-h-11">
           ← All projects
         </Link>
-        <header className="flex flex-col gap-6">
-          <Eyebrow>{formatWorkPeriod(project.started_on, project.ended_on) ?? "Project"}</Eyebrow>
-          <h1 className="font-display text-headline font-extrabold uppercase">{project.title}</h1>
-          {project.short_description && <p className="max-w-2xl text-xl text-muted">{project.short_description}</p>}
-          <div className="flex flex-wrap gap-3">
-            {project.live_url && (
-              <ButtonLink href={project.live_url} target="_blank" rel="noopener noreferrer">
-                Visit the site ↗
-              </ButtonLink>
-            )}
-            {project.repository_url && (
-              <ButtonLink href={project.repository_url} variant="outline" target="_blank" rel="noopener noreferrer">
-                Source code ↗
-              </ButtonLink>
-            )}
-          </div>
-          {project.skills.length > 0 && (
-            <ul className="flex flex-wrap gap-2" aria-label="Built with">
-              {project.skills.map((skill) => (
-                <li key={skill.id}>
-                  <Tag href={listHref("/projects", { skill: skill.slug })}>{skill.name}</Tag>
-                </li>
-              ))}
-            </ul>
+        <header className="flex flex-col gap-8">
+          {(period || project.skills.length > 0) && (
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              {period && <p className="text-sm font-semibold text-muted">{period}</p>}
+              {project.skills.length > 0 && (
+                <ul className="flex flex-wrap gap-2" aria-label="Built with">
+                  {project.skills.map((skill) => (
+                    <li key={skill.id}>
+                      <Tag href={listHref("/projects", { skill: skill.slug })}>{skill.name}</Tag>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          <h1 className="font-display text-[clamp(3rem,8vw,7.5rem)] leading-[0.88] tracking-[-0.035em]">{project.title}</h1>
+          {project.short_description && (
+            <p className="max-w-2xl text-xl leading-relaxed text-muted">{project.short_description}</p>
+          )}
+          {(project.live_url || project.repository_url) && (
+            <div className="flex flex-wrap gap-3">
+              {project.live_url && (
+                <ButtonLink href={project.live_url} target="_blank" rel="noopener noreferrer">
+                  Visit the site ↗
+                </ButtonLink>
+              )}
+              {project.repository_url && (
+                <ButtonLink href={project.repository_url} variant="secondary" target="_blank" rel="noopener noreferrer">
+                  Source code ↗
+                </ButtonLink>
+              )}
+            </div>
           )}
         </header>
-        <ProjectSummaryBlock project={project} />
         {thumbnail && (
-          <MediaImage
-            src={thumbnail.url}
-            alt={thumbnail.alt_text ?? ""}
-            width={thumbnail.width}
-            height={thumbnail.height}
-            sizes="(min-width: 1280px) 1216px, 100vw"
-            fetchPriority="high"
-            loading="eager"
-            className="h-auto w-full rounded-2xl border border-line"
-          />
+          <div className="overflow-hidden rounded-card border border-line">
+            <MediaImage
+              src={thumbnail.url}
+              alt={thumbnail.alt_text ?? ""}
+              width={thumbnail.width}
+              height={thumbnail.height}
+              sizes="(min-width: 1280px) 1216px, 100vw"
+              fetchPriority="high"
+              loading="eager"
+              className="block h-auto w-full"
+            />
+          </div>
         )}
+        <ProjectSummaryBlock project={project} />
         {project.description && <Markdown className="max-w-3xl text-lg">{project.description}</Markdown>}
         {project.images.length > 0 && (
           <section aria-label="Gallery" className="grid gap-6 md:grid-cols-2">
-            {project.images.map(({ id, image }) => (
-              // Each picture uncovers as it scrolls into view (lib/motion "image").
-              <div key={id} data-motion="image" className="h-fit overflow-hidden rounded-2xl border border-line">
+            {project.images.map(({ id, image }, index) => (
+              <div
+                key={id}
+                data-reveal
+                style={{ "--reveal": index % 2 } as CSSProperties}
+                className="h-fit overflow-hidden rounded-card border border-line"
+              >
                 <MediaImage
                   src={image.url}
                   alt={image.alt_text ?? ""}
@@ -125,10 +140,15 @@ function ProjectSummaryBlock({ project }: { project: ProjectDetail }) {
   }
   return (
     <dl className={`grid gap-8 ${SUMMARY_COLUMNS[items.length]}`}>
-      {items.map((item) => (
-        <div key={item.label} className="flex flex-col gap-3 border-t border-line pt-5">
-          <dt className="font-mono text-xs uppercase tracking-[0.2em] text-muted">{item.label}</dt>
-          <dd className="max-w-prose text-lg">{item.text}</dd>
+      {items.map((item, index) => (
+        <div key={item.label} className="flex flex-col gap-4 border-t-[1.5px] border-paper/80 pt-5">
+          <dt className="flex items-baseline gap-3">
+            <span aria-hidden="true" className="font-display text-5xl leading-none text-accent">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <span className="text-sm font-semibold text-muted">{item.label}</span>
+          </dt>
+          <dd className="max-w-prose text-lg leading-relaxed">{item.text}</dd>
         </div>
       ))}
     </dl>

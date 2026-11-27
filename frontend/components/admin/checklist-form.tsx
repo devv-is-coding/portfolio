@@ -31,7 +31,7 @@ export function ChecklistForm({ legend, options, selected, action, submitLabel, 
           {options.map((option) => (
             <label
               key={option.id}
-              className="flex cursor-pointer items-center gap-2 rounded-full border border-line px-3 py-1.5 text-sm has-checked:border-accent has-checked:text-accent"
+              className="flex cursor-pointer items-center gap-2 rounded-btn border border-line px-3 py-1.5 text-sm has-checked:border-accent has-checked:text-accent"
             >
               <input type="checkbox" name="ids" value={option.id} defaultChecked={selected.includes(option.id)} className="accent-accent" />
               {option.label}

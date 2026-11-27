@@ -1,26 +1,26 @@
 import Link from "next/link";
 import { MediaImage } from "@/components/media-image";
-import { Tag } from "@/components/ui/tag";
 import type { ProjectSummary } from "@/lib/api/public";
 import { formatWorkPeriod } from "@/lib/format";
 
 const MAX_SKILLS = 4;
 
-/** A project in a grid: thumbnail, title, summary and its first skills; the whole card links. */
+/** A project in a grid: picture, period, title, summary and its first skills; the whole card links. */
 type ProjectCardProps = {
   project: ProjectSummary;
   sizes: string;
   /** `h2` where the cards sit right under the page title, `h3` inside a section. */
   headingLevel?: "h2" | "h3";
+  /** On screen when the page opens: the picture loads at once, at high priority (not lazily). */
+  priority?: boolean;
 };
 
-export function ProjectCard({ project, sizes, headingLevel: Heading = "h3" }: ProjectCardProps) {
+export function ProjectCard({ project, sizes, headingLevel: Heading = "h3", priority = false }: ProjectCardProps) {
   const { thumbnail } = project;
   const period = formatWorkPeriod(project.started_on, project.ended_on);
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-line bg-ink-raised transition-[border-color,box-shadow] duration-500 hover:border-accent hover:shadow-[0_30px_80px_-40px] hover:shadow-accent/50">
-      {/* The picture uncovers as the card scrolls into view (lib/motion "image"). */}
-      <div data-motion="image" className="aspect-[16/10] overflow-hidden bg-ink">
+    <article className="group relative flex flex-col gap-5">
+      <div className="aspect-[16/10] overflow-hidden rounded-card border border-line bg-ink-raised">
         {thumbnail ? (
           <MediaImage
             src={thumbnail.url}
@@ -28,30 +28,38 @@ export function ProjectCard({ project, sizes, headingLevel: Heading = "h3" }: Pr
             width={thumbnail.width}
             height={thumbnail.height}
             sizes={sizes}
-            className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : undefined}
+            className="size-full object-cover object-top transition-transform duration-700 ease-(--ease-enter) pointer-fine:group-hover:scale-[1.035]"
           />
         ) : (
-          <div aria-hidden="true" className="flex size-full items-center justify-center font-display text-5xl font-extrabold text-line uppercase">
-            {project.title.slice(0, 2)}
+          // No screenshot yet: what it was built with, set large (the title again read as a
+          // placeholder). Decorative: the skills list below says the same to screen readers.
+          <div aria-hidden="true" className="flex size-full flex-col justify-end gap-2 p-6">
+            {project.skills.length > 0 && <span className="text-sm font-semibold text-muted">Built with</span>}
+            <span className="font-display text-[clamp(1.75rem,3vw,2.5rem)] leading-[0.95] text-paper">
+              {project.skills
+                .slice(0, MAX_SKILLS)
+                .map((skill) => skill.name)
+                .join(" · ")}
+            </span>
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-4 p-6">
-        <div className="flex flex-col gap-1.5">
-          <Heading className="font-display text-2xl font-extrabold">
-            <Link href={`/projects/${project.slug}`} className="after:absolute after:inset-0">
-              {project.title}
-            </Link>
-          </Heading>
-          {period && <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted">{period}</p>}
-        </div>
+      <div className="flex flex-1 flex-col gap-3">
+        {period && <p className="text-sm font-semibold text-muted">{period}</p>}
+        <Heading className="font-display text-[clamp(1.75rem,2.6vw,2.5rem)] leading-[0.95] tracking-[-0.02em] transition-colors group-hover:text-accent">
+          <Link href={`/projects/${project.slug}`} className="after:absolute after:inset-0">
+            {project.title}
+          </Link>
+        </Heading>
         {/* Three lines at most, so cards in a row stay even; the project page has the rest. */}
-        {project.short_description && <p className="line-clamp-3 text-muted">{project.short_description}</p>}
+        {project.short_description && <p className="line-clamp-3 leading-relaxed text-muted">{project.short_description}</p>}
         {project.skills.length > 0 && (
-          <ul className="mt-auto flex flex-wrap gap-2" aria-label="Skills">
+          <ul className="mt-auto flex flex-wrap gap-2 pt-2" aria-label="Skills">
             {project.skills.slice(0, MAX_SKILLS).map((skill) => (
-              <li key={skill.id}>
-                <Tag>{skill.name}</Tag>
+              <li key={skill.id} className="rounded-btn border border-line px-3 py-1 text-sm font-medium text-muted">
+                {skill.name}
               </li>
             ))}
           </ul>

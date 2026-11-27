@@ -28,7 +28,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
       <div className="flex flex-col gap-6">
         {items.length === 0 && <EmptyState title="No settings yet" />}
         {items.map((setting) => (
-          <article key={setting.key} className="flex flex-col gap-4 rounded-2xl border border-line p-5">
+          <article key={setting.key} className="flex flex-col gap-4 rounded-card border border-line p-5">
             <h2 className="flex flex-wrap items-center gap-3 font-mono text-sm">
               {setting.key}
               <Tag className={setting.is_public ? "border-accent text-accent" : undefined}>
@@ -47,7 +47,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/admin/s
       </div>
       <ListPagination path="/admin/settings" list={list} />
       <section className="mt-16 flex flex-col gap-6 border-t border-line pt-10" aria-labelledby="new-setting">
-        <h2 id="new-setting" className="font-display text-2xl font-extrabold">
+        <h2 id="new-setting" className="font-display text-2xl">
           New setting
         </h2>
         <ResourceForm fields={SETTING_NEW_FIELDS} action={saveSetting.bind(null, null)} submitLabel="Add setting" />

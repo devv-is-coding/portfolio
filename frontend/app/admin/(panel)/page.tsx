@@ -54,17 +54,17 @@ export default async function DashboardPage() {
           <li key={stat.label}>
             <Link
               href={stat.href}
-              className="flex h-full flex-col gap-2 rounded-2xl border border-line bg-ink-raised p-6 transition-colors hover:border-accent"
+              className="flex h-full flex-col gap-2 rounded-card border border-line bg-ink-raised p-6 transition-colors hover:border-accent"
             >
-              <span className="font-mono text-xs uppercase tracking-[0.2em] text-muted">{stat.label}</span>
-              <span className="font-display text-5xl font-extrabold">{stat.value}</span>
+              <span className="text-label font-medium text-muted">{stat.label}</span>
+              <span className="font-display text-5xl">{stat.value}</span>
               <span className="text-sm text-muted">{stat.note}</span>
             </Link>
           </li>
         ))}
       </ul>
       <section className="mt-12 flex flex-col gap-6" aria-labelledby="recent-heading">
-        <h2 id="recent-heading" className="font-display text-2xl font-extrabold">
+        <h2 id="recent-heading" className="font-display text-2xl">
           Newest messages
         </h2>
         <DataTable

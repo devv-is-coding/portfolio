@@ -72,7 +72,7 @@ export function MediaField({ defaultValue, mediaKind, options, ...field }: Media
           aria-hidden="true"
           onChange={(event) => void uploadChosenFile(event.currentTarget)}
         />
-        <Button variant="outline" size="sm" disabled={busy} aria-busy={busy} onClick={() => fileInput.current?.click()}>
+        <Button variant="secondary" size="sm" disabled={busy} aria-busy={busy} onClick={() => fileInput.current?.click()}>
           {busy ? "Uploading…" : `Upload a new ${what}`}
         </Button>
         <p role="status" className={upload.kind === "failed" ? "text-sm text-signal" : "text-sm text-muted"}>

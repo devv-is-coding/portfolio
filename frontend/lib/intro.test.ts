@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { INTRO_GATE_SCRIPT, INTRO_PLAYING, INTRO_SEEN_KEY } from "@/lib/intro";
+import { INTRO_GATE_SCRIPT, INTRO_PLAYED, INTRO_PLAYING, INTRO_SEEN_KEY, INTRO_WAKE } from "@/lib/intro";
 
 type Visit = {
   path?: string;
@@ -27,15 +27,21 @@ function runGate({ path = "/", reducedMotion = false, storage = new Map() }: Vis
   };
   const run = new Function("location", "sessionStorage", "matchMedia", "document", INTRO_GATE_SCRIPT);
   run({ pathname: path }, sessionStorage, () => ({ matches: reducedMotion }), { documentElement: { dataset } });
-  return { intro: dataset.intro, storage };
+  return { intro: dataset.intro, played: dataset[INTRO_PLAYED], wake: dataset[INTRO_WAKE], storage };
 }
 
 describe("intro gate", () => {
   it("plays on the first page of a session and remembers it", () => {
-    const { intro, storage } = runGate({});
+    const { intro, played, storage } = runGate({});
 
     expect(intro).toBe(INTRO_PLAYING);
+    expect(played).toBe("1");
     expect(storage?.get(INTRO_SEEN_KEY)).toBe("1");
+  });
+
+  it("marks nothing as played when the greeting doesn't play", () => {
+    expect(runGate({ reducedMotion: true }).played).toBeUndefined();
+    expect(runGate({ path: "/projects" }).played).toBeUndefined();
   });
 
   it("stays away on refreshes and later pages of the same session", () => {
@@ -60,8 +66,23 @@ describe("intro gate", () => {
     expect(storage?.has(INTRO_SEEN_KEY)).toBe(false);
   });
 
-  it("never plays with reduced motion", () => {
-    expect(runGate({ reducedMotion: true }).intro).toBeUndefined();
+  it("never plays with reduced motion, but still wakes the backend", () => {
+    const { intro, wake } = runGate({ reducedMotion: true });
+
+    expect(intro).toBeUndefined();
+    expect(wake).toBe("1");
+  });
+
+  it("wakes the backend on the session's first public page, whichever it is", () => {
+    expect(runGate({}).wake).toBe("1");
+    expect(runGate({ path: "/projects/some-project" }).wake).toBe("1");
+  });
+
+  it("wakes nothing on later pages or in the admin", () => {
+    const storage = new Map([[INTRO_SEEN_KEY, "1"]]);
+
+    expect(runGate({ path: "/about", storage }).wake).toBeUndefined();
+    expect(runGate({ path: "/admin" }).wake).toBeUndefined();
   });
 
   it("shows the site at once when storage is blocked, without throwing", () => {

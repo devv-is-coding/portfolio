@@ -1,104 +1,118 @@
 import { getImageProps } from "next/image";
-import { Suspense } from "react";
-import { HeroLinks } from "@/app/(site)/_components/hero-links";
-import { ColorBends } from "@/components/color-bends";
+import { type CSSProperties, Fragment, Suspense } from "react";
+import { ResumeBadge } from "@/app/(site)/_components/hero-badge";
+import { HeroFacts } from "@/app/(site)/_components/hero-facts";
 import { SectionErrorBoundary } from "@/components/section-error-boundary";
 import { ButtonLink } from "@/components/ui/button-link";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { SITE } from "@/lib/site";
-import portrait from "@/public/images/portrait.png";
-
-// The accent with a darker band for depth, read from the design tokens: no color outside the palette.
-const BAND_COLORS = ["--color-accent", "--color-line"] as const;
+import portrait from "@/public/images/portrait.webp";
 
 const PORTRAIT_ALT = `Portrait of ${SITE.name}`;
 
-// The portrait is the phone LCP: loaded at once, at high priority. getImageProps() gives the
+// The headline in four poster lines; one word in the accent.
+const HEADLINE = [
+  { text: "Building", accent: false },
+  { text: "systems,", accent: false },
+  { text: "creating", accent: true },
+  { text: "solutions.", accent: false },
+];
+
+// The portrait is a likely LCP: loaded at once, at high priority. getImageProps() gives the
 // optimized srcset (AVIF) without next/image's browser JavaScript.
 const { props: portraitProps } = getImageProps({
   src: portrait,
   alt: PORTRAIT_ALT,
   loading: "eager",
   fetchPriority: "high",
-  // Below lg its width follows the height left for it, up to the file's own 372 px.
-  sizes: "(min-width: 1280px) 460px, (min-width: 1024px) 340px, 372px",
+  // 110% of the block's height, its own width: about 500 px wide at 1440x900, 330 px on phones.
+  sizes: "(min-width: 768px) 600px, 340px",
 });
 
-/** The home page's first screen: headline, calls to action and the portrait. */
+/**
+ * The home page's first screen: the headline, the line under it and two actions; the portrait
+ * (seated, in the graduation gown) standing in a cream block, its head above the block's edge; the facts row as the floor.
+ * Nothing above the floor needs data, so it shows while the API wakes up; the facts and the
+ * résumé link stream in. The welcome screen (components/intro.tsx) shrinks into the block.
+ */
 export function Hero() {
   return (
-    // One screen below the header (h-16 + its 1px border), so the links bar is the first
-    // screen's bottom edge; taller only when the content can't fit (min-h-fit: very short screens).
-    <section className="relative isolate flex h-[calc(100svh-4rem-1px)] min-h-fit flex-col overflow-x-clip">
-      {/* Behind the content (isolate + -z-10), dimmed and softened so it never competes with the headline. */}
-      <div aria-hidden="true" className="absolute inset-0 -z-10 opacity-25 blur-lg">
-        <ColorBends colors={BAND_COLORS} intensity={1} noise={0.08} />
-      </div>
-      {/* Phones and tablets: text, then the photo in whatever height is left (at least 11rem).
-          Desktop: text centered beside the photo. */}
-      <Container className="grid flex-1 grid-rows-[auto_minmax(11rem,1fr)] gap-6 pt-8 sm:gap-8 sm:pt-10 lg:grid-cols-[1fr_auto] lg:grid-rows-[auto] lg:gap-12">
-        {/* A size container: the headline's size follows this column's width (cqi). While the
-            hero scrolls away the text drifts up faster and fades (lib/motion parallax). */}
+    // One screen below the header (h-16 + its 1px border) from md up; taller only when the
+    // content can't fit (min-h-fit). Phones scroll.
+    // overflow-x-clip: the portrait (110% of the block's height, its own width) never pushes the page sideways.
+    <section className="hero flex flex-col overflow-x-clip md:h-[calc(100svh-4rem-1px)] md:min-h-fit">
+      <Container className="grid flex-1 gap-10 py-8 md:grid-cols-2 md:gap-10 md:pb-6 lg:gap-14">
+        {/* One group, centred in the column: on a tall screen the line and the buttons stay
+            with the headline instead of dropping to the column's foot. */}
+        <div className="flex flex-col justify-center gap-8 lg:gap-10">
+          {/* The headline's size follows this column's width (--text-display, globals.css). */}
+          <div className="flex flex-col gap-5">
+            <Eyebrow className="hero-fade">Full-stack developer</Eyebrow>
+            <h1 className="font-display text-display">
+              {/* A real space between the lines: block boxes alone leave the text glued together
+                  for search engines and some screen readers ("Buildingsystems,"). */}
+              {HEADLINE.map((line, index) => (
+                <Fragment key={line.text}>
+                  {index > 0 && " "}
+                  <span className="hero-mask block">
+                    <span
+                      className={line.accent ? "hero-line block text-accent" : "hero-line block"}
+                      style={{ "--line": index } as CSSProperties}
+                    >
+                      {line.text}
+                    </span>
+                  </span>
+                </Fragment>
+              ))}
+            </h1>
+          </div>
+          <div className="hero-fade flex flex-col gap-6">
+            <p className="max-w-xl leading-relaxed text-muted xl:text-lg">
+              I build web products end to end, from APIs and databases to the pages people use, from
+              the Philippines. {SITE.availability}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <ButtonLink href="/projects">See the work</ButtonLink>
+              <ButtonLink href="/contact" variant="secondary">
+                Get in touch
+              </ButtonLink>
+            </div>
+          </div>
+        </div>
+        {/* The cream block. It starts a step below the column's top, and the portrait (110% of
+            its height) stands on its floor, so the head rises above the edge and stays clear of
+            the header. Clipped at its sides and floor (keeping the block's rounded corners) but
+            not above, so the rising portrait never shows below it and the head stays free. On a
+            portrait screen from md up (a tablet held upright) it sits at the column's foot at
+            1.25 times its width: the column's full height would blow the portrait up and cut
+            the sleeves. data-intro-target: the welcome screen shrinks into this box. */}
         <div
-          data-motion="parallax"
-          data-motion-y="-25"
-          data-motion-fade
-          className="@container flex flex-col gap-5 sm:gap-7 lg:self-center lg:pb-10"
+          data-intro-target
+          className="hero-block relative mt-14 min-h-[26rem] rounded-card bg-cream [clip-path:inset(-100%_0_0_0_round_0_0_var(--radius-card)_var(--radius-card))] md:mt-16 md:min-h-0 md:portrait:aspect-[0.8] md:portrait:self-end"
         >
-          <Eyebrow>Full-stack developer</Eyebrow>
-          <h1 className="font-display text-display font-extrabold uppercase">
-            {/* Two lines from sm up; on phones one word per line, so the size can stay big. */}
-            <span className="block animate-rise">
-              Building <span className="max-sm:block">systems</span>
-            </span>
-            <span className="block animate-rise text-accent [animation-delay:120ms]">
-              Creating <span className="max-sm:block">solutions</span>
-            </span>
-          </h1>
-          {/* What he builds, with what, and what he's open to: a visitor who reads only this
-              knows whether to keep going. */}
-          <p className="max-w-2xl leading-[1.7] text-muted sm:text-xl">
-            I build web products end to end, from APIs and databases to the pages people use, from
-            the Philippines. {SITE.availability}
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <ButtonLink href="/projects">See the work</ButtonLink>
-            <ButtonLink href="/contact" variant="outline">
-              Get in touch
-            </ButtonLink>
-          </div>
-        </div>
-        {/* The photo's bottom edge sits on the links bar, so its crop at the waist never shows.
-            Below lg it is as tall as the row left for it (never above its own 574 px): h-0 +
-            min-h-full fills the row without making it taller. From lg its width follows the screen
-            height (64svh - 120px) so it fills the hero top to bottom and everything fits one
-            screen; on xl up to 460 px (1.24x the file, slightly soft but never distorted). */}
-        <div className="flex h-0 min-h-full items-end justify-center lg:block lg:h-auto lg:min-h-0 lg:self-end">
-          {/* While the hero scrolls away the portrait sinks slower than the page, behind the bar. */}
-          <div
-            data-motion="parallax"
-            data-motion-y="14"
-            className="relative aspect-[372/574] h-full max-h-[574px] max-w-full lg:h-auto lg:max-h-none lg:w-[clamp(260px,calc(64svh-120px),340px)] xl:w-[clamp(260px,calc(64svh-120px),460px)]"
-          >
-            <div
-              aria-hidden="true"
-              className="absolute inset-x-[-8%] top-[12%] bottom-0 rounded-t-full border border-line bg-ink-raised"
+          <picture className="contents">
+            <img
+              {...portraitProps}
+              alt={PORTRAIT_ALT}
+              className="hero-portrait absolute bottom-0 left-1/2 h-[110%] w-auto max-w-none -translate-x-1/2"
             />
-            <picture className="contents">
-              <img {...portraitProps} alt={PORTRAIT_ALT} className="relative size-full animate-rise [animation-delay:120ms]" />
-            </picture>
-          </div>
-        </div>
-      </Container>
-      {/* The floor the portrait stands on: quick links from the profile. A fixed height, so the
-          links streaming in never move anything; if the API fails the bar just stays empty and
-          the hero, which needs no data, still shows. On narrow phones the links scroll sideways. */}
-      <div className="relative z-10 border-y border-line bg-ink-raised">
-        <Container className="flex h-14 items-center overflow-x-auto [scrollbar-width:none]">
+          </picture>
+          {/* The résumé badge streams in from the profile; nothing until then, or without one. */}
           <SectionErrorBoundary fallback={null}>
             <Suspense fallback={null}>
-              <HeroLinks />
+              <ResumeBadge />
+            </Suspense>
+          </SectionErrorBoundary>
+        </div>
+      </Container>
+      {/* The floor: facts from the API. A fixed height (two rows on phones), so the facts
+          streaming in never move anything; if the API fails or has nothing, it stays empty. */}
+      <div className="border-t border-line">
+        <Container className="hero-fade h-36 md:h-20">
+          <SectionErrorBoundary fallback={null}>
+            <Suspense fallback={null}>
+              <HeroFacts />
             </Suspense>
           </SectionErrorBoundary>
         </Container>

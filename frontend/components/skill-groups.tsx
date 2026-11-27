@@ -14,7 +14,7 @@ export function SkillGroups({ skills, withProjects }: SkillsProps) {
     <dl className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
       {groupSkills(skills).map((group) => (
         <div key={group.category} className="flex flex-col gap-4 border-t border-line pt-6">
-          <dt className="font-mono text-xs uppercase tracking-[0.2em] text-muted">{group.category}</dt>
+          <dt className="text-label font-medium text-muted">{group.category}</dt>
           <dd>
             <SkillTags skills={group.skills} withProjects={withProjects} />
           </dd>

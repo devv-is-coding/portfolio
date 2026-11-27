@@ -14,12 +14,14 @@ export const SITE = {
   // two never drift apart.
   availability:
     "Open to full-stack and backend roles and to freelance projects, remote or on-site, anywhere.",
+  // The same, short, for the header's status and the hero's badge.
+  status: "Open to roles and freelance",
 } as const;
 
 export const NAV_ITEMS = [
   { href: "/projects", label: "Projects" },
   { href: "/about", label: "About" },
-  { href: "/blog", label: "Blog" },
+  { href: "/blog", label: "Writing" },
   { href: "/contact", label: "Contact" },
 ] as const;
 

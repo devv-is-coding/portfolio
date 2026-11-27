@@ -12,7 +12,7 @@ export default function AdminError({ error, reset }: { error: Error & { digest?:
   return (
     <div role="alert" className="flex max-w-xl flex-col items-start gap-6">
       <Eyebrow>Something went wrong</Eyebrow>
-      <h1 className="font-display text-4xl font-extrabold uppercase">This page didn&apos;t load</h1>
+      <h1 className="font-display text-4xl">This page didn&apos;t load</h1>
       <p className="text-muted">
         The API may be unreachable for a moment. Try again; if it keeps failing, check that the backend is running.
       </p>
@@ -21,7 +21,7 @@ export default function AdminError({ error, reset }: { error: Error & { digest?:
         <Button onClick={reset} size="sm">
           Try again
         </Button>
-        <ButtonLink href="/admin" variant="outline" size="sm">
+        <ButtonLink href="/admin" variant="secondary" size="sm">
           Dashboard
         </ButtonLink>
       </div>

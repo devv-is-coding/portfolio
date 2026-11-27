@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { SectionHeading } from "@/components/section-heading";
+import { PosterHeading } from "@/components/poster-heading";
 import { AboutSkeleton } from "@/components/skeletons";
 import { Container } from "@/components/ui/container";
 import { SITE } from "@/lib/site";
@@ -22,7 +22,7 @@ export default function AboutPage() {
   return (
     <>
       <Container className="pt-16 sm:pt-24">
-        <SectionHeading as="h1" eyebrow="About" title="About me" />
+        <PosterHeading as="h1" title="About me" />
       </Container>
       {/*
         One boundary for everything below the title, at least a screen tall, fallback and
