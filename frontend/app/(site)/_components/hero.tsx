@@ -26,14 +26,13 @@ const { props: portraitProps } = getImageProps({
   alt: PORTRAIT_ALT,
   loading: "eager",
   fetchPriority: "high",
-  // The bust is 110% of the block tall and wider than the block (its sides clipped): about
-  // 810 px wide at 1440x900, 530 px on phones.
-  sizes: "(min-width: 768px) 900px, 540px",
+  // As wide as the block: about 580 px at 1440x900, 350 px on phones.
+  sizes: "(min-width: 768px) 640px, 400px",
 });
 
 /**
  * The home page's first screen: the headline, the line under it and two actions; the portrait
- * (a bust) filling a cream block from side to side, its head above the block's edge; the facts row as the floor.
+ * (a bust, shown whole) standing in a cream block, its head above the block's edge; the facts row as the floor.
  * Nothing above the floor needs data, so it shows while the API wakes up; the facts and the
  * résumé link stream in. The welcome screen (components/intro.tsx) shrinks into the block.
  */
@@ -79,21 +78,21 @@ export function Hero() {
             </div>
           </div>
         </div>
-        {/* The cream block. It starts a step below the column's top, and the portrait (110% of
-            its height) stands on its floor, so the head rises above the edge and stays clear of
-            the header. Clipped at its sides and floor (keeping the block's rounded corners) but
-            not above: the gown fills the block edge to edge and never shows below it while the
-            portrait rises in, and the head stays free. data-intro-target: the welcome screen
-            shrinks into this box. */}
+        {/* The cream block, at the column's foot. Its height follows its width (aspect 1.28),
+            and the portrait (the whole bust, as wide as the block, aspect 1.15) stands on its
+            floor, so the head rises about a tenth above the edge whatever the screen. Clipped
+            at its sides and floor (keeping the block's rounded corners) but not above, so the
+            rising portrait never shows below it and the head stays free. data-intro-target:
+            the welcome screen shrinks into this box. */}
         <div
           data-intro-target
-          className="hero-block relative mt-14 min-h-[26rem] rounded-card bg-cream [clip-path:inset(-100%_0_0_0_round_0_0_var(--radius-card)_var(--radius-card))] md:mt-16 md:min-h-0"
+          className="hero-block relative mt-12 aspect-[1.28] self-end rounded-card bg-cream [clip-path:inset(-100%_0_0_0_round_0_0_var(--radius-card)_var(--radius-card))]"
         >
           <picture className="contents">
             <img
               {...portraitProps}
               alt={PORTRAIT_ALT}
-              className="hero-portrait absolute bottom-0 left-1/2 h-[110%] w-auto max-w-none -translate-x-1/2"
+              className="hero-portrait absolute bottom-0 left-0 h-auto w-full max-w-none"
             />
           </picture>
           {/* The résumé badge streams in from the profile; nothing until then, or without one. */}
