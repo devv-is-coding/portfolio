@@ -7,7 +7,7 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { SITE } from "@/lib/site";
-import portrait from "@/public/images/portrait.png";
+import portrait from "@/public/images/portrait.webp";
 
 const PORTRAIT_ALT = `Portrait of ${SITE.name}`;
 
@@ -26,12 +26,14 @@ const { props: portraitProps } = getImageProps({
   alt: PORTRAIT_ALT,
   loading: "eager",
   fetchPriority: "high",
-  sizes: "(min-width: 768px) 440px, 300px",
+  // The bust is 110% of the block tall and wider than the block (its sides clipped): about
+  // 810 px wide at 1440x900, 530 px on phones.
+  sizes: "(min-width: 768px) 900px, 540px",
 });
 
 /**
  * The home page's first screen: the headline, the line under it and two actions; the portrait
- * standing in a cream block with its head above the block's edge; the facts row as the floor.
+ * (a bust) filling a cream block from side to side, its head above the block's edge; the facts row as the floor.
  * Nothing above the floor needs data, so it shows while the API wakes up; the facts and the
  * résumé link stream in. The welcome screen (components/intro.tsx) shrinks into the block.
  */
@@ -79,12 +81,13 @@ export function Hero() {
         </div>
         {/* The cream block. It starts a step below the column's top, and the portrait (110% of
             its height) stands on its floor, so the head rises above the edge and stays clear of
-            the header. Clipped at its floor only, so the rising portrait never shows below it
-            while the head stays free above. data-intro-target: the welcome screen shrinks into
-            this box. */}
+            the header. Clipped at its sides and floor (keeping the block's rounded corners) but
+            not above: the gown fills the block edge to edge and never shows below it while the
+            portrait rises in, and the head stays free. data-intro-target: the welcome screen
+            shrinks into this box. */}
         <div
           data-intro-target
-          className="hero-block relative mt-14 min-h-[26rem] rounded-card bg-cream [clip-path:inset(-100%_-100%_0_-100%)] md:mt-16 md:min-h-0"
+          className="hero-block relative mt-14 min-h-[26rem] rounded-card bg-cream [clip-path:inset(-100%_0_0_0_round_0_0_var(--radius-card)_var(--radius-card))] md:mt-16 md:min-h-0"
         >
           <picture className="contents">
             <img
